@@ -22,6 +22,13 @@ window.addEventListener('load', async () => {
         const roleSelect = document.getElementById("view-role-select");
         if (roleSelect) roleSelect.classList.remove("hidden");
     }
+
+    // ✅ OPRAVA — schování loaderu po dokončení inicializace
+    const loaderEl = document.getElementById("loader");
+    if (loaderEl) {
+        loaderEl.style.opacity = "0";
+        setTimeout(() => { loaderEl.style.display = "none"; }, 600);
+    }
 });
 
 // === HLAVNÍ INICIALIZACE MODULŮ REMEXO ===
