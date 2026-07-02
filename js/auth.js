@@ -31,7 +31,7 @@ window.goToAuth = function(role) {
     const authForm = document.getElementById("view-auth-form");
     
     if (roleSelect) roleSelect.classList.add("hidden");
-    if (authForm) autoForm.classList.remove("hidden");
+    if (authForm) authForm.classList.remove("hidden");
     
     window.switchTab("login"); 
     window.clearMsg();
