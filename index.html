@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Remexo – Profesionální řemesla</title>
-    <meta name="description" content="Remexo – Najděte ověřeného řemeslníka ve vašem okolí rychle a jednoduše.">
+    <title>Fixit – Profesionální řemesla</title>
+    <meta name="description" content="Fixit – Najděte ověřeného řemeslníka ve vašem okolí rychle a jednoduše.">
     <meta name="theme-color" content="#f59e0b">
     
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 5L90 27.5V72.5L50 95L10 72.5V27.5L50 5Z' fill='%23f59e0b'/%3E%3Ccircle cx='50' cy='47' r='16' fill='white'/%3E%3Cpath d='M40 57 L28 69 L44 64 Z' fill='white'/%3E%3C/svg%3E">
@@ -12,7 +12,7 @@
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Remexo">
+    <meta name="apple-mobile-web-app-title" content="Fixit">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -24,7 +24,7 @@
     <script>
         tailwind.config = {
             darkMode: "class",
-            theme: { extend: { fontFamily: { sans: ['"Plus Jakarta Sans"', "sans-serif"] }, colors: { remexo: { 50:"#fffbeb",100:"#fef3c7",500:"#f59e0b",600:"#d97706",700:"#b45309",dark:"#020617",slate:"#0f172a" } } } }
+            theme: { extend: { fontFamily: { sans: ['"Plus Jakarta Sans"', "sans-serif"] }, colors: { fixit: { 50:"#fffbeb",100:"#fef3c7",500:"#f59e0b",600:"#d97706",700:"#b45309",dark:"#020617",slate:"#0f172a" } } } }
         }
     </script>
 
@@ -44,7 +44,7 @@
         })();
     </script>
 </head>
-<body class="antialiased bg-slate-50 text-slate-900 dark:bg-remexo-dark dark:text-white">
+<body class="antialiased bg-slate-50 text-slate-900 dark:bg-fixit-dark dark:text-white">
 
 <div id="toast-container"></div>
 
@@ -54,35 +54,35 @@
         <circle cx="50" cy="48" r="16" fill="#f59e0b"/>
         <path d="M40 58 L30 68 L45 64 Z" fill="#f59e0b"/>
     </svg>
-    <div style="color:white;font-weight:800;font-size:1.875rem;letter-spacing:-0.025em;opacity:0;animation:loader-fadein-up 0.5s ease forwards 0.8s;">Remexo</div>
+    <div style="color:white;font-weight:800;font-size:1.875rem;letter-spacing:-0.025em;opacity:0;animation:loader-fadein-up 0.5s ease forwards 0.8s;">Fixit</div>
     <div style="color:#94a3b8;font-size:0.875rem;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;opacity:0;animation:loader-fadein-up 0.5s ease forwards 1.1s;">Profesionální řemesla v Brně</div>
 </div>
 
-<div id="auth-screen" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-50 dark:bg-remexo-dark p-4 transition-opacity duration-500 overflow-y-auto">
-    <div class="absolute top-[-10%] left-[-10%] w-96 h-96 bg-remexo-500/20 rounded-full blur-[100px] pointer-events-none"></div>
+<div id="auth-screen" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-50 dark:bg-fixit-dark p-4 transition-opacity duration-500 overflow-y-auto">
+    <div class="absolute top-[-10%] left-[-10%] w-96 h-96 bg-fixit-500/20 rounded-full blur-[100px] pointer-events-none"></div>
     <div class="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-blue-500/10 rounded-full blur-[100px] pointer-events-none"></div>
     <div class="w-full max-w-2xl bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl border border-slate-200 dark:border-slate-800 p-8 md:p-12 relative z-10">
         <div class="flex justify-center items-center gap-3 mb-8">
             <svg width="48" height="48" viewBox="0 0 100 100" fill="none"><path d="M50 10L85 30V70L50 90L15 70V30L50 10Z" fill="#f59e0b"/><circle cx="50" cy="48" r="16" fill="white"/><path d="M40 58 L30 68 L45 64 Z" fill="white"/></svg>
-            <span class="font-extrabold text-4xl tracking-tighter dark:text-white">Remexo</span>
+            <span class="font-extrabold text-4xl tracking-tighter dark:text-white">Fixit</span>
         </div>
         <div id="view-role-select" class="hidden">
             <h2 class="text-2xl md:text-3xl font-extrabold mb-2 text-center dark:text-white">Vítejte v aplikaci</h2>
-            <p class="text-slate-500 dark:text-slate-400 text-center mb-10 text-lg">Vyberte, jak chcete Remexo používat</p>
+            <p class="text-slate-500 dark:text-slate-400 text-center mb-10 text-lg">Vyberte, jak chcete Fixit používat</p>
             <div class="grid md:grid-cols-2 gap-6">
-                <button onclick="window.goToAuth('customer')" class="group bg-slate-50 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 hover:border-remexo-500 rounded-[2rem] p-8 flex flex-col items-center gap-4 transition-all hover:-translate-y-1 hover:shadow-xl text-center">
-                    <div class="w-20 h-20 bg-white dark:bg-slate-700 text-remexo-500 rounded-2xl flex items-center justify-center text-4xl group-hover:bg-remexo-500 group-hover:text-white transition-all shadow-sm"><i class="fa-solid fa-house-chimney-window"></i></div>
+                <button onclick="window.goToAuth('customer')" class="group bg-slate-50 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 hover:border-fixit-500 rounded-[2rem] p-8 flex flex-col items-center gap-4 transition-all hover:-translate-y-1 hover:shadow-xl text-center">
+                    <div class="w-20 h-20 bg-white dark:bg-slate-700 text-fixit-500 rounded-2xl flex items-center justify-center text-4xl group-hover:bg-fixit-500 group-hover:text-white transition-all shadow-sm"><i class="fa-solid fa-house-chimney-window"></i></div>
                     <div><h3 class="font-extrabold text-xl text-slate-900 dark:text-white mb-2">Vstoupit jako poptávající</h3><p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">Potřebuji opravit něco doma a hledám ověřeného profíka.</p></div>
                 </button>
-                <button onclick="window.goToAuth('craftsman')" class="group bg-slate-50 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 hover:border-remexo-500 rounded-[2rem] p-8 flex flex-col items-center gap-4 transition-all hover:-translate-y-1 hover:shadow-xl text-center">
-                    <div class="w-20 h-20 bg-white dark:bg-slate-700 text-slate-400 group-hover:bg-remexo-500 group-hover:text-white transition-all rounded-2xl flex items-center justify-center text-3xl shadow-sm"><i class="fa-solid fa-toolbox"></i></div>
+                <button onclick="window.goToAuth('craftsman')" class="group bg-slate-50 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 hover:border-fixit-500 rounded-[2rem] p-8 flex flex-col items-center gap-4 transition-all hover:-translate-y-1 hover:shadow-xl text-center">
+                    <div class="w-20 h-20 bg-white dark:bg-slate-700 text-slate-400 group-hover:bg-fixit-500 group-hover:text-white transition-all rounded-2xl flex items-center justify-center text-3xl shadow-sm"><i class="fa-solid fa-toolbox"></i></div>
                     <div><h3 class="font-extrabold text-xl text-slate-900 dark:text-white mb-2">Vstoupit jako řemeslník</h3><p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">Jsem profík a chci získat přístup k novým zakázkám.</p></div>
                 </button>
             </div>
         </div>
         <div id="view-auth-form" class="hidden max-w-md mx-auto relative">
-            <button onclick="window.backToRoles()" class="text-sm font-bold text-slate-500 hover:text-remexo-500 mb-5 flex items-center gap-2"><i class="fa-solid fa-arrow-left"></i> Zpět</button>
-            <div class="bg-remexo-50 dark:bg-remexo-500/10 border border-remexo-500/30 rounded-xl p-3 mb-6 flex items-center justify-center gap-2 text-remexo-700 dark:text-remexo-400 font-bold text-sm">
+            <button onclick="window.backToRoles()" class="text-sm font-bold text-slate-500 hover:text-fixit-500 mb-5 flex items-center gap-2"><i class="fa-solid fa-arrow-left"></i> Zpět</button>
+            <div class="bg-fixit-50 dark:bg-fixit-500/10 border border-fixit-500/30 rounded-xl p-3 mb-6 flex items-center justify-center gap-2 text-fixit-700 dark:text-fixit-400 font-bold text-sm">
                 <i id="role-icon" class="fa-solid fa-house"></i><span id="role-text">Zákazník</span>
             </div>
             <div class="bg-slate-100 dark:bg-slate-800 p-1.5 rounded-2xl flex relative mb-6">
@@ -94,16 +94,16 @@
             <div id="auth-ok" class="hidden mb-4 p-3 bg-green-50 dark:bg-green-500/10 border border-green-200 text-green-600 rounded-xl text-sm font-bold text-center"></div>
             
             <div id="form-login" class="space-y-4">
-                <input type="email" id="log-email" placeholder="Váš e-mail" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-remexo-500 outline-none dark:text-white">
+                <input type="email" id="log-email" placeholder="Váš e-mail" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-fixit-500 outline-none dark:text-white">
                 
                 <div class="relative">
-                    <input type="password" id="log-pass" placeholder="Vaše heslo" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-4 pr-12 py-3 text-sm focus:ring-2 focus:ring-remexo-500 outline-none dark:text-white" onkeypress="if(event.key==='Enter')window.doLogin()">
-                    <button type="button" onclick="window.togglePassword('log-pass', this)" class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-remexo-500 transition"><i class="fa-solid fa-eye text-lg"></i></button>
+                    <input type="password" id="log-pass" placeholder="Vaše heslo" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-4 pr-12 py-3 text-sm focus:ring-2 focus:ring-fixit-500 outline-none dark:text-white" onkeypress="if(event.key==='Enter')window.doLogin()">
+                    <button type="button" onclick="window.togglePassword('log-pass', this)" class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-fixit-500 transition"><i class="fa-solid fa-eye text-lg"></i></button>
                 </div>
                 
                 <div class="flex items-center justify-between mt-2 mb-2">
                     <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="remember-me" checked class="w-4 h-4 rounded" style="accent-color:#f59e0b"><span class="text-sm font-bold text-slate-600 dark:text-slate-400">Zapamatovat si mě</span></label>
-                    <button onclick="window.switchTab('forgot')" class="text-sm text-remexo-500 hover:text-remexo-600 font-bold transition">Zapomenuté heslo?</button>
+                    <button onclick="window.switchTab('forgot')" class="text-sm text-fixit-500 hover:text-fixit-600 font-bold transition">Zapomenuté heslo?</button>
                 </div>
 
                 <div class="mt-4">
@@ -117,56 +117,56 @@
                     </div>
                 </div>
 
-                <button onclick="window.doLogin()" id="btn-do-login" class="w-full bg-remexo-500 hover:bg-remexo-600 text-white font-bold py-3.5 rounded-xl mt-2 transition shadow-lg">Přihlásit se</button>
+                <button onclick="window.doLogin()" id="btn-do-login" class="w-full bg-fixit-500 hover:bg-fixit-600 text-white font-bold py-3.5 rounded-xl mt-2 transition shadow-lg">Přihlásit se</button>
             </div>
 
             <div id="form-reg" class="hidden space-y-4">
                 <div class="relative">
-                    <input type="text" id="reg-name" placeholder="Vaše jméno a příjmení" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 pr-12 text-sm focus:ring-2 focus:ring-remexo-500 outline-none dark:text-white">
+                    <input type="text" id="reg-name" placeholder="Vaše jméno a příjmení" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 pr-12 text-sm focus:ring-2 focus:ring-fixit-500 outline-none dark:text-white">
                     <div class="absolute right-4 top-1/2 -translate-y-1/2 group cursor-help flex items-center">
-                        <i class="fa-solid fa-circle-question text-slate-300 hover:text-remexo-500 transition text-lg"></i>
-                        <div class="absolute top-1/2 -translate-y-1/2 left-full ml-3 w-56 p-3 bg-remexo-500 text-white text-xs font-bold rounded-xl shadow-xl opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-[60]">Jméno uvidí ostatní uživatelé, aby věděli, s kým komunikují.</div>
+                        <i class="fa-solid fa-circle-question text-slate-300 hover:text-fixit-500 transition text-lg"></i>
+                        <div class="absolute top-1/2 -translate-y-1/2 left-full ml-3 w-56 p-3 bg-fixit-500 text-white text-xs font-bold rounded-xl shadow-xl opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-[60]">Jméno uvidí ostatní uživatelé, aby věděli, s kým komunikují.</div>
                     </div>
                 </div>
 
                 <div class="relative">
-                    <input type="email" id="reg-email" placeholder="Váš e-mail" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 pr-12 text-sm focus:ring-2 focus:ring-remexo-500 outline-none dark:text-white">
+                    <input type="email" id="reg-email" placeholder="Váš e-mail" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 pr-12 text-sm focus:ring-2 focus:ring-fixit-500 outline-none dark:text-white">
                     <div class="absolute right-4 top-1/2 -translate-y-1/2 group cursor-help flex items-center">
-                        <i class="fa-solid fa-circle-question text-slate-300 hover:text-remexo-500 transition text-lg"></i>
-                        <div class="absolute top-1/2 -translate-y-1/2 left-full ml-3 w-56 p-3 bg-remexo-500 text-white text-xs font-bold rounded-xl shadow-xl opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-[60]">E-mail slouží k přihlášení a důležitým notifikacím. Nikomu ho neukazujeme.</div>
+                        <i class="fa-solid fa-circle-question text-slate-300 hover:text-fixit-500 transition text-lg"></i>
+                        <div class="absolute top-1/2 -translate-y-1/2 left-full ml-3 w-56 p-3 bg-fixit-500 text-white text-xs font-bold rounded-xl shadow-xl opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-[60]">E-mail slouží k přihlášení a důležitým notifikacím. Nikomu ho neukazujeme.</div>
                     </div>
                 </div>
 
                 <div class="relative">
-                    <input type="password" id="reg-pass" placeholder="Nové heslo (Min. 8 znaků, 1 velké, 1 číslo)" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-4 pr-20 py-3 text-sm focus:ring-2 focus:ring-remexo-500 outline-none dark:text-white">
+                    <input type="password" id="reg-pass" placeholder="Nové heslo (Min. 8 znaků, 1 velké, 1 číslo)" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-4 pr-20 py-3 text-sm focus:ring-2 focus:ring-fixit-500 outline-none dark:text-white">
                     <div class="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-3">
-                        <button type="button" onclick="window.togglePassword('reg-pass', this)" class="text-slate-400 hover:text-remexo-500 transition"><i class="fa-solid fa-eye text-lg"></i></button>
+                        <button type="button" onclick="window.togglePassword('reg-pass', this)" class="text-slate-400 hover:text-fixit-500 transition"><i class="fa-solid fa-eye text-lg"></i></button>
                         <div class="group cursor-help flex items-center">
-                            <i class="fa-solid fa-circle-question text-slate-300 hover:text-remexo-500 transition text-lg"></i>
-                            <div class="absolute top-1/2 -translate-y-1/2 left-full ml-3 w-56 p-3 bg-remexo-500 text-white text-xs font-bold rounded-xl shadow-xl opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-[60]">Silné heslo chrání vaše zprávy a bezpečné platby.</div>
+                            <i class="fa-solid fa-circle-question text-slate-300 hover:text-fixit-500 transition text-lg"></i>
+                            <div class="absolute top-1/2 -translate-y-1/2 left-full ml-3 w-56 p-3 bg-fixit-500 text-white text-xs font-bold rounded-xl shadow-xl opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-[60]">Silné heslo chrání vaše zprávy a bezpečné platby.</div>
                         </div>
                     </div>
                 </div>
 
                 <div class="relative">
-                    <input type="password" id="reg-pass-confirm" placeholder="Zopakujte heslo pro kontrolu" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-4 pr-20 py-3 text-sm focus:ring-2 focus:ring-remexo-500 outline-none dark:text-white">
+                    <input type="password" id="reg-pass-confirm" placeholder="Zopakujte heslo pro kontrolu" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-4 pr-20 py-3 text-sm focus:ring-2 focus:ring-fixit-500 outline-none dark:text-white">
                     <div class="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-3">
-                        <button type="button" onclick="window.togglePassword('reg-pass-confirm', this)" class="text-slate-400 hover:text-remexo-500 transition"><i class="fa-solid fa-eye text-lg"></i></button>
+                        <button type="button" onclick="window.togglePassword('reg-pass-confirm', this)" class="text-slate-400 hover:text-fixit-500 transition"><i class="fa-solid fa-eye text-lg"></i></button>
                         <div class="group cursor-help flex items-center">
-                            <i class="fa-solid fa-circle-question text-slate-300 hover:text-remexo-500 transition text-lg"></i>
-                            <div class="absolute top-1/2 -translate-y-1/2 left-full ml-3 w-56 p-3 bg-remexo-500 text-white text-xs font-bold rounded-xl shadow-xl opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-[60]">Pojistka, abychom měli jistotu, že ve vašem hesle není překlep.</div>
+                            <i class="fa-solid fa-circle-question text-slate-300 hover:text-fixit-500 transition text-lg"></i>
+                            <div class="absolute top-1/2 -translate-y-1/2 left-full ml-3 w-56 p-3 bg-fixit-500 text-white text-xs font-bold rounded-xl shadow-xl opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-[60]">Pojistka, abychom měli jistotu, že ve vašem hesle není překlep.</div>
                         </div>
                     </div>
                 </div>
 
-                <button id="btn-do-reg" onclick="window.doRegister()" class="w-full bg-remexo-500 hover:bg-remexo-600 text-white py-3.5 rounded-xl font-bold transition shadow-md mt-2">Vytvořit účet</button>
+                <button id="btn-do-reg" onclick="window.doRegister()" class="w-full bg-fixit-500 hover:bg-fixit-600 text-white py-3.5 rounded-xl font-bold transition shadow-md mt-2">Vytvořit účet</button>
             </div>
 
             <div id="form-forgot" class="hidden fade-up">
                 <p class="text-sm text-slate-500 dark:text-slate-400 mb-4 text-center font-medium">Zadejte svůj e-mail a my vám zašleme odkaz pro obnovení hesla.</p>
-                <input type="email" id="forgot-email" placeholder="Váš e-mail" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-remexo-500 outline-none dark:text-white mb-3">
+                <input type="email" id="forgot-email" placeholder="Váš e-mail" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-fixit-500 outline-none dark:text-white mb-3">
                 <button onclick="window.doResetPassword()" id="btn-do-forgot" class="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold py-3.5 rounded-xl transition shadow-lg">Odeslat odkaz</button>
-                <button onclick="window.switchTab('login')" class="w-full mt-3 text-sm text-slate-500 hover:text-remexo-500 font-bold transition">Zpět na přihlášení</button>
+                <button onclick="window.switchTab('login')" class="w-full mt-3 text-sm text-slate-500 hover:text-fixit-500 font-bold transition">Zpět na přihlášení</button>
             </div>
         </div>
     </div>
@@ -177,20 +177,20 @@
         <div>
             <div class="h-20 flex items-center px-6 border-b border-slate-200 dark:border-slate-800">
                 <svg width="36" height="36" viewBox="0 0 100 100" fill="none"><path d="M50 10L85 30V70L50 90L15 70V30L50 10Z" fill="#f59e0b"/><circle cx="50" cy="48" r="16" fill="white"/><path d="M40 58 L30 68 L45 64 Z" fill="white"/></svg>
-                <span class="font-extrabold text-xl tracking-tighter ml-2.5 dark:text-white">Remexo</span>
-                <span class="ml-2 px-2 py-0.5 bg-remexo-500/10 text-remexo-500 text-[10px] font-black uppercase tracking-widest rounded-full">App</span>
+                <span class="font-extrabold text-xl tracking-tighter ml-2.5 dark:text-white">Fixit</span>
+                <span class="ml-2 px-2 py-0.5 bg-fixit-500/10 text-fixit-500 text-[10px] font-black uppercase tracking-widest rounded-full">App</span>
             </div>
             <nav class="p-3 space-y-1 mt-3" id="sidebar-nav"></nav>
         </div>
         <div class="p-4 border-t border-slate-200 dark:border-slate-800">
             <button onclick="window.doLogout()" class="w-full mb-3 px-4 py-2 rounded-xl text-sm font-bold text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition flex items-center justify-center gap-2"><i class="fa-solid fa-arrow-right-from-bracket"></i> Odhlásit se</button>
-            <div class="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 cursor-pointer hover:border-remexo-500 transition" onclick="window.goTab('profile','Můj profil')">
+            <div class="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 cursor-pointer hover:border-fixit-500 transition" onclick="window.goTab('profile','Můj profil')">
                 <img id="user-avatar" src="" class="w-10 h-10 rounded-full bg-slate-200 shrink-0">
                 <div class="truncate"><p class="text-sm font-bold dark:text-white leading-tight truncate" id="user-name">Uživatel</p><p class="text-xs text-slate-500" id="user-role-lbl">Role</p></div>
             </div>
         </div>
     </aside>
-    <main class="flex-1 flex flex-col h-screen overflow-hidden bg-slate-50 dark:bg-remexo-dark">
+    <main class="flex-1 flex flex-col h-screen overflow-hidden bg-slate-50 dark:bg-fixit-dark">
         <header class="h-16 glass-panel border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-6 z-40 flex-shrink-0">
             <h1 class="text-xl font-extrabold dark:text-white" id="page-title">Nástěnka</h1>
             <div class="flex items-center gap-3">
@@ -251,15 +251,15 @@
                     </div>
                 </div>
                 <div class="bg-slate-50 dark:bg-slate-900/50 rounded-3xl p-6 md:p-8 border border-slate-200 dark:border-slate-800 shadow-inner">
-                    <h4 class="font-extrabold text-lg dark:text-white mb-5 flex items-center gap-3"><i class="fa-solid fa-file-signature text-remexo-500"></i> Vaše nabídka pro zákazníka</h4>
+                    <h4 class="font-extrabold text-lg dark:text-white mb-5 flex items-center gap-3"><i class="fa-solid fa-file-signature text-fixit-500"></i> Vaše nabídka pro zákazníka</h4>
                     <div class="space-y-5">
-                        <div><label class="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2">Odhadovaná cena (Kč) nebo "Dohodou"</label><input type="text" id="co-price" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-5 py-3.5 text-sm focus:ring-2 focus:ring-remexo-500 outline-none dark:text-white shadow-sm" placeholder="Např. 1500 Kč, nebo Dohodou..."></div>
-                        <div><label class="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2">Zpráva pro zákazníka</label><textarea id="co-msg" rows="3" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-5 py-3.5 text-sm focus:ring-2 focus:ring-remexo-500 outline-none dark:text-white shadow-sm resize-none" placeholder="Dobrý den, mohu přijet zítra odpoledne..."></textarea></div>
+                        <div><label class="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2">Odhadovaná cena (Kč) nebo "Dohodou"</label><input type="text" id="co-price" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-5 py-3.5 text-sm focus:ring-2 focus:ring-fixit-500 outline-none dark:text-white shadow-sm" placeholder="Např. 1500 Kč, nebo Dohodou..."></div>
+                        <div><label class="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2">Zpráva pro zákazníka</label><textarea id="co-msg" rows="3" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-5 py-3.5 text-sm focus:ring-2 focus:ring-fixit-500 outline-none dark:text-white shadow-sm resize-none" placeholder="Dobrý den, mohu přijet zítra odpoledne..."></textarea></div>
                     </div>
                 </div>
             </div>
             <div class="p-6 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-[#0f172a]">
-                <button id="co-submit-btn" onclick="window.submitCraftsmanOffer()" class="w-full bg-remexo-500 hover:bg-remexo-600 text-white py-4 rounded-2xl font-black text-lg transition shadow-xl shadow-remexo-500/20 hover:-translate-y-1">Odeslat nabídku zákazníkovi</button>
+                <button id="co-submit-btn" onclick="window.submitCraftsmanOffer()" class="w-full bg-fixit-500 hover:bg-fixit-600 text-white py-4 rounded-2xl font-black text-lg transition shadow-xl shadow-fixit-500/20 hover:-translate-y-1">Odeslat nabídku zákazníkovi</button>
             </div>
             <input type="hidden" id="co-req-id">
             <input type="hidden" id="co-req-title">
@@ -279,10 +279,10 @@
                     <i class="fa-solid fa-star text-4xl cursor-pointer text-yellow-400 hover:scale-110 transition" onclick="window.setRating(4)"></i>
                     <i class="fa-solid fa-star text-4xl cursor-pointer text-yellow-400 hover:scale-110 transition" onclick="window.setRating(5)"></i>
                 </div>
-                <textarea id="rating-comment" rows="3" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-5 py-3.5 text-sm focus:ring-2 focus:ring-remexo-500 outline-none dark:text-white shadow-inner resize-none mb-6" placeholder="Napište krátkou recenzi... (volitelné)"></textarea>
+                <textarea id="rating-comment" rows="3" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-5 py-3.5 text-sm focus:ring-2 focus:ring-fixit-500 outline-none dark:text-white shadow-inner resize-none mb-6" placeholder="Napište krátkou recenzi... (volitelné)"></textarea>
                 <div class="flex gap-3">
                     <button onclick="window.closeRatingModal()" class="flex-1 py-3.5 rounded-xl font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition">Zrušit</button>
-                    <button id="btn-submit-rating" onclick="window.submitRating()" class="flex-1 bg-remexo-500 hover:bg-remexo-600 text-white py-3.5 rounded-xl font-bold transition shadow-lg">Odeslat</button>
+                    <button id="btn-submit-rating" onclick="window.submitRating()" class="flex-1 bg-fixit-500 hover:bg-fixit-600 text-white py-3.5 rounded-xl font-bold transition shadow-lg">Odeslat</button>
                 </div>
                 <input type="hidden" id="rating-req-index">
                 <input type="hidden" id="rating-req-sbid">
@@ -313,9 +313,40 @@
                 <img id="pp-avatar" src="" class="w-24 h-24 rounded-full border-4 border-white dark:border-slate-800 shadow-lg mx-auto mb-4 object-cover bg-slate-100 dark:bg-slate-800">
                 <h3 id="pp-name" class="text-2xl font-black dark:text-white leading-tight">Načítám...</h3>
                 <div class="flex items-center justify-center gap-2 mt-2">
-                    <span id="pp-role" class="px-3 py-1 bg-remexo-500/10 text-remexo-500 text-xs font-bold rounded-full"></span>
+                    <span id="pp-role" class="px-3 py-1 bg-fixit-50 dark:bg-fixit-500/10 text-fixit-600 dark:text-fixit-400 rounded-lg text-[10px] font-black uppercase tracking-widest">Role</span>
+                    <span id="pp-city" class="text-sm font-bold text-slate-500"><i class="fa-solid fa-location-dot mr-1"></i> Město</span>
+                </div>
+                <div class="mt-4 flex items-center justify-center gap-2 text-yellow-500">
+                    <i class="fa-solid fa-star text-xl"></i>
+                    <span id="pp-rating" class="text-xl font-black text-slate-900 dark:text-white">5.0</span>
                 </div>
             </div>
+            <div class="p-6 md:p-8 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
+                <p class="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3">O mně / Popis služeb</p>
+                <p id="pp-bio" class="text-sm text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-line italic">Prosím čekejte...</p>
+            </div>
+        </div>
+    </div>
+    
+    <div id="forgot-pw-modal" class="hidden fixed inset-0 z-[500] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm opacity-0 transition-opacity duration-300">
+        <div class="bg-white dark:bg-[#0f172a] rounded-[2rem] shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-md p-8 relative">
+            <button onclick="window.closeForgotPw()" class="absolute top-4 right-4 w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:text-red-500 transition"><i class="fa-solid fa-times"></i></button>
+            <h3 class="text-2xl font-black mb-2 dark:text-white">Zapomenuté heslo</h3>
+            <p class="text-slate-500 text-sm mb-6">Zadejte svůj e-mail a my vám pošleme odkaz pro nastavení nového hesla.</p>
+            <input type="email" id="forgot-pw-email" placeholder="vas@email.cz" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-5 py-3.5 text-sm mb-4 focus:ring-2 focus:ring-fixit-500 outline-none dark:text-white">
+            <button id="btn-send-reset" onclick="window.sendResetLink()" class="w-full bg-fixit-500 hover:bg-fixit-600 text-white py-3.5 rounded-xl font-bold transition shadow-md">Odeslat odkaz</button>
+        </div>
+    </div>
+
+    <div id="new-pw-modal" class="hidden fixed inset-0 z-[600] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm opacity-0 transition-opacity duration-300">
+        <div class="bg-white dark:bg-[#0f172a] rounded-[2rem] shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-md p-8 relative">
+            <h3 class="text-2xl font-black mb-2 dark:text-white">Nové heslo</h3>
+            <p class="text-slate-500 text-sm mb-6">Zadejte své nové heslo. Musí mít alespoň 8 znaků, 1 velké písmeno a 1 číslici.</p>
+            <div class="relative mb-4">
+                <input type="password" id="new-pw-input" placeholder="Min. 8 znaků, 1 velké, 1 číslo" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-5 py-3.5 pr-12 text-sm focus:ring-2 focus:ring-fixit-500 outline-none dark:text-white">
+                <button type="button" onclick="window.togglePassword('new-pw-input', this)" class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-fixit-500 transition"><i class="fa-solid fa-eye text-lg"></i></button>
+            </div>
+            <button id="btn-save-new-pw" onclick="window.saveNewPassword()" class="w-full bg-green-500 hover:bg-green-600 text-white py-3.5 rounded-xl font-bold transition shadow-md">Uložit heslo a přihlásit</button>
         </div>
     </div>
 </div>
