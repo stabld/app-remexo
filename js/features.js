@@ -222,7 +222,7 @@ window.appendChat = function(role, text) {
     const box = document.getElementById("popt-chat-msgs");
     const d = document.createElement("div");
     if (role==="user") { d.className="poptavka-bubble-user text-sm font-medium"; d.innerText=text; }
-    else { d.className="poptavka-bubble-ai text-sm flex items-start gap-3"; d.innerHTML='<div class="w-8 h-8 bg-fixit-500 rounded-full flex items-center justify-center text-white shrink-0"><i class="fa-solid fa-hard-hat text-xs"></i></div><div>' + text + '</div>'; }
+    else { d.className="poptavka-bubble-ai text-sm flex items-start gap-3"; d.innerHTML='<div class="w-8 h-8 bg--500 rounded-full flex items-center justify-center text-white shrink-0"><i class="fa-solid fa-hard-hat text-xs"></i></div><div>' + text + '</div>'; }
     box.appendChild(d); box.scrollTop=box.scrollHeight;
 };
 
@@ -283,7 +283,7 @@ window.showFinalizeForm = function() {
 };
 
 window.publishRequest = async function(btnNode) {
-    let orig = "Zveřejnit poptávku na Fixit";
+    let orig = "Zveřejnit poptávku na Remexo";
     try {
         if(btnNode&&btnNode.tagName){orig=btnNode.innerHTML;btnNode.innerHTML='<i class="fa-solid fa-circle-notch fa-spin mr-2"></i>Zpracovávám...';btnNode.disabled=true;}
         const getText=(id,def)=>{const el=document.getElementById(id);return el?el.innerText.trim():def;};
@@ -387,11 +387,11 @@ window.submitCraftsmanOffer = async function() {
         const {error}=await window.sb.from("offers").insert({request_id:requestId,craftsman_id:window.APP_USER.id,craftsman_name:document.getElementById("user-name").innerText,message:msg,price:price||"Dohodou",status:"pending"});
         if(error)throw error;
         btn.innerHTML='<i class="fa-solid fa-check mr-2"></i>Odesláno!';
-        btn.className=btn.className.replace("bg-fixit-500 hover:bg-fixit-600","bg-green-500");
+        btn.className=btn.className.replace("bg-remexo-500 hover:bg-remexo-600","bg-green-500");
         window.showToast("Nabídka odeslána! 🎉","Zákazník obdrží vaši nabídku co nejdříve.","success");
         window.STATE.craftJobs.push({title,requestId,status:"pending",time:new Date().toLocaleTimeString("cs",{hour:"2-digit",minute:"2-digit"})});
         window.refreshCraftsmanJobs();window.activeChatId=String(requestId);
-        setTimeout(()=>{window.closeOfferModal();btn.innerHTML=orig;btn.disabled=false;btn.className=btn.className.replace("bg-green-500","bg-fixit-500 hover:bg-fixit-600");window.goTab("c-messages","Zprávy");window.openConversation(requestId,"Zákazník","customer"+requestId);},1000);
+        setTimeout(()=>{window.closeOfferModal();btn.innerHTML=orig;btn.disabled=false;btn.className=btn.className.replace("bg-green-500","bg-remexo-500 hover:bg-remexo-600");window.goTab("c-messages","Zprávy");window.openConversation(requestId,"Zákazník","customer"+requestId);},1000);
     } catch(e){btn.innerHTML=orig;btn.disabled=false;window.showToast("Chyba odesílání",e.message,"error");}
 };
 
@@ -405,7 +405,7 @@ window.loadOffersForRequest = async function(requestId, requestTitle) {
     if(!offers||offers.length===0){
         modalList.innerHTML='<div class="text-center text-slate-400 py-12"><i class="fa-solid fa-inbox text-4xl mb-4 block"></i><p>Zatím žádné aktivní nabídky.</p></div>';
     } else {
-        modalList.innerHTML=offers.map(o=>'<div class="p-5 border border-slate-200 dark:border-slate-700 rounded-3xl bg-slate-50 dark:bg-slate-800/50"><div class="flex items-center gap-4 mb-4 cursor-pointer hover:opacity-75 transition" onclick="window.openPublicProfile(\'' + o.craftsman_id + '\')"><img src="https://api.dicebear.com/7.x/avataaars/svg?seed=' + encodeURIComponent(o.craftsman_name) + '&backgroundColor=0f172a" class="w-12 h-12 rounded-full bg-white shadow-sm border border-slate-200 dark:border-slate-700"><div><p class="font-extrabold dark:text-white">' + o.craftsman_name + '</p><p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-0.5">' + new Date(o.created_at).toLocaleDateString("cs") + '</p></div><span class="ml-auto font-black text-lg text-fixit-500">' + o.price + '</span></div><p class="text-sm text-slate-600 dark:text-slate-300 mb-5 bg-white dark:bg-[#0f172a] p-4 rounded-2xl border border-slate-100 dark:border-slate-700">' + o.message + '</p><div class="flex gap-2"><button onclick="window.rejectOffer(this, ' + o.id + ',' + requestId + ',\'' + (requestTitle||"").replace(/'/g,"\\'") + '\')" class="px-5 bg-red-50 hover:bg-red-100 dark:bg-red-500/10 dark:hover:bg-red-500/20 text-red-500 rounded-xl transition shadow-sm"><i class="fa-solid fa-times text-lg"></i></button><button onclick="window.acceptOffer(' + o.id + ',' + requestId + ',\'' + (o.craftsman_name||"").replace(/'/g,"\\'") + '\'); window.closeOffersModal();" class="flex-1 bg-slate-900 dark:bg-white text-white dark:text-slate-900 py-3.5 rounded-xl font-bold text-sm transition shadow-md hover:scale-[1.02]">Přijmout a zahájit zprávy</button></div></div>').join("");
+        modalList.innerHTML=offers.map(o=>'<div class="p-5 border border-slate-200 dark:border-slate-700 rounded-3xl bg-slate-50 dark:bg-slate-800/50"><div class="flex items-center gap-4 mb-4 cursor-pointer hover:opacity-75 transition" onclick="window.openPublicProfile(\'' + o.craftsman_id + '\')"><img src="https://api.dicebear.com/7.x/avataaars/svg?seed=' + encodeURIComponent(o.craftsman_name) + '&backgroundColor=0f172a" class="w-12 h-12 rounded-full bg-white shadow-sm border border-slate-200 dark:border-slate-700"><div><p class="font-extrabold dark:text-white">' + o.craftsman_name + '</p><p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-0.5">' + new Date(o.created_at).toLocaleDateString("cs") + '</p></div><span class="ml-auto font-black text-lg text-remexo-500">' + o.price + '</span></div><p class="text-sm text-slate-600 dark:text-slate-300 mb-5 bg-white dark:bg-[#0f172a] p-4 rounded-2xl border border-slate-100 dark:border-slate-700">' + o.message + '</p><div class="flex gap-2"><button onclick="window.rejectOffer(this, ' + o.id + ',' + requestId + ',\'' + (requestTitle||"").replace(/'/g,"\\'") + '\')" class="px-5 bg-red-50 hover:bg-red-100 dark:bg-red-500/10 dark:hover:bg-red-500/20 text-red-500 rounded-xl transition shadow-sm"><i class="fa-solid fa-times text-lg"></i></button><button onclick="window.acceptOffer(' + o.id + ',' + requestId + ',\'' + (o.craftsman_name||"").replace(/'/g,"\\'") + '\'); window.closeOffersModal();" class="flex-1 bg-slate-900 dark:bg-white text-white dark:text-slate-900 py-3.5 rounded-xl font-bold text-sm transition shadow-md hover:scale-[1.02]">Přijmout a zahájit zprávy</button></div></div>').join("");
     }
     const modal=document.getElementById("offers-modal");modal.classList.remove("hidden");void modal.offsetWidth;modal.classList.add("opacity-100");
 };
@@ -448,7 +448,7 @@ window.refreshCraftsmanJobs = function() {
         let badge='<span class="status-badge status-waiting">Čekám na odpověď</span>';
         if(job.status==="accepted"||job.status==="active")badge='<span class="status-badge status-active">Aktivní zakázka</span>';
         if(job.status==="done"||job.status==="completed")badge='<span class="status-badge status-done">Dokončeno</span>';
-        d.innerHTML='<div class="flex items-start justify-between mb-4"><div><h4 class="font-extrabold text-lg dark:text-white leading-tight">' + job.title + '</h4><p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1.5">' + job.time + '</p></div>' + badge + '</div><button onclick="window.activeChatId=\'' + job.requestId + '\'; window.goTab(\'c-messages\',\'Zprávy\'); setTimeout(()=>window.openConversation(\'' + job.requestId + '\',\'Zákazník\',\'customer' + job.requestId + '\'),300);" class="text-sm font-bold text-fixit-500 hover:text-fixit-600 transition flex items-center gap-2"><i class="fa-regular fa-comment-dots"></i> Napsat zákazníkovi</button>';
+        d.innerHTML='<div class="flex items-start justify-between mb-4"><div><h4 class="font-extrabold text-lg dark:text-white leading-tight">' + job.title + '</h4><p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1.5">' + job.time + '</p></div>' + badge + '</div><button onclick="window.activeChatId=\'' + job.requestId + '\'; window.goTab(\'c-messages\',\'Zprávy\'); setTimeout(()=>window.openConversation(\'' + job.requestId + '\',\'Zákazník\',\'customer' + job.requestId + '\'),300);" class="text-sm font-bold text-remexo-500 hover:text-remexo-600 transition flex items-center gap-2"><i class="fa-regular fa-comment-dots"></i> Napsat zákazníkovi</button>';
         list.appendChild(d);
     });
 };
@@ -485,13 +485,13 @@ window.toggleMarketView = function(mode) {
     if(!listEl||!mapEl)return;
     if(mode==="map"){
         listEl.classList.add("hidden");mapEl.classList.remove("hidden");
-        if(btnList)btnList.className=btnList.className.replace("bg-fixit-500 text-white","text-slate-500 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700");
-        if(btnMap)btnMap.className=btnMap.className.replace("text-slate-500 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700","bg-fixit-500 text-white");
+        if(btnList)btnList.className=btnList.className.replace("bg-remexo-500 text-white","text-slate-500 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700");
+        if(btnMap)btnMap.className=btnMap.className.replace("text-slate-500 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700","bg-remexo-500 text-white");
         window.initMarketMap();
     } else {
         mapEl.classList.add("hidden");listEl.classList.remove("hidden");
-        if(btnMap)btnMap.className=btnMap.className.replace("bg-fixit-500 text-white","text-slate-500 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700");
-        if(btnList)btnList.className=btnList.className.replace("text-slate-500 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700","bg-fixit-500 text-white");
+        if(btnMap)btnMap.className=btnMap.className.replace("bg-remexo-500 text-white","text-slate-500 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700");
+        if(btnList)btnList.className=btnList.className.replace("text-slate-500 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700","bg-remexo-500 text-white");
     }
 };
 
@@ -512,7 +512,7 @@ window.initMarketMap = async function() {
             if(geo&&geo.length>0){
                 const lat=parseFloat(geo[0].lat),lon=parseFloat(geo[0].lon);bounds.push([lat,lon]);
                 const urgencyColor=r.urgency==="Vysoká"?"#ef4444":r.urgency==="Nízká"?"#22c55e":"#f59e0b";
-                const popup=L.popup({maxWidth:280,minWidth:220}).setContent('<div class="fixit-pin-popup"><span class="cat-badge">'+(r.category||"Ostatní")+'</span><p class="title">'+(r.title||"Poptávka")+'</p><p class="addr"><i class="fa-solid fa-location-dot" style="color:#f59e0b;margin-right:4px"></i>'+addr+'</p><div style="display:flex;gap:8px;margin-bottom:10px"><span style="font-size:11px;font-weight:700;color:'+urgencyColor+';background:'+urgencyColor+'18;padding:3px 8px;border-radius:6px;">'+(r.urgency||"Střední")+' priorita</span>'+(r.price_estimate?'<span style="font-size:11px;font-weight:700;color:#0f172a;background:#f1f5f9;padding:3px 8px;border-radius:6px;">'+r.price_estimate+'</span>':'')+'</div><button class="offer-btn" onclick="window.openOfferModal('+r.id+',\\"'+(r.title||"").replace(/"/g,"")+'\\""); document.querySelectorAll(\".leaflet-popup-close-button\").forEach(b=>b.click());">Poslat nabídku →</button></div>');
+                const popup=L.popup({maxWidth:280,minWidth:220}).setContent('<div class="remexo-pin-popup"><span class="cat-badge">'+(r.category||"Ostatní")+'</span><p class="title">'+(r.title||"Poptávka")+'</p><p class="addr"><i class="fa-solid fa-location-dot" style="color:#f59e0b;margin-right:4px"></i>'+addr+'</p><div style="display:flex;gap:8px;margin-bottom:10px"><span style="font-size:11px;font-weight:700;color:'+urgencyColor+';background:'+urgencyColor+'18;padding:3px 8px;border-radius:6px;">'+(r.urgency||"Střední")+' priorita</span>'+(r.price_estimate?'<span style="font-size:11px;font-weight:700;color:#0f172a;background:#f1f5f9;padding:3px 8px;border-radius:6px;">'+r.price_estimate+'</span>':'')+'</div><button class="offer-btn" onclick="window.openOfferModal('+r.id+',\\"'+(r.title||"").replace(/"/g,"")+'\\""); document.querySelectorAll(\".leaflet-popup-close-button\").forEach(b=>b.click());">Poslat nabídku →</button></div>');
                 L.marker([lat,lon],{icon:pinIcon}).addTo(window._marketMap).bindPopup(popup);
             }
         }catch(e){}
@@ -524,11 +524,11 @@ window.initMarketMap = async function() {
 window.filterMarket = function(kat, triggerEl) {
     const activeBtn = triggerEl || document.activeElement;
     document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.classList.remove('bg-fixit-500','text-white','shadow-md');
+        btn.classList.remove('bg-remexo-500','text-white','shadow-md');
         btn.classList.add('bg-white','dark:bg-slate-800','border','border-slate-200','dark:border-slate-700','text-slate-600','dark:text-slate-300');
     });
     if (activeBtn && activeBtn.classList && activeBtn.classList.contains('filter-btn')) {
-        activeBtn.classList.add('bg-fixit-500','text-white','shadow-md');
+        activeBtn.classList.add('bg-remexo-500','text-white','shadow-md');
         activeBtn.classList.remove('bg-white','dark:bg-slate-800','border','border-slate-200','dark:border-slate-700','text-slate-600','dark:text-slate-300');
     }
     const data = Array.isArray(window.STATE?.marketRequests) ? window.STATE.marketRequests : [];
