@@ -1,3 +1,15 @@
+// === PŘÍJEM POPTÁVKY Z LANDING PAGE ===
+(function() {
+    const params = new URLSearchParams(window.location.search);
+    const p = params.get('poptavka');
+    if (p) {
+        try {
+            const json = decodeURIComponent(escape(atob(decodeURIComponent(p))));
+            window.PENDING_POPTAVKA = JSON.parse(json);
+        } catch(e) { console.warn('Nepodařilo se načíst data poptávky z landing page:', e); }
+    }
+})();
+
 // === START APLIKACE A KONTROLA SESSION ===
 window.addEventListener('load', async () => {
     if (window.sb) {
@@ -15,8 +27,13 @@ window.addEventListener('load', async () => {
             }
             window.initApp(window.APP_ROLE, name);
         } else {
-            const roleSelect = document.getElementById("view-role-select");
-            if (roleSelect) roleSelect.classList.remove("hidden");
+            if (window.PENDING_POPTAVKA && window.goToAuth) {
+                // Přišel z landing page s poptávkou – rovnou na přihlášení jako zákazník
+                window.goToAuth('customer');
+            } else {
+                const roleSelect = document.getElementById("view-role-select");
+                if (roleSelect) roleSelect.classList.remove("hidden");
+            }
         }
     } else {
         const roleSelect = document.getElementById("view-role-select");
@@ -88,5 +105,10 @@ window.initApp = function(role, name) {
 
     if (window.showToast) {
         setTimeout(() => window.showToast("Vítej, " + name + "! 👋", "Aplikace je připravena.", "success"), 600);
+    }
+
+    // Pokud uživatel přišel z landing page s rozpracovanou poptávkou, předvyplníme ji
+    if (role === "customer" && window.PENDING_POPTAVKA && window.applyPendingPoptavka) {
+        setTimeout(() => window.applyPendingPoptavka(), 900);
     }
 };
