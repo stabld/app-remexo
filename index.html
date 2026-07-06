@@ -3,359 +3,1124 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Remexo – Profesionální řemesla</title>
-    <meta name="description" content="Remexo – Najděte ověřeného řemeslníka ve vašem okolí rychle a jednoduše.">
-    <meta name="theme-color" content="#f59e0b">
+    <title>Remexo | Najdeme ti řemeslníka</title>
+
+    <meta name="description" content="Remexo propojuje brněnské domácnosti s ověřenými řemeslníky. Bezpečně, rychle a s pomocí chytrého asistenta. Startujeme v červnu 2026!">
     
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 5L90 27.5V72.5L50 95L10 72.5V27.5L50 5Z' fill='%23f59e0b'/%3E%3Ccircle cx='50' cy='47' r='16' fill='white'/%3E%3Cpath d='M40 57 L28 69 L44 64 Z' fill='white'/%3E%3C/svg%3E">
-    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23f59e0b'/%3E%3Cpath d='M50 10L85 30V70L50 90L15 70V30L50 10Z' fill='white' opacity='0.25'/%3E%3Ccircle cx='50' cy='47' r='16' fill='white'/%3E%3Cpath d='M40 57 L28 69 L44 64 Z' fill='white'/%3E%3C/svg%3E">
-    
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Remexo">
-    
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://remexo.cz/">
+    <meta property="og:title" content="Remexo | Profesionální řemesla v Brně">
+    <meta property="og:description" content="Odteď už na opravy nejste sami. Náš asistent Bořek vám kryje záda.">
+    <meta property="og:image" content="https://remexo.cz/logo.png?v=2">
+
+    <meta name="seznam-wmt" content="KwS5EeUtB2FFIssVb92Pn1434x8KnMt8" />
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://remexo.cz/">
+    <meta name="twitter:title" content="Remexo | Profesionální řemesla v Brně">
+    <meta name="twitter:description" content="Odteď už na opravy nejste sami. Náš asistent Bořek vám kryje záda.">
+    <meta name="twitter:image" content="https://remexo.cz/logo.png?v=2">
+
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 10L85 30V70L50 90L15 70V30L50 10Z' fill='%23f59e0b'/%3E%3Ccircle cx='50' cy='48' r='16' fill='white'/%3E%3Cpath d='M40 58 L30 68 L45 64 Z' fill='white'/%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 10L85 30V70L50 90L15 70V30L50 10Z' fill='%23f59e0b'/%3E%3Ccircle cx='50' cy='48' r='16' fill='white'/%3E%3Cpath d='M40 58 L30 68 L45 64 Z' fill='white'/%3E%3C/svg%3E">
+
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      // Zablokování analytiky před udělením souhlasu
+      gtag('consent', 'default', {
+        'analytics_storage': 'denied',
+        'wait_for_update': 500
+      });
+    </script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EJF4NM3W9X"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-EJF4NM3W9X');
+    </script>
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
     <script>
         tailwind.config = {
-            darkMode: "class",
-            theme: { extend: { fontFamily: { sans: ['"Plus Jakarta Sans"', "sans-serif"] }, colors: { remexo: { 50:"#fffbeb",100:"#fef3c7",500:"#f59e0b",600:"#d97706",700:"#b45309",dark:"#020617",slate:"#0f172a" } } } }
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
+                    colors: {
+                        remexo: { 
+                            50: '#fffbeb', 100: '#fef3c7', 500: '#f59e0b', 
+                            600: '#d97706', 700: '#b45309', dark: '#020617', slate: '#0f172a'
+                        }
+                    }
+                }
+            }
         }
     </script>
+    
+    <style>
+        body { transition: background-color 0.3s ease, color 0.3s ease; }
+        .glass-nav { background: rgba(255,255,255,0.85); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(0,0,0,0.05); }
+        .dark .glass-nav { background: rgba(2,6,23,0.85); border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .hero-gradient { background: radial-gradient(circle at top right, rgba(245,158,11,0.1), transparent 40%), radial-gradient(circle at bottom left, rgba(15,23,42,0.05), transparent 40%); }
+        @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-15px)} }
+        .float-anim { animation: float 6s ease-in-out infinite; }
+        .nav-link-active { color: #f59e0b !important; font-weight: 800; position: relative; }
+        .nav-link-active::after { content:''; position:absolute; bottom:-4px; left:0; width:100%; height:2px; background-color:#f59e0b; }
+        #chat-widget { transition: all 0.3s cubic-bezier(0.4,0,0.2,1); transform: translateY(20px); opacity:0; pointer-events:none; }
+        #chat-widget.open { transform: translateY(0); opacity:1; pointer-events:auto; }
+        .chat-bubble-borek { background-color:#f1f5f9; color:#0f172a; border-radius:18px 18px 18px 2px; }
+        .dark .chat-bubble-borek { background-color:#1e293b; color:#f8fafc; }
+        .chat-bubble-user { background-color:#f59e0b; color:white; border-radius:18px 18px 2px 18px; }
+        .shimmer { background: linear-gradient(90deg,transparent,rgba(255,255,255,0.1),transparent); background-size:200% 100%; animation:shimmer 2s infinite; }
+        @keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
+        .cta-highlight-box { box-shadow:0 0 25px rgba(245,158,11,0.15); animation:pulse-border 2s infinite; }
+        @keyframes pulse-border { 0%{border-color:rgba(245,158,11,0.4)} 50%{border-color:rgba(245,158,11,1)} 100%{border-color:rgba(245,158,11,0.4)} }
+        .poptavka-bubble-user { background-color:#f59e0b; color:white; border-radius:18px 18px 2px 18px; padding:12px 20px; max-width:80%; align-self:flex-end; box-shadow:0 4px 6px rgba(245,158,11,0.2); }
+        .poptavka-bubble-ai { background-color:#f1f5f9; color:#0f172a; border-radius:18px 18px 18px 2px; padding:12px 20px; max-width:80%; align-self:flex-start; border:1px solid #e2e8f0; }
+        .dark .poptavka-bubble-ai { background-color:#1e293b; color:#f8fafc; border-color:#334155; }
+        .modal-overlay { position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; padding: 1rem; backdrop-filter: blur(4px); opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+        .modal-overlay.open { opacity: 1; pointer-events: auto; }
+        .modal-box { background: white; border-radius: 2rem; max-width: 640px; width: 100%; max-height: 85vh; overflow-y: auto; padding: 2.5rem; position: relative; transform: scale(0.93); transition: transform 0.3s ease; }
+        .dark .modal-box { background: #1e293b; color: #f1f5f9; }
+        .modal-overlay.open .modal-box { transform: scale(1); }
 
-    <link rel="stylesheet" href="style.css">
+        /* LOADER */
+        #loader { position:fixed; inset:0; z-index:9999; background:#020617; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:24px; transition:opacity 0.6s ease, transform 0.6s ease; }
+        #loader.hide { opacity:0; pointer-events:none; transform:scale(1.05); }
+        @keyframes draw { from{stroke-dashoffset:300} to{stroke-dashoffset:0} }
+        #loader-hex { stroke-dasharray:300; stroke-dashoffset:300; animation:draw 1s ease forwards 0.2s; }
+        #loader-text { opacity:0; animation:fadein-up 0.5s ease forwards 0.8s; }
+        #loader-sub { opacity:0; animation:fadein-up 0.5s ease forwards 1.1s; }
+        @keyframes fadein-up { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+        .reveal { opacity:0; transform:translateY(30px); transition:opacity 0.7s ease, transform 0.7s ease; }
+        .reveal.visible { opacity:1; transform:translateY(0); }
+        .reveal-delay-1 { transition-delay:0.1s; }
+        .reveal-delay-2 { transition-delay:0.25s; }
+        .reveal-delay-3 { transition-delay:0.4s; }
+        .reveal-delay-4 { transition-delay:0.55s; }
+        .reveal-delay-5 { transition-delay:0.7s; }
 
+        /* MOBILNÍ MENU */
+        #mobile-menu { position:fixed; top:0; right:0; height:100vh; width:80%; max-width:320px; background:white; z-index:300; transform:translateX(100%); transition:transform 0.35s cubic-bezier(0.4,0,0.2,1); box-shadow:-10px 0 40px rgba(0,0,0,0.15); }
+        .dark #mobile-menu { background:#0f172a; }
+        #mobile-menu.open { transform:translateX(0); }
+        #mobile-overlay { position:fixed; inset:0; z-index:299; background:rgba(0,0,0,0.5); opacity:0; pointer-events:none; transition:opacity 0.3s ease; backdrop-filter:blur(4px); }
+        #mobile-overlay.open { opacity:1; pointer-events:auto; }
+    </style>
+    
     <script>
-        (function () {
-            var storedTheme = null;
-            try { storedTheme = window.localStorage ? localStorage.getItem("color-theme") : null; } catch (e) { storedTheme = null; }
-            var prefersDark = false;
-            try { prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches; } catch (e) { prefersDark = false; }
-            if (storedTheme === "dark" || (!storedTheme && prefersDark)) {
-                document.documentElement.classList.add("dark");
-            } else {
-                document.documentElement.classList.remove("dark");
-            }
-        })();
+        if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else { document.documentElement.classList.remove('dark'); }
     </script>
 </head>
-<body class="antialiased bg-slate-50 text-slate-900 dark:bg-remexo-dark dark:text-white">
+<body class="antialiased bg-remexo-dark text-slate-900 dark:text-white">
 
-<div id="toast-container"></div>
+    <div class="bg-white dark:bg-remexo-dark w-full">
 
-<div id="loader" style="position:fixed;inset:0;z-index:99999;background:#020617;min-height:100vh;min-height:-webkit-fill-available;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:24px;transition:opacity 0.6s ease,transform 0.6s ease;">
-    <svg width="80" height="80" viewBox="0 0 100 100" fill="none">
-        <path id="loader-hex" d="M50 10L85 30V70L50 90L15 70V30L50 10Z" fill="none" stroke="#f59e0b" stroke-width="3" style="stroke-dasharray:300;stroke-dashoffset:300;animation:loader-draw 1s ease forwards 0.2s;"/>
-        <circle cx="50" cy="48" r="16" fill="#f59e0b"/>
-        <path d="M40 58 L30 68 L45 64 Z" fill="#f59e0b"/>
-    </svg>
-    <div style="color:white;font-weight:800;font-size:1.875rem;letter-spacing:-0.025em;opacity:0;animation:loader-fadein-up 0.5s ease forwards 0.8s;">Remexo</div>
-    <div style="color:#94a3b8;font-size:0.875rem;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;opacity:0;animation:loader-fadein-up 0.5s ease forwards 1.1s;">Profesionální řemesla v Brně</div>
-</div>
-
-<div id="auth-screen" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-50 dark:bg-remexo-dark p-4 transition-opacity duration-500 overflow-y-auto">
-    <div class="absolute top-[-10%] left-[-10%] w-96 h-96 bg-remexo-500/20 rounded-full blur-[100px] pointer-events-none"></div>
-    <div class="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-blue-500/10 rounded-full blur-[100px] pointer-events-none"></div>
-    <div class="w-full max-w-2xl bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl border border-slate-200 dark:border-slate-800 p-8 md:p-12 relative z-10">
-        <div class="flex justify-center items-center gap-3 mb-8">
-            <img src="logo.png" alt="Remexo" class="h-16 w-auto">
+        <div id="loader">
+            <svg width="80" height="80" viewBox="0 0 100 100" fill="none">
+                <path id="loader-hex" d="M50 10L85 30V70L50 90L15 70V30L50 10Z" fill="none" stroke="#f59e0b" stroke-width="3"/>
+                <circle cx="50" cy="48" r="16" fill="#f59e0b"/>
+                <path d="M40 58 L30 68 L45 64 Z" fill="#f59e0b"/>
+            </svg>
+            <div id="loader-text" class="text-white font-extrabold text-3xl tracking-tighter">Remexo</div>
+            <div id="loader-sub" class="text-slate-400 text-sm font-medium tracking-widest uppercase">Profesionální řemesla v Brně</div>
         </div>
-        <div id="view-role-select" class="hidden">
-            <h2 class="text-2xl md:text-3xl font-extrabold mb-2 text-center dark:text-white">Vítejte v aplikaci</h2>
-            <p class="text-slate-500 dark:text-slate-400 text-center mb-10 text-lg">Vyberte, jak chcete Remexo používat</p>
-            <div class="grid md:grid-cols-2 gap-6">
-                <button onclick="window.goToAuth('customer')" class="group bg-slate-50 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 hover:border-Remexo-500 rounded-[2rem] p-8 flex flex-col items-center gap-4 transition-all hover:-translate-y-1 hover:shadow-xl text-center">
-                    <div class="w-20 h-20 bg-white dark:bg-slate-700 text-Remexo-500 rounded-2xl flex items-center justify-center text-4xl group-hover:bg-remexo-500 group-hover:text-white transition-all shadow-sm"><i class="fa-solid fa-house-chimney-window"></i></div>
-                    <div><h3 class="font-extrabold text-xl text-slate-900 dark:text-white mb-2">Vstoupit jako poptávající</h3><p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">Potřebuji opravit něco doma a hledám ověřeného profíka.</p></div>
-                </button>
-                <button onclick="window.goToAuth('craftsman')" class="group bg-slate-50 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 hover:border-remexo-500 rounded-[2rem] p-8 flex flex-col items-center gap-4 transition-all hover:-translate-y-1 hover:shadow-xl text-center">
-                    <div class="w-20 h-20 bg-white dark:bg-slate-700 text-slate-400 group-hover:bg-remexo-500 group-hover:text-white transition-all rounded-2xl flex items-center justify-center text-3xl shadow-sm"><i class="fa-solid fa-toolbox"></i></div>
-                    <div><h3 class="font-extrabold text-xl text-slate-900 dark:text-white mb-2">Vstoupit jako řemeslník</h3><p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">Jsem profík a chci získat přístup k novým zakázkám.</p></div>
-                </button>
-            </div>
-        </div>
-        <div id="view-auth-form" class="hidden max-w-md mx-auto relative">
-            <button onclick="window.backToRoles()" class="text-sm font-bold text-slate-500 hover:text-remexo-500 mb-5 flex items-center gap-2"><i class="fa-solid fa-arrow-left"></i> Zpět</button>
-            <div class="bg-remexo-50 dark:bg-remexo-500/10 border border-remexo-500/30 rounded-xl p-3 mb-6 flex items-center justify-center gap-2 text-remexo-700 dark:text-remexo-400 font-bold text-sm">
-                <i id="role-icon" class="fa-solid fa-house"></i><span id="role-text">Zákazník</span>
-            </div>
-            <div class="bg-slate-100 dark:bg-slate-800 p-1.5 rounded-2xl flex relative mb-6">
-                <button onclick="window.switchTab('login')" id="btn-login" class="flex-1 py-2.5 text-sm font-bold rounded-xl z-10 dark:text-white transition-colors">Přihlášení</button>
-                <button onclick="window.switchTab('register')" id="btn-reg" class="flex-1 py-2.5 text-sm font-bold rounded-xl z-10 text-slate-500 transition-colors">Registrace</button>
-                <div id="tab-slider" class="absolute top-1.5 left-1.5 w-[calc(50%-6px)] h-[calc(100%-12px)] bg-white dark:bg-slate-700 rounded-xl shadow-sm transition-all duration-300"></div>
-            </div>
-            <div id="auth-error" class="hidden mb-4 p-3 bg-red-50 dark:bg-red-500/10 border border-red-200 text-red-600 rounded-xl text-sm font-bold text-center"></div>
-            <div id="auth-ok" class="hidden mb-4 p-3 bg-green-50 dark:bg-green-500/10 border border-green-200 text-green-600 rounded-xl text-sm font-bold text-center"></div>
-            
-            <div id="form-login" class="space-y-4">
-                <input type="email" id="log-email" placeholder="Váš e-mail" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-remexo-500 outline-none dark:text-white">
-                
-                <div class="relative">
-                    <input type="password" id="log-pass" placeholder="Vaše heslo" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-4 pr-12 py-3 text-sm focus:ring-2 focus:ring-remexo-500 outline-none dark:text-white" onkeypress="if(event.key==='Enter')window.doLogin()">
-                    <button type="button" onclick="window.togglePassword('log-pass', this)" class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-remexo-500 transition"><i class="fa-solid fa-eye text-lg"></i></button>
-                </div>
-                
-                <div class="flex items-center justify-between mt-2 mb-2">
-                    <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="remember-me" checked class="w-4 h-4 rounded" style="accent-color:#f59e0b"><span class="text-sm font-bold text-slate-600 dark:text-slate-400">Zapamatovat si mě</span></label>
-                    <button onclick="window.switchTab('forgot')" class="text-sm text-remexo-500 hover:text-remexo-600 font-bold transition">Zapomenuté heslo?</button>
-                </div>
 
-                <div class="mt-4">
-                    <div class="relative mb-4">
-                        <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-slate-200 dark:border-slate-700"></div></div>
-                        <div class="relative flex justify-center text-sm"><span class="px-2 bg-white dark:bg-slate-900 text-slate-500">nebo se přihlaste přes</span></div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <button type="button" onclick="window.signInWith('google')" class="flex justify-center items-center py-3 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition"><i class="fa-brands fa-google text-lg"></i></button>
-                        <button type="button" onclick="window.signInWith('facebook')" class="flex justify-center items-center py-3 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition"><i class="fa-brands fa-facebook text-lg text-blue-600"></i></button>
-                    </div>
-                </div>
+        <div id="mobile-overlay"></div>
 
-                <button onclick="window.doLogin()" id="btn-do-login" class="w-full bg-remexo-500 hover:bg-remexo-600 text-white font-bold py-3.5 rounded-xl mt-2 transition shadow-lg">Přihlásit se</button>
-            </div>
-
-            <div id="form-reg" class="hidden space-y-4">
-                <div class="relative">
-                    <input type="text" id="reg-name" placeholder="Vaše jméno a příjmení" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 pr-12 text-sm focus:ring-2 focus:ring-remexo-500 outline-none dark:text-white">
-                    <div class="absolute right-4 top-1/2 -translate-y-1/2 group cursor-help flex items-center">
-                        <i class="fa-solid fa-circle-question text-slate-300 hover:text-remexo-500 transition text-lg"></i>
-                        <div class="absolute top-1/2 -translate-y-1/2 left-full ml-3 w-56 p-3 bg-remexo-500 text-white text-xs font-bold rounded-xl shadow-xl opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-[60]">Jméno uvidí ostatní uživatelé, aby věděli, s kým komunikují.</div>
-                    </div>
-                </div>
-
-                <div class="relative">
-                    <input type="email" id="reg-email" placeholder="Váš e-mail" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 pr-12 text-sm focus:ring-2 focus:ring-remexo-500 outline-none dark:text-white">
-                    <div class="absolute right-4 top-1/2 -translate-y-1/2 group cursor-help flex items-center">
-                        <i class="fa-solid fa-circle-question text-slate-300 hover:text-remexo-500 transition text-lg"></i>
-                        <div class="absolute top-1/2 -translate-y-1/2 left-full ml-3 w-56 p-3 bg-remexo-500 text-white text-xs font-bold rounded-xl shadow-xl opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-[60]">E-mail slouží k přihlášení a důležitým notifikacím. Nikomu ho neukazujeme.</div>
-                    </div>
-                </div>
-
-                <div class="relative">
-                    <input type="password" id="reg-pass" placeholder="Nové heslo (Min. 8 znaků, 1 velké, 1 číslo)" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-4 pr-20 py-3 text-sm focus:ring-2 focus:ring-remexo-500 outline-none dark:text-white">
-                    <div class="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-3">
-                        <button type="button" onclick="window.togglePassword('reg-pass', this)" class="text-slate-400 hover:text-remexo-500 transition"><i class="fa-solid fa-eye text-lg"></i></button>
-                        <div class="group cursor-help flex items-center">
-                            <i class="fa-solid fa-circle-question text-slate-300 hover:text-remexo-500 transition text-lg"></i>
-                            <div class="absolute top-1/2 -translate-y-1/2 left-full ml-3 w-56 p-3 bg-remexo-500 text-white text-xs font-bold rounded-xl shadow-xl opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-[60]">Silné heslo chrání vaše zprávy a bezpečné platby.</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="relative">
-                    <input type="password" id="reg-pass-confirm" placeholder="Zopakujte heslo pro kontrolu" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-4 pr-20 py-3 text-sm focus:ring-2 focus:ring-remexo-500 outline-none dark:text-white">
-                    <div class="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-3">
-                        <button type="button" onclick="window.togglePassword('reg-pass-confirm', this)" class="text-slate-400 hover:text-remexo-500 transition"><i class="fa-solid fa-eye text-lg"></i></button>
-                        <div class="group cursor-help flex items-center">
-                            <i class="fa-solid fa-circle-question text-slate-300 hover:text-remexo-500 transition text-lg"></i>
-                            <div class="absolute top-1/2 -translate-y-1/2 left-full ml-3 w-56 p-3 bg-remexo-500 text-white text-xs font-bold rounded-xl shadow-xl opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-[60]">Pojistka, abychom měli jistotu, že ve vašem hesle není překlep.</div>
-                        </div>
-                    </div>
-                </div>
-
-                <button id="btn-do-reg" onclick="window.doRegister()" class="w-full bg-remexo-500 hover:bg-remexo-600 text-white py-3.5 rounded-xl font-bold transition shadow-md mt-2">Vytvořit účet</button>
-            </div>
-
-            <div id="form-forgot" class="hidden fade-up">
-                <p class="text-sm text-slate-500 dark:text-slate-400 mb-4 text-center font-medium">Zadejte svůj e-mail a my vám zašleme odkaz pro obnovení hesla.</p>
-                <input type="email" id="forgot-email" placeholder="Váš e-mail" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-remexo-500 outline-none dark:text-white mb-3">
-                <button onclick="window.doResetPassword()" id="btn-do-forgot" class="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold py-3.5 rounded-xl transition shadow-lg">Odeslat odkaz</button>
-                <button onclick="window.switchTab('login')" class="w-full mt-3 text-sm text-slate-500 hover:text-remexo-500 font-bold transition">Zpět na přihlášení</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div id="main-app" class="hidden flex h-screen w-full transition-opacity duration-500 opacity-0 overflow-hidden">
-    <aside id="sidebar" class="bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col justify-between flex-shrink-0 z-50" style="width:272px">
-        <div>
-            <div class="h-20 flex items-center px-6 border-b border-slate-200 dark:border-slate-800">
-    <img src="logo.png" alt="Remexo" class="h-12 w-auto object-contain">
-    <span class="ml-2 px-2 py-0.5 bg-remexo-500/10 text-remexo-500 text-[10px] font-black uppercase tracking-widest rounded-full">App</span>
-</div>
-            <nav class="p-3 space-y-1 mt-3" id="sidebar-nav"></nav>
-        </div>
-        <div class="p-4 border-t border-slate-200 dark:border-slate-800">
-            <button onclick="window.doLogout()" class="w-full mb-3 px-4 py-2 rounded-xl text-sm font-bold text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition flex items-center justify-center gap-2"><i class="fa-solid fa-arrow-right-from-bracket"></i> Odhlásit se</button>
-            <div class="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 cursor-pointer hover:border-remexo-500 transition" onclick="window.goTab('profile','Můj profil')">
-                <img id="user-avatar" src="" class="w-10 h-10 rounded-full bg-slate-200 shrink-0">
-                <div class="truncate"><p class="text-sm font-bold dark:text-white leading-tight truncate" id="user-name">Uživatel</p><p class="text-xs text-slate-500" id="user-role-lbl">Role</p></div>
-            </div>
-        </div>
-    </aside>
-    <main class="flex-1 flex flex-col h-screen overflow-hidden bg-slate-50 dark:bg-remexo-dark">
-        <header class="h-16 glass-panel border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-6 z-40 flex-shrink-0">
-            <h1 class="text-xl font-extrabold dark:text-white" id="page-title">Nástěnka</h1>
-            <div class="flex items-center gap-3">
-                <div id="notif-bell" class="relative">
-                    <button id="notif-btn" onclick="window.toggleNotifDropdown()" class="w-9 h-9 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 flex items-center justify-center text-slate-500 transition">
-                        <i class="fa-solid fa-bell text-lg"></i>
-                    </button>
-                    <span id="notif-badge"></span>
-                    <div id="notif-dropdown">
-                        <div style="padding:12px 16px;border-bottom:1px solid rgba(0,0,0,0.06);display:flex;align-items:center;">
-                            <span style="font-weight:800;font-size:14px;" class="dark:text-white flex-1">Oznámení</span>
-                            <button onclick="window.clearNotifs()" style="font-size:11px;font-weight:700;color:#f59e0b;margin-left:auto;">Označit vše přečtené</button>
-                        </div>
-                        <div id="notif-list"><div id="notif-empty" style="padding:24px 16px;text-align:center;color:#94a3b8;font-size:13px;"><i class="fa-regular fa-bell-slash text-2xl mb-2 block opacity-40"></i>Žádná oznámení</div></div>
-                    </div>
-                </div>
-                <button id="theme-toggle" class="w-9 h-9 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 flex items-center justify-center text-slate-500 transition">
-                    <i id="theme-toggle-dark-icon" class="fa-solid fa-moon hidden text-lg"></i>
-                    <i id="theme-toggle-light-icon" class="fa-solid fa-sun hidden text-lg"></i>
-                </button>
-                <div id="header-cta"></div>
-            </div>
-        </header>
-        <div id="main-content" class="flex-1 overflow-y-auto p-6 hide-scroll max-w-6xl mx-auto w-full"></div>
-    </main>
-    <nav id="mobile-bottom-nav" class="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 z-50 hidden">
-        <div id="bottom-nav-items" class="flex w-full items-center h-16"></div>
-    </nav>
-
-    <div id="offers-modal" class="hidden fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm opacity-0 transition-opacity duration-300">
-        <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-lg max-h-[80vh] flex flex-col overflow-hidden">
-            <div class="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-800">
-                <div><h3 class="font-extrabold dark:text-white">Nabídky řemeslníků</h3><p class="text-sm text-slate-500" id="offers-modal-title"></p></div>
-                <button onclick="window.closeOffersModal()" class="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:text-red-500 transition"><i class="fa-solid fa-times"></i></button>
-            </div>
-            <div id="offers-modal-list" class="flex-1 overflow-y-auto p-6 space-y-4 hide-scroll"></div>
-        </div>
-    </div>
-
-    <div id="craftsman-offer-modal" class="hidden fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm opacity-0 transition-opacity duration-300">
-        <div class="bg-white dark:bg-[#0f172a] rounded-[2rem] shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden relative">
+        <div id="mobile-menu">
             <div class="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-800">
-                <h3 class="text-xl font-black dark:text-white">Detail poptávky</h3>
-                <button onclick="window.closeOfferModal()" class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:text-red-500 transition"><i class="fa-solid fa-times"></i></button>
+                <div class="flex items-center gap-3">
+                    <img src="/logo.png" alt="Remexo Logo" class="h-8 object-contain">
+                </div>
+                <button id="mobile-menu-close" class="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                    <i class="fa-solid fa-times text-lg"></i>
+                </button>
             </div>
-            <div class="flex-1 overflow-y-auto p-6 md:p-8 hide-scroll">
-                <div class="flex flex-col md:flex-row gap-6 mb-8">
-                    <div id="co-photo-wrap" class="w-full md:w-48 h-40 shrink-0 rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hidden shadow-inner">
-                        <img id="co-photo" src="" class="w-full h-full object-cover">
+            <nav class="p-6 flex flex-col gap-2">
+                <a href="#hero" onclick="closeMobileMenu()" class="flex items-center gap-4 px-4 py-3 rounded-2xl font-bold text-slate-700 dark:text-slate-300 hover:bg-amber-50 dark:hover:bg-slate-800 hover:text-amber-500 transition">
+                    <i class="fa-solid fa-house w-5 text-amber-500"></i> O nás
+                </a>
+                <a href="#jak-to-funguje" onclick="closeMobileMenu()" class="flex items-center gap-4 px-4 py-3 rounded-2xl font-bold text-slate-700 dark:text-slate-300 hover:bg-amber-50 dark:hover:bg-slate-800 hover:text-amber-500 transition">
+                    <i class="fa-solid fa-list-check w-5 text-amber-500"></i> Jak to funguje
+                </a>
+                <a href="#remesla" onclick="closeMobileMenu()" class="flex items-center gap-4 px-4 py-3 rounded-2xl font-bold text-slate-700 dark:text-slate-300 hover:bg-amber-50 dark:hover:bg-slate-800 hover:text-amber-500 transition">
+                    <i class="fa-solid fa-toolbox w-5 text-amber-500"></i> Co Remexo řeší
+                </a>
+                <a href="#ai-poptavka" onclick="closeMobileMenu()" class="flex items-center gap-4 px-4 py-3 rounded-2xl font-bold text-slate-700 dark:text-slate-300 hover:bg-amber-50 dark:hover:bg-slate-800 hover:text-amber-500 transition">
+                    <i class="fa-solid fa-hard-hat w-5 text-amber-500"></i> Tvorba poptávky
+                </a>
+                <a href="#newsletter" onclick="closeMobileMenu()" class="flex items-center gap-4 px-4 py-3 rounded-2xl font-bold text-slate-700 dark:text-slate-300 hover:bg-amber-50 dark:hover:bg-slate-800 hover:text-amber-500 transition">
+                    <i class="fa-solid fa-envelope w-5 text-amber-500"></i> Získat přístup
+                </a>
+                <a href="#faq" onclick="closeMobileMenu()" class="flex items-center gap-4 px-4 py-3 rounded-2xl font-bold text-slate-700 dark:text-slate-300 hover:bg-amber-50 dark:hover:bg-slate-800 hover:text-amber-500 transition">
+                    <i class="fa-solid fa-circle-question w-5 text-amber-500"></i> FAQ
+                </a>
+                <a href="#kontakt" onclick="closeMobileMenu()" class="flex items-center gap-4 px-4 py-3 rounded-2xl font-bold text-slate-700 dark:text-slate-300 hover:bg-amber-50 dark:hover:bg-slate-800 hover:text-amber-500 transition">
+                    <i class="fa-solid fa-phone w-5 text-amber-500"></i> Kontakt
+                </a>
+            </nav>
+            <div class="px-6 mt-4 space-y-3">
+                <a href="https://app.remexo.cz" onclick="closeMobileMenu()" class="block w-full bg-amber-500 hover:bg-amber-600 text-white px-6 py-4 rounded-2xl font-bold text-center transition shadow-lg text-base">
+                    Přihlásit se
+                </a>
+                <a href="#newsletter" onclick="closeMobileMenu()" class="block w-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-6 py-4 rounded-2xl font-bold text-center transition text-base">
+                    Získat přístup
+                </a>
+            </div>
+        </div>
+
+        <nav class="fixed w-full z-50 glass-nav">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-20">
+                    <div class="flex-shrink-0 flex items-center gap-3 cursor-pointer" onclick="window.scrollTo(0,0)">
+                        <img src="/logo.png" alt="Remexo Logo" class="h-14 object-contain">
                     </div>
-                    <div class="flex-1">
-                        <div class="flex gap-2 mb-3">
-                            <span id="co-cat" class="px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-[11px] font-extrabold text-slate-500 uppercase tracking-wide"></span>
-                            <span id="co-urg" class="px-2.5 py-1 rounded-md bg-red-50 dark:bg-red-500/10 text-[11px] font-extrabold text-red-600 dark:text-red-400 uppercase tracking-wide"></span>
+                    <div class="hidden lg:flex space-x-6 items-center" id="nav-links">
+                        <a href="#hero" class="nav-item relative text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-remexo-500 transition">O nás</a>
+                        <a href="#jak-to-funguje" class="nav-item relative text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-remexo-500 transition">Jak to funguje</a>
+                        <a href="#remesla" class="nav-item relative text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-remexo-500 transition">Co Remexo řeší</a>
+                        <a href="#ai-poptavka" class="nav-item relative text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-remexo-500 transition">Tvorba poptávky</a>
+                         <a href="#o-zakladateli" class="nav-item relative text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-remexo-500 transition">O zakladateli</a>
+                        <a href="#newsletter" class="nav-item relative text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-remexo-500 transition">Získat přístup</a>
+                        <a href="#faq" class="nav-item relative text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-remexo-500 transition">FAQ</a>
+                        <a href="#kontakt" class="nav-item relative text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-remexo-500 transition">Kontakt</a>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <button id="theme-toggle" class="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
+                            <i id="theme-toggle-dark-icon" class="fa-solid fa-moon hidden text-xl"></i>
+                            <i id="theme-toggle-light-icon" class="fa-solid fa-sun hidden text-xl"></i>
+                        </button>
+                        <div class="hidden md:block">
+                            <a href="https://app.remexo.cz" class="bg-remexo-500 hover:bg-remexo-600 text-white px-6 py-2.5 rounded-full font-bold transition shadow-lg text-sm hover:scale-105">Přihlásit se</a>
                         </div>
-                        <h4 id="co-title" class="text-2xl md:text-3xl font-black dark:text-white leading-tight mb-4"></h4>
-                        <div id="co-desc" class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-line"></div>
-                    </div>
-                </div>
-                <div class="bg-slate-50 dark:bg-slate-900/50 rounded-3xl p-6 md:p-8 border border-slate-200 dark:border-slate-800 shadow-inner">
-                    <h4 class="font-extrabold text-lg dark:text-white mb-5 flex items-center gap-3"><i class="fa-solid fa-file-signature text-remexo-500"></i> Vaše nabídka pro zákazníka</h4>
-                    <div class="space-y-5">
-                        <div><label class="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2">Odhadovaná cena (Kč) nebo "Dohodou"</label><input type="text" id="co-price" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-5 py-3.5 text-sm focus:ring-2 focus:ring-Remexo-500 outline-none dark:text-white shadow-sm" placeholder="Např. 1500 Kč, nebo Dohodou..."></div>
-                        <div><label class="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2">Zpráva pro zákazníka</label><textarea id="co-msg" rows="3" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-5 py-3.5 text-sm focus:ring-2 focus:ring-Remexo-500 outline-none dark:text-white shadow-sm resize-none" placeholder="Dobrý den, mohu přijet zítra odpoledne..."></textarea></div>
+                        <button id="mobile-menu-btn" class="lg:hidden p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition">
+                            <i class="fa-solid fa-bars text-xl"></i>
+                        </button>
                     </div>
                 </div>
             </div>
-            <div class="p-6 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-[#0f172a]">
-                <button id="co-submit-btn" onclick="window.submitCraftsmanOffer()" class="w-full bg-remexo-500 hover:bg-remexo-600 text-white py-4 rounded-2xl font-black text-lg transition shadow-xl shadow-remexo-500/20 hover:-translate-y-1">Odeslat nabídku zákazníkovi</button>
-            </div>
-            <input type="hidden" id="co-req-id">
-            <input type="hidden" id="co-req-title">
-        </div>
-    </div>
+        </nav>
 
-    <div id="rating-modal" class="hidden fixed inset-0 z-[250] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm opacity-0 transition-opacity duration-300">
-        <div class="bg-white dark:bg-[#0f172a] rounded-[2rem] shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-md flex flex-col overflow-hidden">
-            <div class="p-8 text-center">
-                <div class="w-16 h-16 bg-yellow-100 dark:bg-yellow-500/20 text-yellow-500 rounded-full flex items-center justify-center text-3xl mx-auto mb-4"><i class="fa-solid fa-star"></i></div>
-                <h3 class="text-2xl font-black dark:text-white mb-2">Hodnocení práce</h3>
-                <p class="text-sm text-slate-500 dark:text-slate-400 mb-6">Jak jste byli spokojeni s odvedenou prací?</p>
-                <div class="flex justify-center gap-2 mb-6" id="star-rating-container">
-                    <i class="fa-solid fa-star text-4xl cursor-pointer text-yellow-400 hover:scale-110 transition" onclick="window.setRating(1)"></i>
-                    <i class="fa-solid fa-star text-4xl cursor-pointer text-yellow-400 hover:scale-110 transition" onclick="window.setRating(2)"></i>
-                    <i class="fa-solid fa-star text-4xl cursor-pointer text-yellow-400 hover:scale-110 transition" onclick="window.setRating(3)"></i>
-                    <i class="fa-solid fa-star text-4xl cursor-pointer text-yellow-400 hover:scale-110 transition" onclick="window.setRating(4)"></i>
-                    <i class="fa-solid fa-star text-4xl cursor-pointer text-yellow-400 hover:scale-110 transition" onclick="window.setRating(5)"></i>
+        <section id="hero" class="relative pt-32 pb-20 lg:pt-52 lg:pb-40 px-4 hero-gradient overflow-hidden">
+            <div class="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
+                <div>
+                    <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-red-600 reveal reveal-delay-1 text-white font-bold text-xs mb-8 uppercase tracking-widest shadow-lg">
+                        <i class="fa-solid fa-location-dot"></i> Startujeme v Brně: Červen 2026
+                    </div>
+                    <h1 class="text-5xl reveal reveal-delay-2 lg:text-7xl font-extrabold tracking-tight mb-8 leading-[1.1] dark:text-white">
+                        Najdeme ti ověřeného řemeslníka <span class="text-remexo-500">bez stresu.</span>
+                    </h1>
+                    <p class="text-lg lg:text-xl reveal reveal-delay-3 text-slate-600 dark:text-slate-400 mb-12 max-w-xl leading-loose">
+                        Stačí popsat problém a my se o zbytek postaráme. Bez složitého hledání, bez nejistoty.
+                    </p>
+                    <div class="flex flex-col sm:flex-row gap-5 reveal reveal-delay-4">
+                        <a href="#ai-poptavka" class="bg-remexo-500 hover:bg-remexo-600 text-white px-10 py-5 rounded-2xl font-bold text-lg transition-transform duration-300 hover:scale-105 shadow-xl shadow-remexo-500/30 text-center">Vytvořit poptávku</a>
+                    </div>
                 </div>
-                <textarea id="rating-comment" rows="3" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-5 py-3.5 text-sm focus:ring-2 focus:ring-remexo-500 outline-none dark:text-white shadow-inner resize-none mb-6" placeholder="Napište krátkou recenzi... (volitelné)"></textarea>
-                <div class="flex gap-3">
-                    <button onclick="window.closeRatingModal()" class="flex-1 py-3.5 rounded-xl font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition">Zrušit</button>
-                    <button id="btn-submit-rating" onclick="window.submitRating()" class="flex-1 bg-remexo-500 hover:bg-remexo-600 text-white py-3.5 rounded-xl font-bold transition shadow-lg">Odeslat</button>
-                </div>
-                <input type="hidden" id="rating-req-index">
-                <input type="hidden" id="rating-req-sbid">
-            </div>
-        </div>
-    </div>
-
-    <div id="confirm-modal" class="hidden fixed inset-0 z-[300] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm opacity-0 transition-opacity duration-300">
-        <div class="bg-white dark:bg-[#0f172a] rounded-[2rem] shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-sm p-8 text-center">
-            <div class="w-14 h-14 bg-red-100 dark:bg-red-500/20 text-red-500 rounded-full flex items-center justify-center text-2xl mx-auto mb-4"><i class="fa-solid fa-trash-can"></i></div>
-            <h3 class="text-xl font-black dark:text-white mb-2">Smazat poptávku?</h3>
-            <p class="text-sm text-slate-500 dark:text-slate-400 mb-6">Tato akce je nevratná. Všechny nabídky a zprávy budou smazány.</p>
-            <div class="flex gap-3">
-                <button onclick="window.closeConfirmModal()" class="flex-1 py-3.5 rounded-xl font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition">Zrušit</button>
-                <button onclick="window.doConfirmDelete()" class="flex-1 bg-red-500 hover:bg-red-600 text-white py-3.5 rounded-xl font-bold transition shadow-lg">Smazat</button>
-            </div>
-        </div>
-    </div>
-    
-    <div id="lightbox" class="hidden fixed inset-0 z-[500] flex items-center justify-center bg-black/90 backdrop-blur-sm" onclick="window.closeLightbox()">
-        <button class="absolute top-4 right-4 w-12 h-12 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white text-xl transition z-10" onclick="event.stopPropagation();window.closeLightbox()"><i class="fa-solid fa-times"></i></button>
-        <img id="lightbox-img" src="" class="max-w-[95vw] max-h-[90vh] object-contain rounded-2xl shadow-2xl" onclick="event.stopPropagation()">
-    </div>
-    <div id="public-profile-modal" class="hidden fixed inset-0 z-[400] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm opacity-0 transition-opacity duration-300">
-        <div class="bg-white dark:bg-[#0f172a] rounded-[2rem] shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-md flex flex-col overflow-hidden">
-            <div class="p-6 md:p-8 text-center relative">
-                <button onclick="window.closePublicProfile()" class="absolute top-4 right-4 w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:text-red-500 transition"><i class="fa-solid fa-times"></i></button>
-                <img id="pp-avatar" src="" class="w-24 h-24 rounded-full border-4 border-white dark:border-slate-800 shadow-lg mx-auto mb-4 object-cover bg-slate-100 dark:bg-slate-800">
-                <h3 id="pp-name" class="text-2xl font-black dark:text-white leading-tight">Načítám...</h3>
-                <div class="flex items-center justify-center gap-2 mt-2">
-                    <span id="pp-role" class="px-3 py-1 bg-remexo-50 dark:bg-remexo-500/10 text-remexo-600 dark:text-remexo-400 rounded-lg text-[10px] font-black uppercase tracking-widest">Role</span>
-                    <span id="pp-city" class="text-sm font-bold text-slate-500"><i class="fa-solid fa-location-dot mr-1"></i> Město</span>
-                </div>
-                <div class="mt-4 flex items-center justify-center gap-2 text-yellow-500">
-                    <i class="fa-solid fa-star text-xl"></i>
-                    <span id="pp-rating" class="text-xl font-black text-slate-900 dark:text-white">5.0</span>
+                <div class="hidden lg:block relative reveal reveal-delay-5">
+                    <div class="float-anim bg-white dark:bg-slate-800 p-4 rounded-[3rem] shadow-2xl border border-slate-100 dark:border-slate-700 relative z-10">
+                        <img src="https://images.unsplash.com/photo-1581244277943-fe4a9c777189?auto=format&fit=crop&q=80&w=1200" alt="Profesionální řemeslník" class="rounded-[2.5rem] w-full dark:opacity-90">
+                    </div>
+                    <div class="absolute -bottom-8 -left-8 bg-white dark:bg-slate-800 p-8 rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-700 z-20 flex items-center gap-5">
+                        <div class="w-16 h-16 bg-remexo-50 dark:bg-remexo-500/20 rounded-2xl flex items-center justify-center text-remexo-600 dark:text-remexo-500 text-3xl font-black italic">100%</div>
+                        <p class="text-sm font-bold text-slate-500 dark:text-slate-300 uppercase tracking-widest leading-tight">Ověření <br>profesionálové</p>
+                    </div>
                 </div>
             </div>
-            <div class="p-6 md:p-8 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
-                <p class="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3">O mně / Popis služeb</p>
-                <p id="pp-bio" class="text-sm text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-line italic">Prosím čekejte...</p>
+        </section>
+
+        <section id="jak-to-funguje" class="py-24 bg-slate-50 dark:bg-slate-900 border-y border-slate-100 dark:border-slate-800 relative z-10">
+            <div class="max-w-7xl mx-auto px-4">
+                <h2 class="text-4xl font-extrabold mb-16 dark:text-white">Vyřeš to ve 3 krocích</h2>
+                <div class="grid md:grid-cols-3 gap-8 relative z-20">
+                    <div class="bg-white dark:bg-slate-800 p-10 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm transition-all duration-300 hover:shadow-xl hover:-translate-y-2 hover:scale-105 group cursor-default relative z-20">
+                        <div class="w-14 h-14 bg-remexo-50 dark:bg-remexo-500 text-remexo-600 dark:text-white rounded-2xl flex items-center justify-center text-2xl font-bold mb-8 group-hover:scale-110 transition-transform duration-300">1</div>
+                        <h4 class="text-2xl font-bold mb-4 dark:text-white">Popíšeš problém</h4>
+                        <p class="text-slate-500 dark:text-slate-400 text-lg leading-relaxed mt-4">Např. „nefunguje zásuvka" nebo „teče kohoutek".</p>
+                    </div>
+                    <div class="bg-white dark:bg-slate-800 p-10 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm transition-all duration-300 hover:shadow-xl hover:-translate-y-2 hover:scale-105 group cursor-default relative z-20">
+                        <div class="w-14 h-14 bg-remexo-50 dark:bg-remexo-500 text-remexo-600 dark:text-white rounded-2xl flex items-center justify-center text-2xl font-bold mb-8 group-hover:scale-110 transition-transform duration-300">2</div>
+                        <h4 class="text-2xl font-bold mb-4 dark:text-white">My najdeme řemeslníka</h4>
+                        <p class="text-slate-500 dark:text-slate-400 text-lg leading-relaxed mt-4">Ověřeného a vhodného pro tvůj problém.</p>
+                    </div>
+                    <div class="bg-white dark:bg-slate-800 p-10 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm transition-all duration-300 hover:shadow-xl hover:-translate-y-2 hover:scale-105 group cursor-default relative z-20">
+                        <div class="w-14 h-14 bg-remexo-50 dark:bg-remexo-500 text-remexo-600 dark:text-white rounded-2xl flex items-center justify-center text-2xl font-bold mb-8 group-hover:scale-110 transition-transform duration-300">3</div>
+                        <h4 class="text-2xl font-bold mb-4 dark:text-white">Domluvíš se na realizaci</h4>
+                        <p class="text-slate-500 dark:text-slate-400 text-lg leading-relaxed mt-4">Jednoduše, bez stresu.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="remesla" class="py-24 bg-white dark:bg-remexo-dark">
+            <div class="max-w-7xl mx-auto px-4">
+                <div class="text-center mb-16">
+                    <h2 class="text-4xl font-extrabold mb-4 dark:text-white">Co Remexo řeší?</h2>
+                    <p class="text-lg text-slate-500 dark:text-slate-400 max-w-2xl mx-auto leading-loose">Od prasklé trubky po rozbitou zásuvku – Bořek najde správného profíka na cokoli v domácnosti.</p>
+                </div>
+                
+                <div id="katalog-app" class="relative"></div>
+
+            </div>
+        </section>
+
+       <section id="ai-poptavka" class="py-24 bg-slate-50 dark:bg-slate-900 border-y border-slate-100 dark:border-slate-800">
+            <div class="max-w-5xl mx-auto px-4">
+                <h2 class="text-4xl font-extrabold mb-4 dark:text-white text-center">Tvorba poptávky s asistentem</h2>
+                <p class="text-lg text-slate-600 dark:text-slate-400 text-center mb-16 max-w-2xl mx-auto leading-loose">
+                    Přiložte fotku závady nebo ji popište svými slovy. Asistent problém zanalyzuje, případně se doptá na detaily, a vytvoří dokonalé zadání pro řemeslníky.
+                </p>
+                <div class="bg-slate-50 dark:bg-slate-800 p-8 md:p-12 rounded-[3rem] shadow-xl border border-slate-200 dark:border-slate-700 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-80 h-80 bg-remexo-500/10 rounded-full blur-[100px] pointer-events-none"></div>
+                    <div class="mb-10 flex items-center gap-6 relative z-10">
+                        <div class="w-16 h-16 rounded-full bg-remexo-500 flex items-center justify-center text-white shadow-inner flex-shrink-0">
+                            <i class="fa-solid fa-hard-hat text-2xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-extrabold mb-1 text-slate-900 dark:text-white">Asistent Bořek</h3>
+                            <p class="text-remexo-600 dark:text-remexo-500 text-sm font-bold uppercase tracking-widest">Příprava zakázky</p>
+                        </div>
+                    </div>
+                    
+                    <div id="poptavka-initial-form" class="space-y-6 relative z-10">
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div class="flex flex-col gap-3">
+                                <label class="font-bold text-slate-700 dark:text-slate-300">Co přesně se pokazilo?</label>
+                                <textarea id="poptavka-input" rows="5" class="w-full h-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl py-5 px-6 text-slate-900 dark:text-white text-lg leading-relaxed focus:ring-2 focus:ring-remexo-500 outline-none transition shadow-sm resize-none" placeholder="Př: Potřebuju opravit skříňku v kuchyni, utrhla se dvířka a nejdou nasadit zpátky..."></textarea>
+                            </div>
+                            <div class="flex flex-col gap-3">
+                                <label class="font-bold text-slate-700 dark:text-slate-300">Přiložte fotku (volitelné)</label>
+                                <div class="relative group h-full min-h-[140px]">
+                                    <input type="file" id="poptavka-photo" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+                                    <div id="poptavka-preview-zone" class="w-full h-full border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-2xl flex flex-col items-center justify-center bg-white dark:bg-slate-900 group-hover:border-remexo-500 transition shadow-sm overflow-hidden relative">
+                                        <i class="fa-solid fa-camera text-4xl mb-3 text-slate-400"></i>
+                                        <p class="text-lg text-slate-500 dark:text-slate-400 text-center leading-loose font-medium px-4">Nahrát fotku závady</p>
+                                        <img id="poptavka-photo-preview" class="hidden absolute inset-0 w-full h-full object-cover">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <button id="poptavka-btn" class="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-remexo-500 dark:hover:bg-remexo-500 hover:text-white font-black py-6 rounded-2xl text-xl transition-all duration-300 hover:scale-[1.02] shadow-xl mt-4">
+                            Analyzovat a vytvořit poptávku
+                        </button>
+                    </div>
+
+                    <div id="poptavka-chat-box" class="hidden flex flex-col gap-6 relative z-10">
+                        <div id="poptavka-chat-messages" class="flex flex-col gap-4 max-h-[500px] overflow-y-auto p-6 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-inner"></div>
+                        <div id="poptavka-reply-area" class="flex gap-4 hidden mt-2">
+                            <input type="text" id="poptavka-reply-input" class="flex-grow bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-full pl-6 pr-4 py-4 text-slate-900 dark:text-white focus:ring-2 focus:ring-remexo-500 outline-none leading-relaxed text-lg shadow-sm" placeholder="Odpovězte asistentovi...">
+                            <button id="poptavka-reply-btn" class="bg-remexo-500 hover:bg-remexo-600 text-white px-8 py-4 rounded-full font-bold transition-transform hover:scale-105 shadow-md">Odeslat</button>
+                        </div>
+                    </div>
+
+                    <div id="poptavka-loading" class="hidden mt-12 text-center text-slate-500 dark:text-slate-400 relative z-10">
+                        <i class="fa-solid fa-microchip fa-spin text-4xl text-remexo-500 mb-6"></i>
+                        <p class="font-bold text-xl">Bořek analyzuje data...</p>
+                    </div>
+
+                    <div id="poptavka-result" class="hidden mt-12 pt-12 border-t border-slate-200 dark:border-slate-700 animate-in fade-in slide-in-from-bottom-5 relative z-10">
+                        <div id="poptavka-rada-box" class="mb-10 bg-remexo-50 dark:bg-remexo-500/10 border border-remexo-500 cta-highlight-box rounded-2xl p-6 shadow-sm hidden">
+                            <div class="flex items-start gap-4">
+                                <i class="fa-solid fa-lightbulb text-remexo-500 text-2xl mt-1"></i>
+                                <div>
+                                    <h4 class="text-slate-900 dark:text-white font-extrabold mb-2 uppercase tracking-widest text-sm">Bořkova rychlá rada</h4>
+                                    <p id="pop-rada" class="text-lg text-slate-800 dark:text-slate-200 leading-relaxed"></p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-xl shadow-sm"><i class="fa-solid fa-check"></i></div>
+                            <h3 class="text-2xl font-extrabold text-slate-900 dark:text-white">Dokonalá poptávka je na světě!</h3>
+                        </div>
+                        <div class="bg-white dark:bg-slate-900 rounded-3xl p-8 border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden">
+                            <div class="absolute top-0 left-0 w-2 h-full bg-remexo-500"></div>
+                            <div class="flex flex-wrap gap-4 mb-6">
+                                <span id="pop-kategorie" class="bg-remexo-100 text-remexo-700 dark:bg-remexo-500/20 dark:text-remexo-400 px-4 py-2 rounded-full font-bold text-sm uppercase tracking-widest">Kategorie</span>
+                                <span id="pop-nalehavost" class="bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400 px-4 py-2 rounded-full font-bold text-sm uppercase tracking-widest">Naléhavost</span>
+                                <span id="pop-cena" class="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 px-4 py-2 rounded-full font-bold text-sm uppercase tracking-widest border border-slate-200 dark:border-slate-700">Cena</span>
+                            </div>
+                            
+                            <h4 id="pop-nazev" contenteditable="true" spellcheck="false" class="text-3xl font-extrabold mb-4 text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800/50 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-remexo-500 rounded-xl px-4 py-2 -mx-4 transition-all cursor-text border border-transparent hover:border-slate-200 dark:hover:border-slate-700">...</h4>
+                            
+                            <h5 class="font-bold text-lg text-slate-500 dark:text-slate-400 mb-3 uppercase tracking-widest">Detailní popis pro řemeslníka</h5>
+                            
+                            <p id="pop-popis" contenteditable="true" spellcheck="false" class="text-lg text-slate-700 dark:text-slate-300 leading-loose whitespace-pre-line hover:bg-slate-100 dark:hover:bg-slate-800/50 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-remexo-500 rounded-xl px-4 py-3 -mx-4 transition-all cursor-text border border-transparent hover:border-slate-200 dark:hover:border-slate-700">...</p>
+                            
+                            <div class="mt-8 pt-8 border-t border-slate-200 dark:border-slate-700 text-center flex flex-col items-center gap-6">
+                                <div>
+                                    <p class="text-remexo-600 dark:text-remexo-400 font-bold text-sm mb-2"><i class="fa-solid fa-pen-to-square"></i> Můžete kliknout do textu a poptávku ručně upravit.</p>
+                                    <p class="text-slate-500 dark:text-slate-400 italic text-sm">Díky jasným detailům dostanete ty nejlepší nabídky bez zbytečného dohadování.</p>
+                                </div>
+                                <div class="flex flex-col sm:flex-row items-center justify-center gap-4 w-full">
+                                    <button type="button" onclick="window.goToAppWithPoptavka()" class="w-full sm:w-auto bg-remexo-500 hover:bg-remexo-600 text-white px-10 py-4 rounded-full font-bold text-lg transition-transform duration-300 hover:scale-105 shadow-xl">Publikovat na Remexo</button>
+                                    <button type="button" id="poptavka-reset-btn" class="w-full sm:w-auto text-slate-500 dark:text-slate-400 hover:text-remexo-500 dark:hover:text-remexo-500 px-6 py-4 font-bold transition duration-300 underline">Vytvořit další poptávku</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+     <section id="o-zakladateli" class="py-24 bg-white dark:bg-remexo-dark border-y border-slate-100 dark:border-slate-800">
+        <div class="max-w-5xl mx-auto px-4">
+            <div class="bg-white dark:bg-slate-800 rounded-[3rem] p-10 md:p-16 border border-slate-200 dark:border-slate-700 shadow-xl">
+                <div class="grid md:grid-cols-2 gap-12 lg:gap-16 items-center">
+
+                    <div class="flex justify-center">
+                        <div class="w-72 h-72 rounded-[2.5rem] overflow-hidden border-4 border-remexo-500 shadow-2xl bg-remexo-50">
+                            <img src="/foto.jpeg" alt="David Štábl" class="w-full h-full object-cover">
+                        </div>
+                    </div>
+    <div>
+        <p class="text-xs font-bold text-remexo-600 dark:text-remexo-500 uppercase tracking-widest mb-2">Kdo za Remexo stojí</p>
+        <h3 class="text-4xl font-extrabold text-slate-900 dark:text-white mb-1 tracking-tight">David Štábl</h3>
+        <p class="text-slate-500 dark:text-slate-400 font-medium mb-6">Zakladatel · Kojetín</p>
+
+        <blockquote class="border-l-4 border-remexo-500 pl-6 py-1 mb-8">
+            <p class="text-lg font-bold text-slate-800 dark:text-slate-200 leading-relaxed italic">
+                "Chci, aby každý v Brně mohl najít spolehlivého řemeslníka stejně snadno, jako si objedná rozvoz jídla."
+            </p>
+        </blockquote>
+
+        <p class="text-lg text-slate-600 dark:text-slate-400 leading-loose mb-8">
+            Jsem student, který chce měnit a automatizovat zastaralé procesy.
+        </p>
+
+                        <div class="flex flex-wrap gap-3">
+                            <a href="https://www.linkedin.com/in/david-%C5%A1t%C3%A1bl-659871374/" target="_blank"
+                               class="inline-flex items-center gap-2 text-sm font-bold px-5 py-3 rounded-full border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-remexo-500 hover:text-remexo-600 transition">
+                                <i class="fa-brands fa-linkedin text-[#0A66C2]"></i> LinkedIn
+                            </a>
+                            <a href="https://www.instagram.com/david_stabl/" target="_blank"
+                               class="inline-flex items-center gap-2 text-sm font-bold px-5 py-3 rounded-full border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-remexo-500 hover:text-remexo-600 transition">
+                                <i class="fa-brands fa-instagram text-[#E4405F]"></i> Instagram
+                            </a>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </section>
+        <section id="newsletter" class="py-24 bg-slate-50 dark:bg-slate-900 border-y border-slate-200 dark:border-slate-800">
+            <div class="max-w-4xl mx-auto px-4 text-center">
+                <div class="bg-white dark:bg-slate-800 p-8 md:p-16 rounded-[3rem] border border-slate-200 dark:border-slate-700 shadow-xl">
+                    <h2 class="text-3xl md:text-5xl font-extrabold mb-6 dark:text-white">Získejte přístup v Brně dříve</h2>
+                    
+                    <div class="flex justify-center mb-8">
+                        <span class="bg-green-100 text-green-700 border border-green-200 px-6 py-2 rounded-full font-bold text-sm tracking-widest uppercase shadow-sm">
+                            🎁 První poptávka zcela zdarma
+                        </span>
+                    </div>
+
+                    <div id="subscriber-count" class="inline-flex items-center gap-3 bg-remexo-50 dark:bg-remexo-500/10 border border-remexo-500/30 px-6 py-3 rounded-full mb-8">
+                        <div class="flex -space-x-2">
+                            <div class="w-8 h-8 rounded-full bg-remexo-500 flex items-center justify-center text-white text-xs font-bold">J</div>
+                            <div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-white text-xs font-bold">M</div>
+                            <div class="w-8 h-8 rounded-full bg-remexo-600 flex items-center justify-center text-white text-xs font-bold">P</div>
+                        </div>
+                        <p class="text-slate-700 dark:text-slate-300 font-bold text-sm">Už <span id="count-number" class="text-remexo-500 text-lg">...</span> lidí čeká na přístup</p>
+                    </div>
+                    <p class="text-slate-600 dark:text-slate-400 text-xl mb-12 max-w-xl mx-auto leading-loose">
+                        Zanechte nám svůj e-mail a my vás budeme informovat, jakmile v červnu 2026 spustíme brněnský provoz. O nic nepřijdete a první zadání máte na nás!
+                    </p>
+                    <div id="newsletter-area">
+                        <form id="newsletter-form" class="flex flex-col sm:flex-row gap-4 max-w-lg mx-auto">
+                            <input type="email" name="email" id="newsletter-email" required placeholder="Váš e-mail" class="flex-grow pl-8 pr-6 py-5 rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-remexo-dark dark:text-white focus:ring-2 focus:ring-remexo-500 outline-none transition text-lg">
+                            <button type="submit" id="newsletter-btn" class="bg-remexo-dark dark:bg-remexo-500 hover:bg-slate-800 dark:hover:bg-remexo-600 text-white px-10 py-5 rounded-full font-bold transition-transform duration-300 hover:scale-105 shadow-lg whitespace-nowrap text-lg">Chci přístup</button>
+                        </form>
+                        <div id="error-msg" class="hidden mt-8 p-6 bg-red-50 dark:bg-red-500/10 border border-red-500/20 rounded-2xl text-left">
+                            <p class="font-bold text-red-700 dark:text-red-400 mb-3 text-lg">Něco se pokazilo.</p>
+                            <p class="text-base text-red-600 dark:text-red-300 leading-loose">Zkuste to prosím za okamžik znovu, nebo nám napište na e-mail: <br> <a href="mailto:remexocz@seznam.cz" class="font-bold underline">remexocz@seznam.cz</a>.</p>
+                        </div>
+                    </div>
+                    <div id="newsletter-success" class="hidden text-center p-8 bg-remexo-50 dark:bg-remexo-500/10 rounded-3xl border border-remexo-500/20 mt-8">
+                        <div class="w-20 h-20 bg-remexo-500 rounded-full flex items-center justify-center text-white mx-auto mb-6"><i class="fa-solid fa-check text-3xl"></i></div>
+                        <h3 class="text-3xl font-extrabold mb-4 text-remexo-700 dark:text-remexo-500">Vaše místo je zajištěno!</h3>
+                        <p class="text-slate-600 dark:text-slate-300 text-lg leading-loose">Děkujeme, váš e-mail jsme bezpečně uložili. Brzy se vám ozveme s novinkami!</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="faq" class="py-24 bg-white dark:bg-remexo-dark border-y border-slate-100 dark:border-slate-800">
+            <div class="max-w-4xl mx-auto px-4">
+                <h2 class="text-4xl font-extrabold mb-16 dark:text-white text-left">Často kladené dotazy</h2>
+                <div class="space-y-8">
+                    <div class="bg-slate-50 dark:bg-slate-900 p-10 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm transition hover:shadow-md">
+                        <h3 class="text-2xl font-bold mb-4 dark:text-white">Proč Brno a červen 2026?</h3>
+                        <p class="text-slate-500 dark:text-slate-400 leading-loose text-lg">Brno je technologické srdce Česka. Právě zde chceme v červnu 2026 ukázat, že řemeslo se dá dělat moderně, bezpečně a plně digitálně s pomocí naší aplikace.</p>
+                    </div>
+                    <div class="bg-slate-50 dark:bg-slate-900 p-10 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm transition hover:shadow-md">
+                        <h3 class="text-2xl font-bold mb-4 dark:text-white">Jak se pozná ověřený řemeslník?</h3>
+                        <p class="text-slate-500 dark:text-slate-400 leading-loose text-lg">Každý Bořkův parťák prochází pečlivou kontrolou identity skrze IČO a verifikací osobních dokumentů. Bezpečnost a kvalita je u nás na prvním místě.</p>
+                    </div>
+                    <div class="bg-slate-50 dark:bg-slate-900 p-10 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm transition hover:shadow-md">
+                        <h3 class="text-2xl font-bold mb-4 dark:text-white">Kolik mě bude platforma stát?</h3>
+                        <p class="text-slate-500 dark:text-slate-400 leading-loose text-lg">Zadání problému a výběr z nabídek od ověřených profesionálů vás nic nestojí. Náš model je naprosto transparentní – z každé zakázky je účtován 10% poplatek za garanci a ochranu vaší platby, která se uvolní až po dokončení práce. Samotní řemeslníci pak za využívání platformy a stabilní přísun zakázek platí měsíční předplatné.</p>
+                    </div>
+                    <div class="bg-slate-50 dark:bg-slate-900 p-10 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm transition hover:shadow-md">
+                        <h3 class="text-2xl font-bold mb-4 dark:text-white">Co když se oprava nepovede?</h3>
+                        <p class="text-slate-500 dark:text-slate-400 leading-loose text-lg">Vaše peníze držíme v bezpečné úschově (Escrow) a řemeslníkovi je uvolníme až po vašem odsouhlasení, že je vše v pořádku. Navíc jsou všechny zakázky realizované přes Remexo pojištěné proti způsobené škodě.</p>
+                    </div>
+                    <div class="bg-slate-50 dark:bg-slate-900 p-10 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm transition hover:shadow-md">
+                        <h3 class="text-2xl font-bold mb-4 dark:text-white">Jak dlouho budu čekat na nabídky?</h3>
+                        <p class="text-slate-500 dark:text-slate-400 leading-loose text-lg">Díky tomu, že AI vytvoří okamžitě přesné zadání a rozešle notifikace profíkům ve vašem okolí, první relevantní nabídky s jasnou cenou a termínem dostáváte obvykle už v řádu desítek minut.</p>
+                    </div>
+                    <div class="bg-slate-50 dark:bg-slate-900 p-10 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm transition hover:shadow-md">
+                        <h3 class="text-2xl font-bold mb-4 dark:text-white">Můžu Remexo využít na velkou rekonstrukci?</h3>
+                        <p class="text-slate-500 dark:text-slate-400 leading-loose text-lg">Platforma Remexo je v první fázi specializována čistě na drobné domácí opravy, instalace a rychlou údržbu. Kompletní rekonstrukce zatím nezprostředkováváme.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </div> <footer id="kontakt" class="bg-remexo-dark text-white border-t border-white/5">
+        <div class="w-full h-64 relative overflow-hidden">
+            <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d83324.52628469956!2d16.536919246187766!3d49.19506020000001!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x4712943ac03f5111%3A0x400af0f6614b1b0!2sBrno!5e0!3m2!1scs!2scz!4v1700000000000!5m2!1scs!2scz"
+                width="100%" height="100%" style="border:0; filter: invert(90%) hue-rotate(180deg) saturate(0.5) brightness(0.8);"
+                allowfullscreen="" loading="lazy">
+            </iframe>
+            <div class="absolute inset-0 pointer-events-none bg-gradient-to-b from-remexo-dark/60 via-transparent to-remexo-dark/80"></div>
+            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-2">
+                <div class="w-12 h-12 bg-remexo-500 rounded-full flex items-center justify-center shadow-2xl border-4 border-white animate-bounce">
+                    <i class="fa-solid fa-location-dot text-white text-xl"></i>
+                </div>
+                <span class="bg-remexo-dark/90 text-white text-sm font-bold px-4 py-1.5 rounded-full border border-white/10 backdrop-blur-sm">Brno, Česká republika</span>
+            </div>
+        </div>
+
+        <div class="max-w-7xl mx-auto px-4 pt-16 pb-10">
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+                <div>
+                    <div class="flex items-center gap-3 mb-5">
+                        <img src="/logo.png" alt="Remexo Logo" class="h-9 object-contain">
+                    </div>
+                    <p class="text-slate-400 text-sm leading-relaxed mb-6">Propojujeme brněnské domácnosti s ověřenými řemeslníky. Bezpečně, rychle, digitálně.</p>
+                    <div class="space-y-2 text-sm">
+                        <a href="mailto:remexocz@seznam.cz" class="flex items-center gap-2 text-slate-400 hover:text-remexo-500 transition">
+                            <i class="fa-solid fa-envelope text-remexo-500 w-4"></i> remexocz@seznam.cz
+                        </a>
+                        <a href="tel:+420732573644" class="flex items-center gap-2 text-slate-400 hover:text-remexo-500 transition">
+                            <i class="fa-solid fa-phone text-remexo-500 w-4"></i> +420 732 573 644
+                        </a>
+                        <div class="flex items-center gap-2 text-slate-400">
+                            <i class="fa-solid fa-location-dot text-remexo-500 w-4"></i> Brno, Czech Republic
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4 mt-6">
+                        <a href="https://instagram.com/remexocz" target="_blank" class="w-10 h-10 bg-white/10 hover:bg-remexo-500 rounded-xl flex items-center justify-center transition-all hover:scale-110">
+                            <i class="fa-brands fa-instagram"></i>
+                        </a>
+                        <a href="https://www.facebook.com/profile.php?id=61577545414056" target="_blank" class="w-10 h-10 bg-white/10 hover:bg-remexo-500 rounded-xl flex items-center justify-center transition-all hover:scale-110">
+                            <i class="fa-brands fa-facebook-f"></i>
+                        </a>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="font-extrabold text-white mb-5 uppercase tracking-widest text-xs">Zákazníci</h4>
+                    <ul class="space-y-3 text-sm">
+                        <li><a href="#hero" class="text-slate-400 hover:text-remexo-500 transition">O nás</a></li>
+                        <li><a href="#jak-to-funguje" class="text-slate-400 hover:text-remexo-500 transition">Jak to funguje</a></li>
+                        <li><a href="#remesla" class="text-slate-400 hover:text-remexo-500 transition">Co Remexo řeší</a></li>
+                        <li><a href="#ai-poptavka" class="text-slate-400 hover:text-remexo-500 transition">Tvorba poptávky</a></li>
+                        <li><a href="#faq" class="text-slate-400 hover:text-remexo-500 transition">FAQ</a></li>
+                        <li><a href="#newsletter" class="text-slate-400 hover:text-remexo-500 transition">Získat přístup</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-extrabold text-white mb-5 uppercase tracking-widest text-xs">Řemeslníci</h4>
+                    <ul class="space-y-3 text-sm flex flex-col items-start">
+                        <li><button onclick="openModal('modal-chystame')" class="text-slate-400 hover:text-remexo-500 transition text-left">Procházet poptávky</button></li>
+                        <li><button onclick="openModal('modal-chystame')" class="text-slate-400 hover:text-remexo-500 transition text-left">Členství</button></li>
+                        <li><button onclick="openModal('modal-chystame')" class="text-slate-400 hover:text-remexo-500 transition text-left">Statistiky</button></li>
+                        <li><button onclick="openModal('modal-chystame')" class="text-slate-400 hover:text-remexo-500 transition text-left">Registrace</button></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-extrabold text-white mb-5 uppercase tracking-widest text-xs">Právní</h4>
+                    <ul class="space-y-3 text-sm">
+                        <li><button onclick="openModal('modal-podminky')" class="text-slate-400 hover:text-remexo-500 transition text-left">Podmínky použití</button></li>
+                        <li><button onclick="openModal('modal-gdpr')" class="text-slate-400 hover:text-remexo-500 transition text-left">Ochrana osobních údajů</button></li>
+                        <li><button onclick="openModal('modal-gdpr')" class="text-slate-400 hover:text-remexo-500 transition text-left">Cookies</button></li>
+                        <li><button onclick="openModal('modal-gdpr')" class="text-slate-400 hover:text-remexo-500 transition text-left">GDPR</button></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-white/10 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
+                <p class="text-slate-500 text-sm">© 2026 Remexo Brno. Startujeme v červnu 2026.</p>
+                <div class="flex items-center gap-4 text-slate-500 text-sm">
+                    <button onclick="openModal('modal-podminky')" class="hover:text-remexo-500 transition">Podmínky</button>
+                    <span>·</span>
+                    <button onclick="openModal('modal-gdpr')" class="hover:text-remexo-500 transition">Soukromí</button>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <div id="modal-chystame" class="modal-overlay" role="dialog" aria-modal="true">
+        <div class="modal-box text-center">
+            <button onclick="closeModal('modal-chystame')" class="absolute top-5 right-5 w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 transition">
+                <i class="fa-solid fa-times"></i>
+            </button>
+            <div class="w-24 h-24 bg-remexo-50 dark:bg-remexo-500/20 text-remexo-500 rounded-full flex items-center justify-center text-4xl mx-auto mb-6">
+                <i class="fa-solid fa-person-digging"></i>
+            </div>
+            <h2 class="text-3xl font-extrabold text-slate-900 dark:text-white mb-4">Tohle pro vás teprve chystáme! 🚧</h2>
+            <p class="text-slate-600 dark:text-slate-400 leading-loose text-lg mb-8">
+                Sekci pro řemeslníky aktuálně ladíme k dokonalosti. Plný přístup, registrace profilů a procházení reálných zakázek spustíme už brzy. Zadejte svůj e-mail nahoře na webu a dáme vám vědět jako prvním!
+            </p>
+            <button onclick="closeModal('modal-chystame'); window.location.hash = 'newsletter';" class="bg-remexo-500 hover:bg-remexo-600 text-white px-8 py-4 rounded-xl font-bold transition hover:scale-105 shadow-lg">
+                Chci vědět o spuštění
+            </button>
+        </div>
+    </div>
+
+    <div id="modal-chystame-zakaznik" class="modal-overlay" role="dialog" aria-modal="true">
+        <div class="modal-box text-center">
+            <button onclick="closeModal('modal-chystame-zakaznik')" class="absolute top-5 right-5 w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 transition">
+                <i class="fa-solid fa-times"></i>
+            </button>
+            <div class="w-24 h-24 bg-remexo-50 dark:bg-remexo-500/20 text-remexo-500 rounded-full flex items-center justify-center text-4xl mx-auto mb-6">
+                <i class="fa-solid fa-tools"></i>
+            </div>
+            <h2 class="text-3xl font-extrabold text-slate-900 dark:text-white mb-4">Katalog řemesel chystáme! 🚧</h2>
+            <p class="text-slate-600 dark:text-slate-400 leading-loose text-lg mb-8">
+                Detailní přehledy pro jednotlivá řemesla aktuálně ladíme k dokonalosti. Brzy si zde budete moci prohlédnout konkrétní ukázky prací a typické opravy. Zadejte svůj e-mail a dáme vám vědět hned, jak odstartujeme!
+            </p>
+            <button onclick="closeModal('modal-chystame-zakaznik'); window.location.hash = 'newsletter';" class="bg-remexo-500 hover:bg-remexo-600 text-white px-8 py-4 rounded-xl font-bold transition hover:scale-105 shadow-lg">
+                Chci vědět o spuštění
+            </button>
+        </div>
+    </div>
+
+    <div id="modal-chystame-publikace" class="modal-overlay" role="dialog" aria-modal="true">
+        <div class="modal-box text-center">
+            <button onclick="closeModal('modal-chystame-publikace')" class="absolute top-5 right-5 w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 transition">
+                <i class="fa-solid fa-times"></i>
+            </button>
+            <div class="w-24 h-24 bg-remexo-50 dark:bg-remexo-500/20 text-remexo-500 rounded-full flex items-center justify-center text-4xl mx-auto mb-6">
+                <i class="fa-solid fa-rocket"></i>
+            </div>
+            <h2 class="text-3xl font-extrabold text-slate-900 dark:text-white mb-4">Publikování poptávek chystáme! 🚧</h2>
+            <p class="text-slate-600 dark:text-slate-400 leading-loose text-lg mb-8">
+                Skvělá práce! Vaše poptávka je připravená. Odesílání reálných zakázek řemeslníkům spustíme v červnu 2026. Zadejte svůj e-mail a dáme vám vědět, jakmile to vypukne!
+            </p>
+            <button onclick="closeModal('modal-chystame-publikace'); window.location.hash = 'newsletter';" class="bg-remexo-500 hover:bg-remexo-600 text-white px-8 py-4 rounded-xl font-bold transition hover:scale-105 shadow-lg">
+                Chci vědět o spuštění
+            </button>
+        </div>
+    </div>
+
+    <div id="modal-podminky" class="modal-overlay" role="dialog" aria-modal="true">
+        <div class="modal-box">
+            <button onclick="closeModal('modal-podminky')" class="absolute top-5 right-5 w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 transition">
+                <i class="fa-solid fa-times"></i>
+            </button>
+            <h2 class="text-2xl font-extrabold text-slate-900 dark:text-white mb-6">Podmínky použití platformy Remexo</h2>
+            <div class="space-y-4 text-slate-600 dark:text-slate-400 leading-relaxed text-sm">
+                <p><strong class="text-slate-900 dark:text-white">1. Obecná ustanovení</strong><br>
+                Platforma Remexo (dále jen „Platforma") slouží jako digitální tržiště propojující zákazníky (domácnosti) s nezávislými poskytovateli služeb (řemeslníky) v Brně a okolí. Platforma pouze zprostředkovává kontakt, není stranou samotné smlouvy o dílo.</p>
+                <p><strong class="text-slate-900 dark:text-white">2. Využití umělé inteligence (AI)</strong><br>
+                Tvorba poptávek je podporována modelem umělé inteligence, který analyzuje texty a fotografie. Odhady cen a postupy navržené AI jsou orientační. Závazná je vždy až finální nabídka dohodnutá přímo s vybraným řemeslníkem.</p>
+                <p><strong class="text-slate-900 dark:text-white">3. Bezpečné platby (Escrow)</strong><br>
+                Veškeré platby probíhají přes zabezpečenou platební bránu (např. Stripe). Částka za opravu je stržena z karty zákazníka a držena v bezpečné úschově (Escrow). Řemeslníkovi je vyplacena až poté, co zákazník potvrdí, že byla práce řádně dokončena. Pokusy o obcházení platebního systému mohou vést k zablokování účtu.</p>
+                <p><strong class="text-slate-900 dark:text-white">4. Odpovědnost za vady</strong><br>
+                Platforma nenese přímou odpovědnost za kvalitu odvedené práce řemeslníka. V případě nespokojenosti nabízí Platforma mediační centrum pro řešení sporů a zablokování uvolnění prostředků z úschovy do doby vyřešení reklamace.</p>
+                <p><strong class="text-slate-900 dark:text-white">5. Závěrečná ustanovení</strong><br>
+                Tyto podmínky se řídí právním řádem České republiky. Plný provoz Platformy bude zahájen v červnu 2026. Do té doby funguje web v režimu sběru zájemců a testování.</p>
             </div>
         </div>
     </div>
-    
-    <div id="forgot-pw-modal" class="hidden fixed inset-0 z-[500] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm opacity-0 transition-opacity duration-300">
-        <div class="bg-white dark:bg-[#0f172a] rounded-[2rem] shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-md p-8 relative">
-            <button onclick="window.closeForgotPw()" class="absolute top-4 right-4 w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:text-red-500 transition"><i class="fa-solid fa-times"></i></button>
-            <h3 class="text-2xl font-black mb-2 dark:text-white">Zapomenuté heslo</h3>
-            <p class="text-slate-500 text-sm mb-6">Zadejte svůj e-mail a my vám pošleme odkaz pro nastavení nového hesla.</p>
-            <input type="email" id="forgot-pw-email" placeholder="vas@email.cz" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-5 py-3.5 text-sm mb-4 focus:ring-2 focus:ring-remexo-500 outline-none dark:text-white">
-            <button id="btn-send-reset" onclick="window.sendResetLink()" class="w-full bg-remexo-500 hover:bg-remexo-600 text-white py-3.5 rounded-xl font-bold transition shadow-md">Odeslat odkaz</button>
-        </div>
-    </div>
 
-    <div id="new-pw-modal" class="hidden fixed inset-0 z-[600] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm opacity-0 transition-opacity duration-300">
-        <div class="bg-white dark:bg-[#0f172a] rounded-[2rem] shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-md p-8 relative">
-            <h3 class="text-2xl font-black mb-2 dark:text-white">Nové heslo</h3>
-            <p class="text-slate-500 text-sm mb-6">Zadejte své nové heslo. Musí mít alespoň 8 znaků, 1 velké písmeno a 1 číslici.</p>
-            <div class="relative mb-4">
-                <input type="password" id="new-pw-input" placeholder="Min. 8 znaků, 1 velké, 1 číslo" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-5 py-3.5 pr-12 text-sm focus:ring-2 focus:ring-remexo-500 outline-none dark:text-white">
-                <button type="button" onclick="window.togglePassword('new-pw-input', this)" class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-remexo-500 transition"><i class="fa-solid fa-eye text-lg"></i></button>
+    <div id="modal-gdpr" class="modal-overlay" role="dialog" aria-modal="true">
+        <div class="modal-box">
+            <button onclick="closeModal('modal-gdpr')" class="absolute top-5 right-5 w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 transition">
+                <i class="fa-solid fa-times"></i>
+            </button>
+            <h2 class="text-2xl font-extrabold text-slate-900 dark:text-white mb-6">Zásady ochrany soukromí a Cookies</h2>
+            <div class="space-y-4 text-slate-600 dark:text-slate-400 leading-relaxed text-sm">
+                <p><strong class="text-slate-900 dark:text-white">1. Kdo zpracovává vaše údaje?</strong><br>
+                Provozovatelem platformy Remexo a správcem osobních údajů je projekt Remexo Brno (kontakt: remexocz@seznam.cz). Zpracováváme údaje v souladu s nařízením EU 2016/679 (GDPR).</p>
+                <p><strong class="text-slate-900 dark:text-white">2. Jaké údaje sbíráme a proč?</strong><br>
+                Zpracováváme pouze nezbytné údaje: e-mailové adresy pro přednostní přístup (Waitlist), popisy a fotografie závad pro AI analýzu, a v ostrém provozu kontaktní a fakturační údaje. Vaše data používáme výhradně k zajištění chodu služby a k zasílání důležitých aktualizací.</p>
+                <p><strong class="text-slate-900 dark:text-white">3. Třetí strany a bezpečnost</strong><br>
+                Vaše texty a fotky odesíláme přes zabezpečené API poskytovatelům AI modelů (např. Google / Microsoft Azure) striktně za účelem vygenerování poptávky. Platební údaje jsou zpracovávány šifrovaně externími partnery. Údaje neprodáváme reklamním agenturám.</p>
+                <p><strong class="text-slate-900 dark:text-white">4. Používání Cookies</strong><br>
+                Web používá nezbytné technické cookies pro správné fungování webu a uložení vašich preferencí (např. tmavý vzhled, uložení e-mailu ve formuláři, aby na vás nevyskakoval znovu). Používáním webu s tímto souhlasíte. Pokud cookies nechcete, můžete je zakázat v nastavení prohlížeče.</p>
+                <p><strong class="text-slate-900 dark:text-white">5. Vaše práva (GDPR)</strong><br>
+                Máte právo kdykoliv požádat o přístup ke svým datům, jejich opravu nebo úplný výmaz z našich databází (právo být zapomenut). Stačí nám napsat na remexocz@seznam.cz a my váš e-mail a všechna přidružená data okamžitě a trvale odstraníme.</p>
             </div>
-            <button id="btn-save-new-pw" onclick="window.saveNewPassword()" class="w-full bg-green-500 hover:bg-green-600 text-white py-3.5 rounded-xl font-bold transition shadow-md">Uložit heslo a přihlásit</button>
         </div>
     </div>
-</div>
 
-<script src="js/config.js"></script>
-<script src="js/auth.js"></script>
-<script src="js/templates.js"></script> 
-<script src="js/ui.js"></script>
-<script src="js/chat.js"></script>
-<script src="js/features.js"></script>
-<script src="app.js"></script>
+    <div id="modal-promo" class="modal-overlay" role="dialog" aria-modal="true">
+        <div class="modal-box text-center">
+            <button onclick="closeModal('modal-promo')" class="absolute top-5 right-5 w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 transition">
+                <i class="fa-solid fa-times"></i>
+            </button>
+            <div class="w-24 h-24 bg-remexo-50 dark:bg-remexo-500/20 text-remexo-500 rounded-full flex items-center justify-center text-4xl mx-auto mb-6">
+                <i class="fa-solid fa-gift"></i>
+            </div>
+            <h2 class="text-3xl font-extrabold text-slate-900 dark:text-white mb-4">Máme pro vás dárek! 🎁</h2>
+            <p class="text-slate-600 dark:text-slate-400 leading-loose text-lg mb-8">
+                Chcete si Remexo vyzkoušet bez rizika? Zapište se na náš waitlist a svou první poptávku řemeslníka od nás dostanete úplně zdarma.
+            </p>
+            <button onclick="closeModal('modal-promo'); window.location.hash = 'newsletter';" class="bg-remexo-500 hover:bg-remexo-600 text-white px-8 py-4 rounded-xl font-bold transition hover:scale-105 shadow-lg">
+                Získat poptávku zdarma
+            </button>
+        </div>
+    </div>
 
+    <div id="cookie-banner" class="fixed bottom-0 left-0 w-full bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] p-6 z-[100] transform translate-y-full transition-transform duration-500 ease-in-out">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+            <div class="text-sm text-slate-600 dark:text-slate-400 max-w-4xl leading-relaxed">
+                <h4 class="font-extrabold text-slate-900 dark:text-white text-base mb-1">Tento web používá cookies 🍪</h4>
+                Pro správné fungování webu a analýzu návštěvnosti (abychom věděli, o co máte v Brně největší zájem) používáme my i naši partneři soubory cookies. Kliknutím na „Přijmout vše" nám k tomu dáte souhlas.
+                <button onclick="openModal('modal-gdpr')" class="underline font-bold hover:text-remexo-500 transition">Více informací</button>.
+            </div>
+            <div class="flex flex-col sm:flex-row items-center gap-3 shrink-0 w-full md:w-auto">
+                <button id="cookie-reject" class="w-full sm:w-auto px-5 py-3 rounded-xl font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition text-sm">Jen nezbytné</button>
+                <button id="cookie-accept" class="w-full sm:w-auto bg-remexo-500 hover:bg-remexo-600 text-white px-8 py-3 rounded-xl font-bold transition shadow-lg text-sm hover:scale-105">Přijmout vše</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="fixed bottom-6 right-6 z-[60] flex flex-col items-end pointer-events-none">
+        <div id="chat-widget" class="w-[380px] h-[550px] bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden mb-4 pointer-events-auto">
+            <div class="bg-remexo-500 p-5 flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-full bg-remexo-dark flex items-center justify-center text-white shadow-inner">
+                        <i class="fa-solid fa-hard-hat text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="font-extrabold text-remexo-dark text-xl leading-tight">Bořek</p>
+                        <p class="text-xs text-remexo-dark/80 font-black tracking-widest uppercase mt-1">Live Poradce</p>
+                    </div>
+                </div>
+                <button onclick="toggleChat()" class="text-remexo-dark hover:scale-110 transition"><i class="fa-solid fa-times text-2xl"></i></button>
+            </div>
+            <div id="chat-messages" class="flex-grow p-6 overflow-y-auto space-y-6 text-lg scroll-smooth leading-relaxed">
+                <div class="chat-bubble-borek p-4 max-w-[85%] mb-2 ml-2 shadow-sm">Ahoj! Jsem Bořek. S čím vám dnes v Brně můžu pichnót? 😊</div>
+            </div>
+            <div class="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
+                <form id="chat-form" class="flex gap-3">
+                    <input type="text" id="chat-input" placeholder="Napište Bořkovi..." class="flex-grow bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full pl-6 pr-4 py-4 text-slate-900 dark:text-white focus:ring-2 focus:ring-remexo-500 outline-none leading-relaxed text-base shadow-inner">
+                    <button type="submit" class="w-14 h-14 bg-remexo-500 rounded-full flex items-center justify-center text-white shrink-0 hover:scale-105 transition shadow-md"><i class="fa-solid fa-paper-plane text-xl"></i></button>
+                </form>
+            </div>
+        </div>
+        <button id="chat-toggle" onclick="toggleChat()" class="w-20 h-20 bg-remexo-500 rounded-full shadow-2xl flex items-center justify-center text-white hover:scale-110 transition relative group pointer-events-auto border-4 border-white dark:border-remexo-dark">
+            <i class="fa-solid fa-comment-dots text-3xl group-hover:hidden"></i>
+            <i class="fa-solid fa-hard-hat text-3xl hidden group-hover:block"></i>
+            <span class="absolute -top-1 -right-1 w-6 h-6 bg-red-500 border-4 border-white rounded-full animate-pulse"></span>
+        </button>
+    </div>
+
+    <script type="module">
+        // --- COOKIE LIŠTA A GA4 ---
+        const cookieBanner = document.getElementById('cookie-banner');
+        const cookieAccept = document.getElementById('cookie-accept');
+        const cookieReject = document.getElementById('cookie-reject');
+
+        const checkCookieConsent = () => {
+            const consent = localStorage.getItem('remexo-cookie-consent');
+            if (!consent) {
+                setTimeout(() => { cookieBanner.classList.remove('translate-y-full'); }, 2000);
+            } else if (consent === 'granted') {
+                gtag('consent', 'update', { 'analytics_storage': 'granted' });
+            }
+        };
+
+        cookieAccept.addEventListener('click', () => {
+            localStorage.setItem('remexo-cookie-consent', 'granted');
+            gtag('consent', 'update', { 'analytics_storage': 'granted' });
+            cookieBanner.classList.add('translate-y-full');
+        });
+
+        cookieReject.addEventListener('click', () => {
+            localStorage.setItem('remexo-cookie-consent', 'denied');
+            cookieBanner.classList.add('translate-y-full');
+        });
+
+        checkCookieConsent();
+
+        window.toggleChat = function() {
+            document.getElementById('chat-widget').classList.toggle('open');
+        }
+
+        // --- LOADER ---
+        setTimeout(() => {
+            const loader = document.getElementById('loader');
+            loader.classList.add('hide');
+            setTimeout(() => {
+                loader.style.display = 'none';
+                document.querySelectorAll('.reveal').forEach(el => el.classList.add('visible'));
+            }, 600);
+        }, 1800);
+
+        // --- MOBILNÍ MENU ---
+        const mobileMenu = document.getElementById('mobile-menu');
+        const mobileOverlay = document.getElementById('mobile-overlay');
+        window.closeMobileMenu = function() {
+            mobileMenu.classList.remove('open');
+            mobileOverlay.classList.remove('open');
+            document.body.style.overflow = '';
+        };
+        document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+            mobileMenu.classList.add('open');
+            mobileOverlay.classList.add('open');
+            document.body.style.overflow = 'hidden';
+        });
+        document.getElementById('mobile-menu-close').addEventListener('click', closeMobileMenu);
+        mobileOverlay.addEventListener('click', closeMobileMenu);
+
+        // --- DARK MODE ---
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const updateIcons = () => {
+            const isDark = document.documentElement.classList.contains('dark');
+            document.getElementById('theme-toggle-dark-icon')?.classList.toggle('hidden', isDark);
+            document.getElementById('theme-toggle-light-icon')?.classList.toggle('hidden', !isDark);
+        };
+        updateIcons();
+        if (themeToggleBtn) {
+            themeToggleBtn.addEventListener('click', () => {
+                document.documentElement.classList.toggle('dark');
+                localStorage.setItem('color-theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+                updateIcons();
+            });
+        }
+
+        // --- MODALS ---
+        window.openModal = function(id) {
+            const el = document.getElementById(id);
+            if (el) { el.classList.add('open'); document.body.style.overflow = 'hidden'; }
+        };
+        window.closeModal = function(id) {
+            const el = document.getElementById(id);
+            if (el) { el.classList.remove('open'); document.body.style.overflow = ''; }
+        };
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal-overlay.open').forEach(m => {
+                    m.classList.remove('open'); document.body.style.overflow = '';
+                });
+            }
+        });
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) { overlay.classList.remove('open'); document.body.style.overflow = ''; }
+            });
+        });
+
+        // --- PROMO POPUP ---
+        setTimeout(() => {
+            if (!sessionStorage.getItem('promoShown')) {
+                openModal('modal-promo');
+                sessionStorage.setItem('promoShown', 'true');
+            }
+        }, 7000); 
+
+        // --- BEZPEČNÉ REGULÁRNÍ VÝRAZY ---
+        const cleanRegex = new RegExp('[*\\u2728\\u2B50]', 'g');
+        const jsonRegex = new RegExp('\`\`\`json', 'gi');
+        const tickRegex = new RegExp('\`\`\`', 'g');
+
+        // --- API ---
+        async function callGeminiAPI(parts, systemPrompt, useJson = false) {
+            const isLocal = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost' || window.location.protocol === 'file:';
+            if (isLocal) {
+                await new Promise(r => setTimeout(r, 1500));
+                if (useJson) {
+                    if (parts.length <= 1) {
+                        return JSON.stringify({ status: "question", message: "Ahoj! Web funguje v lokálním testovacím režimu. Zkus mi odpovědět a otestujeme chat!" });
+                    } else {
+                        return JSON.stringify({ status: "done", nazev: "Testovací poptávka", kategorie: "UKÁZKA FUNKČNOSTI", popis: "- Web funguje přesně jak má.", nalehavost: "Nízká", odhad_ceny: "0 Kč", rada: "Tohle je vizuální ukázka rychlé rady." });
+                    }
+                } else {
+                    return "Tohle je automatická odpověď. Až nahraješ web online, probudím se k životu.";
+                }
+            }
+            const response = await fetch('/api/gemini', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ parts, systemPrompt, useJson })
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || `HTTP chyba: ${response.status}`);
+            return data.text;
+        }
+
+        // --- CHAT S BOŘKEM ---
+        function appendMessage(role, text) {
+            const chatMessages = document.getElementById('chat-messages');
+            const msg = document.createElement('div');
+            msg.className = role === 'user'
+                ? 'chat-bubble-user p-4 max-w-[85%] self-end ml-auto mb-3 mr-2 leading-relaxed shadow-sm'
+                : 'chat-bubble-borek p-4 max-w-[85%] mb-3 ml-2 leading-relaxed shadow-sm';
+            msg.innerText = text;
+            chatMessages.appendChild(msg);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        document.getElementById('chat-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const inputEl = document.getElementById('chat-input');
+            const text = inputEl.value.trim();
+            if (!text) return;
+            appendMessage('user', text);
+            inputEl.value = '';
+            
+            const systemPrompt = "Jsi Bořek, asistent platformy Remexo. Odpovídej stručně. ZÁSADNÍ: Odpovídej POUZE na základě faktů (Platforma pro drobné opravy, Escrow, KYC ověření, start 06/2026 Brno). Pokud uživatel popisuje problém, doporuč Remexo.";
+            try {
+                const responseText = await callGeminiAPI([{ text: text }], systemPrompt, false);
+                appendMessage('borek', responseText.replace(cleanRegex, '').trim());
+            } catch (e) {
+                appendMessage('borek', `⚠️ Jejda, něco se pokazilo: ${e.message}`);
+            }
+        });
+
+        // --- GENERÁTOR POPTÁVKY ---
+        const photoInput = document.getElementById('poptavka-photo');
+        const photoPreview = document.getElementById('poptavka-photo-preview');
+        const previewZone = document.getElementById('poptavka-preview-zone');
+        let currentBase64Image = null;
+        let currentMimeType = null;
+        let poptavkaHistoryText = "";
+
+        photoInput.addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                currentMimeType = file.type;
+                const reader = new FileReader();
+                reader.onload = e => {
+                    photoPreview.src = e.target.result;
+                    photoPreview.classList.remove('hidden');
+                    currentBase64Image = e.target.result.split(',')[1];
+                    previewZone.querySelector('i').classList.add('hidden');
+                    previewZone.querySelector('p').classList.add('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function appendPoptavkaChat(role, text) {
+            const chatMessages = document.getElementById('poptavka-chat-messages');
+            const msg = document.createElement('div');
+            if (role === 'user') {
+                msg.className = 'poptavka-bubble-user text-lg leading-relaxed shadow-sm font-medium';
+                msg.innerText = text;
+            } else {
+                msg.className = 'poptavka-bubble-ai text-lg leading-relaxed shadow-sm flex items-start gap-4';
+                msg.innerHTML = `<div class="w-10 h-10 rounded-full bg-remexo-500 flex items-center justify-center text-white shrink-0 mt-1"><i class="fa-solid fa-hard-hat"></i></div><div>${text}</div>`;
+            }
+            chatMessages.appendChild(msg);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        async function processPoptavka(userInputText) {
+            const loading = document.getElementById('poptavka-loading');
+            const replyArea = document.getElementById('poptavka-reply-area');
+            const resultArea = document.getElementById('poptavka-result');
+            const btnInitial = document.getElementById('poptavka-btn');
+            const btnReply = document.getElementById('poptavka-reply-btn');
+            if (btnInitial) btnInitial.disabled = true;
+            if (btnReply) btnReply.disabled = true;
+            loading.classList.remove('hidden');
+            replyArea.classList.add('hidden');
+            
+            const systemPrompt = "Jsi Bořek, profesionální technik. Vytvoř zadání pro řemeslníka.\n" +
+                                 "ODPOVÍDEJ PŘESNĚ V TOMTO JSON FORMÁTU BEZ DALŠÍHO TEXTU KOLEM:\n" +
+                                 "Pokud se ptáš na detaily: {\"status\": \"question\", \"message\": \"tvoje otázka\"}\n" +
+                                 "Pokud máš vše: {\"status\": \"done\", \"nazev\": \"titulek\", \"kategorie\": \"obor\", \"popis\": \"detailní popis\", \"nalehavost\": \"Vysoká/Střední/Nízká\", \"odhad_ceny\": \"cena Kč\", \"rada\": \"krátká rada\"}";
+            
+            let parts = [{ text: userInputText }];
+            if (currentBase64Image && currentMimeType) {
+                parts.push({ inlineData: { mimeType: currentMimeType, data: currentBase64Image } });
+            }
+            try {
+                const responseText = await callGeminiAPI(parts, systemPrompt, true);
+                let cleanText = responseText.replace(jsonRegex, '').replace(tickRegex, '').trim();
+                
+                if (cleanText.indexOf('{') !== -1 && cleanText.lastIndexOf('}') !== -1) {
+                    cleanText = cleanText.substring(cleanText.indexOf('{'), cleanText.lastIndexOf('}') + 1);
+                }
+                const data = JSON.parse(cleanText);
+                loading.classList.add('hidden');
+                
+                if (data.status === "question") {
+                    appendPoptavkaChat('ai', data.message.replace(cleanRegex, ''));
+                    replyArea.classList.remove('hidden');
+                } else if (data.status === "done") {
+                    document.getElementById('pop-nazev').innerText = data.nazev.replace(cleanRegex, '');
+                    document.getElementById('pop-kategorie').innerText = data.kategorie.replace(cleanRegex, '');
+                    document.getElementById('pop-popis').innerText = data.popis.replace(cleanRegex, '');
+                    document.getElementById('pop-nalehavost').innerText = data.nalehavost.replace(cleanRegex, '');
+                    document.getElementById('pop-cena').innerText = data.odhad_ceny.replace(cleanRegex, '');
+                    if (data.rada && data.rada.trim()) {
+                        document.getElementById('pop-rada').innerText = data.rada.replace(cleanRegex, '');
+                        document.getElementById('poptavka-rada-box').classList.remove('hidden');
+                    }
+                    resultArea.classList.remove('hidden');
+                    replyArea.classList.add('hidden');
+                }
+            } catch (e) {
+                loading.classList.add('hidden');
+                alert(`Došlo k chybě: ${e.message}\nZkuste to prosím znovu.`);
+                replyArea.classList.remove('hidden');
+            } finally {
+                if (btnInitial) btnInitial.disabled = false;
+                if (btnReply) btnReply.disabled = false;
+            }
+        }
+
+        document.getElementById('poptavka-btn').addEventListener('click', async () => {
+            const inputEl = document.getElementById('poptavka-input');
+            const text = inputEl.value.trim();
+            if (!text && !currentBase64Image) return;
+            document.getElementById('poptavka-initial-form').classList.add('hidden');
+            document.getElementById('poptavka-chat-box').classList.remove('hidden');
+            poptavkaHistoryText = text || "Posílám fotografii k analýze.";
+            appendPoptavkaChat('user', poptavkaHistoryText);
+            await processPoptavka(poptavkaHistoryText);
+        });
+
+        document.getElementById('poptavka-reply-btn').addEventListener('click', async () => {
+            const inputEl = document.getElementById('poptavka-reply-input');
+            const text = inputEl.value.trim();
+            if (!text) return;
+            appendPoptavkaChat('user', text);
+            poptavkaHistoryText += `\nUpřesnění od uživatele: ${text}`;
+            inputEl.value = '';
+            await processPoptavka(poptavkaHistoryText);
+        });
+
+        document.getElementById('poptavka-reply-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') { e.preventDefault(); document.getElementById('poptavka-reply-btn').click(); }
+        });
+
+        document.getElementById('poptavka-reset-btn').addEventListener('click', (e) => {
+            e.preventDefault();
+            poptavkaHistoryText = "";
+            currentBase64Image = null;
+            currentMimeType = null;
+            document.getElementById('poptavka-input').value = '';
+            document.getElementById('poptavka-reply-input').value = '';
+            document.getElementById('poptavka-chat-messages').innerHTML = '';
+            photoInput.value = '';
+            photoPreview.src = '';
+            photoPreview.classList.add('hidden');
+            previewZone.querySelector('i').classList.remove('hidden');
+            previewZone.querySelector('p').classList.remove('hidden');
+            document.getElementById('poptavka-result').classList.add('hidden');
+            document.getElementById('poptavka-rada-box').classList.add('hidden');
+            document.getElementById('poptavka-chat-box').classList.add('hidden');
+            document.getElementById('poptavka-initial-form').classList.remove('hidden');
+            window.scrollTo({ top: document.getElementById('ai-poptavka').offsetTop - 100, behavior: 'smooth' });
+        });
+
+        // --- PŘEDÁNÍ POPTÁVKY DO APLIKACE ---
+        window.goToAppWithPoptavka = function() {
+            const getText = (id) => { const el = document.getElementById(id); return el ? el.innerText.trim() : ""; };
+            const data = {
+                title: getText("pop-nazev"),
+                kategorie: getText("pop-kategorie"),
+                popis: getText("pop-popis"),
+                nalehavost: getText("pop-nalehavost"),
+                cena: getText("pop-cena")
+            };
+            try {
+                const json = JSON.stringify(data);
+                const encoded = btoa(unescape(encodeURIComponent(json)));
+                window.location.href = "https://app.remexo.cz/?poptavka=" + encodeURIComponent(encoded);
+            } catch(e) {
+                window.location.href = "https://app.remexo.cz";
+            }
+        };
+
+        // --- NEWSLETTER ---
+        const newsletterArea = document.getElementById('newsletter-area');
+        const newsletterSuccess = document.getElementById('newsletter-success');
+        const errorMsg = document.getElementById('error-msg');
+        const newsletterBtn = document.getElementById('newsletter-btn');
+        const newsletterForm = document.getElementById('newsletter-form');
+
+        if(newsletterForm) {
+            newsletterForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const emailInput = document.getElementById('newsletter-email');
+                const emailValue = emailInput.value.trim().toLowerCase();
+                if (!emailValue) return;
+
+                newsletterBtn.disabled = true;
+                const originalBtnText = newsletterBtn.innerText;
+                newsletterBtn.innerText = 'Odesílám...';
+                errorMsg.classList.add('hidden');
+                
+                try {
+                    const response = await fetch('/api/subscribe', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: emailValue })
+                    });
+                    const data = await response.json();
+                    
+                    if (data.duplicate) {
+                        errorMsg.querySelector('p.font-bold').innerText = "Tento e-mail už u nás máte!";
+                        errorMsg.querySelectorAll('p')[1].innerHTML = "Nemusíte se bát, o nic nepřijdete. Váš e-mail máme bezpečně uložený.";
+                        errorMsg.classList.remove('hidden');
+                        newsletterBtn.disabled = false;
+                        newsletterBtn.innerText = originalBtnText;
+                        return;
+                    }
+                    
+                    if (response.ok && data.success) {
+                        newsletterArea.classList.add('hidden');
+                        newsletterSuccess.classList.remove('hidden');
+                    } else { 
+                        throw new Error("Chyba"); 
+                    }
+                } catch (err) {
+                    errorMsg.classList.remove('hidden');
+                    newsletterBtn.disabled = false;
+                    newsletterBtn.innerText = originalBtnText;
+                }
+            });
+        }
+
+        // --- POČÍTADLO ---
+        async function loadCount() {
+            try {
+                const res = await fetch('/api/count');
+                const data = await res.json();
+                const el = document.getElementById('count-number');
+                if (el) el.innerText = data.count;
+            } catch (e) {}
+        }
+        loadCount();
+
+        // --- SCROLLSPY ---
+        const sections = document.querySelectorAll('section[id], footer[id]');
+        const navItems = document.querySelectorAll('.nav-item');
+        const updateScrollSpy = () => {
+            let current = '';
+            sections.forEach(section => { if (window.scrollY >= section.offsetTop - 150) current = section.getAttribute('id'); });
+            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 50) current = 'kontakt';
+            navItems.forEach(link => {
+                link.classList.remove('nav-link-active');
+                if (current && link.getAttribute('href') === `#${current}`) link.classList.add('nav-link-active');
+            });
+        };
+        window.addEventListener('scroll', updateScrollSpy);
+        updateScrollSpy();
+    </script>
+    <script src="katalog.js"></script>
 </body>
 </html>
