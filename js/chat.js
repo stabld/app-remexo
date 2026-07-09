@@ -294,8 +294,9 @@ window.initGlobalNotifications = function() {
 
             if (isMyChat && msg.sender_id !== window.APP_USER.id) {
                 if (window.activeChatId !== String(msg.conversation_id)) {
-                    window.showToast("Nová zpráva! 💬", "Napsal vám: " + (msg.sender_name || "Uživatel"), "info");
-                    window.addNotif("Nová zpráva! 💬", "Zpráva od: " + msg.sender_name);
+                    // Tohle je JEDINÝ typ notifikace, který má zvyšovat bublinu u "Zprávy"
+                    // (4. parametr "true" u showToast to zajišťuje)
+                    window.showToast("Nová zpráva! 💬", "Napsal vám: " + (msg.sender_name || "Uživatel"), "info", true);
                     
                     if (!window.STATE.unreadChats) window.STATE.unreadChats = {};
                     window.STATE.unreadChats[msg.conversation_id] = (window.STATE.unreadChats[msg.conversation_id] || 0) + 1;
@@ -307,21 +308,21 @@ window.initGlobalNotifications = function() {
         })
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'offers' }, payload => {
             if (window.APP_ROLE === "customer") {
+                // Nová nabídka NENÍ zpráva - jde jen do zvonečku nahoře, ne do bubliny u Zpráv
                 window.showToast("Nová nabídka! 🎉", "Řemeslník " + (payload.new.craftsman_name || "") + " má zájem.", "success");
-                window.addNotif("Nová nabídka! 🎉", payload.new.craftsman_name + " poslal nabídku.");
                 if (window.loadCustomerRequestsFromDB) window.loadCustomerRequestsFromDB();
             }
         })
         .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'offers' }, payload => {
             if (window.APP_ROLE === "craftsman" && payload.new.craftsman_id === window.APP_USER.id) {
                 if (payload.new.status === "accepted") {
+                    // Přijetí nabídky NENÍ zpráva - jde jen do zvonečku nahoře
                     window.showToast("Nabídka přijata! ✅", "Zákazník přijal vaši nabídku.", "success");
-                    window.addNotif("Nabídka přijata! ✅", "Můžete začít komunikovat.");
                     if (window.loadCraftsmanJobsFromDB) window.loadCraftsmanJobsFromDB();
                     if (window.loadCraftsmanConversations) window.loadCraftsmanConversations();
                 } else if (payload.new.status === "rejected") {
+                    // Odmítnutí nabídky NENÍ zpráva - jde jen do zvonečku nahoře
                     window.showToast("Nabídka odmítnuta ❌", "Zákazník si vybral někoho jiného.", "error");
-                    window.addNotif("Nabídka odmítnuta", "Vaše nabídka na zakázku nebyla přijata.");
                     if (window.loadCraftsmanJobsFromDB) window.loadCraftsmanJobsFromDB();
                 }
             }
