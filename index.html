@@ -161,8 +161,8 @@
                 <label class="flex items-start gap-3 cursor-pointer mt-2">
         <input type="checkbox" id="reg-consent" class="w-4 h-4 rounded mt-0.5 shrink-0" style="accent-color:#f59e0b">
         <span class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-            Souhlasím s <a href="https://remexo.cz" target="_blank" class="text-remexo-500 hover:underline font-bold">podmínkami použití</a>
-            a <a href="https://remexo.cz" target="_blank" class="text-remexo-500 hover:underline font-bold">zpracováním osobních údajů (GDPR)</a>.
+            Souhlasím s <button type="button" onclick="event.preventDefault();window.openModal('modal-podminky')" class="text-remexo-500 hover:underline font-bold">podmínkami použití</button>
+            a <button type="button" onclick="event.preventDefault();window.openModal('modal-gdpr')" class="text-remexo-500 hover:underline font-bold">zpracováním osobních údajů (GDPR)</button>.
         </span>
     </label>
     <button id="btn-do-reg" onclick="window.doRegister()" class="w-full bg-remexo-500 hover:bg-remexo-600 text-white py-3.5 rounded-xl font-bold transition shadow-md mt-2">Vytvořit účet</button>
