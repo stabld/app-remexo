@@ -52,6 +52,11 @@ window.togglePassword = function(inputId, btnNode) {
 window.doRegister = async function() {
     if (!window.sb) return window.showErr("Chyba připojení.");
 
+    const consentEl = document.getElementById("reg-consent");
+    if (consentEl && !consentEl.checked) {
+        return window.showErr("Pro vytvoření účtu musíte souhlasit s podmínkami použití a zpracováním osobních údajů.");
+    }
+
     const password = document.getElementById("reg-pass").value;
     const confirmPassword = document.getElementById("reg-pass-confirm").value;
 
