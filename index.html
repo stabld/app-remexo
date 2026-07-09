@@ -59,6 +59,9 @@
 </div>
 
 <div id="auth-screen" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-50 dark:bg-remexo-dark p-4 transition-opacity duration-500 overflow-y-auto">
+    <a href="https://remexo.cz" class="absolute top-5 left-5 z-20 flex items-center gap-2 text-sm font-bold text-slate-500 dark:text-slate-400 hover:text-remexo-500 transition bg-white dark:bg-slate-900 px-4 py-2.5 rounded-full shadow-sm border border-slate-200 dark:border-slate-800">
+        <i class="fa-solid fa-arrow-left"></i> Zpět na web
+    </a>
     <div class="absolute top-[-10%] left-[-10%] w-96 h-96 bg-remexo-500/20 rounded-full blur-[100px] pointer-events-none"></div>
     <div class="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-blue-500/10 rounded-full blur-[100px] pointer-events-none"></div>
     <div class="w-full max-w-2xl bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl border border-slate-200 dark:border-slate-800 p-8 md:p-12 relative z-10">
@@ -199,6 +202,10 @@
         <header class="h-16 glass-panel border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-6 z-40 flex-shrink-0">
             <h1 class="text-xl font-extrabold dark:text-white" id="page-title">Nástěnka</h1>
             <div class="flex items-center gap-3">
+                <a href="https://remexo.cz" class="w-9 h-9 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 flex items-center justify-center text-slate-500 transition" title="Zpět na web">
+        <i class="fa-solid fa-arrow-left text-lg"></i>
+    </a>
+    <div id="notif-bell" class="relative">
                 <div id="notif-bell" class="relative">
                     <button id="notif-btn" onclick="window.toggleNotifDropdown()" class="w-9 h-9 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 flex items-center justify-center text-slate-500 transition">
                         <i class="fa-solid fa-bell text-lg"></i>
