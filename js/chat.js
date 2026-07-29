@@ -232,6 +232,11 @@ window.loadCustomerConversations = async function() {
                 if(el) el.innerText = data[0].sender_name;
             }
         }
+        if (r.craftsman_id && window.getUserAvatar) {
+            const avUrl = await window.getUserAvatar(r.craftsman_id, r.craftsman_name || "c", "0f172a");
+            const img = document.getElementById("cav-" + r.id);
+            if (img) img.src = avUrl;
+        }
     });
 };
 
@@ -264,7 +269,7 @@ window.loadCraftsmanConversations = async function() {
 
         // Tady se předává i ID zákazníka, aby fungovalo chytré načítání fotky!
         return '<div id="conv-' + o.request_id + '" onclick="window.openConversation(' + o.request_id + ',\'' + safeName + '\',\'customer' + o.request_id + '\',' + customerIdParam + ')" class="conv-item px-4 py-3.5 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/60 border-b border-slate-100 dark:border-slate-800/80 transition-all duration-150 flex items-center gap-3 ' + isActiveClass + '">' +
-        '<div class="relative shrink-0"><img src="https://api.dicebear.com/7.x/avataaars/svg?seed=' + seed + '&backgroundColor=f59e0b" class="w-10 h-10 rounded-full border-2 border-slate-200 dark:border-slate-700 bg-slate-100"><span style="position:absolute;bottom:0;right:0;width:10px;height:10px;border-radius:50%;background:' + statusDot + ';border:2px solid white;"></span></div>' +
+        '<div class="relative shrink-0"><img id="cav-c-' + o.request_id + '" src="https://api.dicebear.com/7.x/avataaars/svg?seed=' + seed + '&backgroundColor=f59e0b" class="w-10 h-10 rounded-full border-2 border-slate-200 dark:border-slate-700 bg-slate-100 object-cover"><span style="position:absolute;bottom:0;right:0;width:10px;height:10px;border-radius:50%;background:' + statusDot + ';border:2px solid white;"></span></div>' +
         '<div class="flex-1 min-w-0"><p class="font-bold text-sm dark:text-white truncate leading-tight" id="clist-name-c-' + o.request_id + '">' + (o.requests?.customer_name || "Zákazník") + '</p><p class="text-xs text-slate-400 mt-0.5 truncate">' + (o.requests?.title || "Poptávka") + '</p></div>' +
         unreadBadge +
         '</div>';
@@ -277,6 +282,11 @@ window.loadCraftsmanConversations = async function() {
                 const el = document.getElementById("clist-name-c-" + o.request_id);
                 if(el) el.innerText = data[0].sender_name;
             }
+        }
+        if (o.requests?.customer_id && window.getUserAvatar) {
+            const avUrl = await window.getUserAvatar(o.requests.customer_id, o.requests?.customer_name || "u", "f59e0b");
+            const img = document.getElementById("cav-c-" + o.request_id);
+            if (img) img.src = avUrl;
         }
     });
 };
