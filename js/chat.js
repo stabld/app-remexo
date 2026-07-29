@@ -76,7 +76,7 @@ window.openConversation = async function(requestId, partnerName, partnerSeed, pa
         avatarEl.style.backgroundImage = "url('" + avUrl + "')";
     }
     
-    document.querySelectorAll(".conv-item").forEach(el=>el.classList.remove("bg-white","dark:bg-slate-800/50","border--500","border-l-4"));
+    document.querySelectorAll(".conv-item").forEach(el=>el.classList.remove("bg-white","dark:bg-slate-800/50","border-remexo-500","border-l-4"));
     const ac=document.getElementById("conv-"+requestId);
     if(ac)ac.classList.add("bg-white","dark:bg-slate-800/50","border-remexo-500","border-l-4");
     
