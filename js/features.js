@@ -308,10 +308,9 @@ window.showFinalizeForm = function() {
     document.getElementById("popt-finalize").scrollIntoView({behavior:"smooth"});
 };
 
-window.isNearBrno = async function(cityName) {
-    if (/brno/i.test(cityName)) return true;
+window.isNearBrno = async function(addressStr) {
     try {
-        const resp = await fetch("https://nominatim.openstreetmap.org/search?format=json&q=" + encodeURIComponent(cityName + ", Česká republika") + "&limit=1", { headers: { "Accept-Language": "cs" } });
+        const resp = await fetch("https://nominatim.openstreetmap.org/search?format=json&q=" + encodeURIComponent(addressStr + ", Česká republika") + "&limit=1", { headers: { "Accept-Language": "cs" } });
         const geo = await resp.json();
         if (!geo || geo.length === 0) return null;
         const lat = parseFloat(geo[0].lat), lon = parseFloat(geo[0].lon);
@@ -339,9 +338,9 @@ window.publishRequest = async function(btnNode) {
         if(city.length<2||/\d/.test(city)){ window.showToast("Neplatné město","Zadejte název města bez čísel.","error"); highlightError("f-city"); if(btnNode&&btnNode.tagName){btnNode.innerHTML=orig;btnNode.disabled=false;} return; }
         if(!/^[+]?[\d\s\-().]{7,20}$/.test(phone)){ window.showToast("Neplatné telefonní číslo","Zadejte číslo ve formátu +420 123 456 789.","error"); highlightError("f-phone"); if(btnNode&&btnNode.tagName){btnNode.innerHTML=orig;btnNode.disabled=false;} return; }
 
-        const nearBrno = await window.isNearBrno(city);
+        const nearBrno = await window.isNearBrno(street + ", " + city);
         if (nearBrno === false) { window.showToast("Mimo oblast působnosti","Momentálně fungujeme jen v Brně a okolí (do 35 km). Mrzí nás to!","error"); highlightError("f-city"); if(btnNode&&btnNode.tagName){btnNode.innerHTML=orig;btnNode.disabled=false;} return; }
-        if (nearBrno === null) { window.showToast("Nepodařilo se ověřit město","Zkontrolujte prosím název města a zkuste to znovu.","error"); highlightError("f-city"); if(btnNode&&btnNode.tagName){btnNode.innerHTML=orig;btnNode.disabled=false;} return; }
+        if (nearBrno === null) { window.showToast("Adresu se nepodařilo najít","Zkontrolujte prosím ulici, číslo popisné a město a zkuste to znovu.","error"); highlightError("f-street"); if(btnNode&&btnNode.tagName){btnNode.innerHTML=orig;btnNode.disabled=false;} return; }
 
         const detailInfo = ["📍 Adresa: "+street+", "+city,"📞 Telefon: "+phone,"📅 Termín: "+timeframe,"🏠 Typ objektu: "+property,"🚗 Parkování: "+parking,...(budget?["💰 Rozpočet: "+budget]:[])].join('\n');
         let finalPopis=popis+"\n\n---\n📋 DOPLŇUJÍCÍ INFORMACE:\n"+detailInfo;
