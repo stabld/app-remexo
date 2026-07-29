@@ -147,8 +147,8 @@ window.craftsmanHTML = function(name) {
             <h2 class="text-3xl font-extrabold dark:text-white">Tržiště zakázek</h2>
             <div class="flex items-center gap-2">
                 <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-1 flex gap-1 shadow-sm">
-                    <button id="view-toggle-list" onclick="window.toggleMarketView('list')" class="px-4 py-2 rounded-lg text-sm font-bold bg-remexo-500 text-white transition"><i class="fa-solid fa-list mr-1.5"></i>Seznam</button>
-                    <button id="view-toggle-map" onclick="window.toggleMarketView('map')" class="px-4 py-2 rounded-lg text-sm font-bold text-slate-500 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition"><i class="fa-solid fa-map-location-dot mr-1.5"></i>Mapa</button>
+                    <button id="toggle-list" onclick="window.toggleMarketView('list')" class="px-4 py-2 rounded-lg text-sm font-bold bg-remexo-500 text-white transition"><i class="fa-solid fa-list mr-1.5"></i>Seznam</button>
+                    <button id="toggle-map" onclick="window.toggleMarketView('map')" class="px-4 py-2 rounded-lg text-sm font-bold text-slate-500 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition"><i class="fa-solid fa-map-location-dot mr-1.5"></i>Mapa</button>
                 </div>
             </div>
         </div>
