@@ -75,8 +75,15 @@ window._doDeleteRequest = async function(index, sbId) {
         try {
             await window.sb.from("offers").delete().eq("request_id",sbId);
             await window.sb.from("messages").delete().eq("conversation_id",String(sbId));
-            await window.sb.from("requests").delete().eq("id",sbId);
-        } catch(e){}
+            const {error}=await window.sb.from("requests").delete().eq("id",sbId);
+            if(error){
+                window.showToast("Smazání se nezdařilo", error.message || "Zkontrolujte oprávnění (RLS) v databázi.", "error");
+                return;
+            }
+        } catch(e){
+            window.showToast("Smazání se nezdařilo", e.message || "Zkuste to prosím znovu.", "error");
+            return;
+        }
     }
     window.STATE.requests.splice(index,1);
     if(window.refreshRequestsList)window.refreshRequestsList(); if(window.refreshDashboard)window.refreshDashboard();
