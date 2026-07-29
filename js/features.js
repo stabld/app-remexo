@@ -248,7 +248,7 @@ window.appendChat = function(role, text, photos) {
             d.appendChild(grid);
         }
     }
-    else { d.className="poptavka-bubble-ai text-sm flex items-start gap-3"; d.innerHTML='<div class="w-8 h-8 bg-remexo-500 rounded-full flex items-center justify-center text-white shrink-0"><i class="fa-solid fa-hard-hat text-xs"></i></div><div>' + text + '</div>'; }
+    else { d.className="poptavka-bubble-ai text-sm flex items-start gap-3"; d.innerHTML='<div class="w-8 h-8 bg-remexo-500 rounded-full flex items-center justify-center text-white shrink-0 overflow-hidden"><img src="/borek-hlava.PNG" alt="Bořek" class="w-full h-full object-contain p-0.5"></div><div>' + text + '</div>'; }
     box.appendChild(d); box.scrollTop=box.scrollHeight;
 };
 
@@ -310,9 +310,14 @@ window.showFinalizeForm = function() {
 
 window.isNearBrno = async function(addressStr) {
     try {
-        const resp = await fetch("https://nominatim.openstreetmap.org/search?format=json&q=" + encodeURIComponent(addressStr + ", Česká republika") + "&limit=1", { headers: { "Accept-Language": "cs" } });
+        const resp = await fetch("https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=" + encodeURIComponent(addressStr + ", Česká republika") + "&limit=1", { headers: { "Accept-Language": "cs" } });
         const geo = await resp.json();
         if (!geo || geo.length === 0) return null;
+
+        const enteredNum = (addressStr.match(/\d+[a-zA-Z]?/) || [])[0];
+        const foundNum = geo[0].address && geo[0].address.house_number;
+        if (enteredNum && (!foundNum || foundNum.replace(/\s/g, "").toLowerCase() !== enteredNum.toLowerCase())) return null;
+
         const lat = parseFloat(geo[0].lat), lon = parseFloat(geo[0].lon);
         const BRNO_LAT = 49.1951, BRNO_LON = 16.6068, R = 6371;
         const dLat = (lat - BRNO_LAT) * Math.PI / 180, dLon = (lon - BRNO_LON) * Math.PI / 180;
@@ -336,7 +341,8 @@ window.publishRequest = async function(btnNode) {
         if(!street||!city||!phone){ window.showToast("Chybí kontaktní údaje","Vyplňte ulici, město a telefonní číslo.","error"); if(!street)highlightError("f-street"); else if(!city)highlightError("f-city"); else highlightError("f-phone"); if(btnNode&&btnNode.tagName){btnNode.innerHTML=orig;btnNode.disabled=false;} return; }
         if(street.length<5||!/[a-zA-ZáčďéěíňóřšťúůýžÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ]/.test(street)||!/\d/.test(street)){ window.showToast("Neplatná adresa","Zadejte ulici i číslo popisné.","error"); highlightError("f-street"); if(btnNode&&btnNode.tagName){btnNode.innerHTML=orig;btnNode.disabled=false;} return; }
         if(city.length<2||/\d/.test(city)){ window.showToast("Neplatné město","Zadejte název města bez čísel.","error"); highlightError("f-city"); if(btnNode&&btnNode.tagName){btnNode.innerHTML=orig;btnNode.disabled=false;} return; }
-        if(!/^[+]?[\d\s\-().]{7,20}$/.test(phone)){ window.showToast("Neplatné telefonní číslo","Zadejte číslo ve formátu +420 123 456 789.","error"); highlightError("f-phone"); if(btnNode&&btnNode.tagName){btnNode.innerHTML=orig;btnNode.disabled=false;} return; }
+        const phoneDigits = phone.replace(/[\s\-().]/g, "");
+        if(!/^(\+420|00420)?\d{9}$/.test(phoneDigits)){ window.showToast("Neplatné telefonní číslo","Zadejte platné české číslo (9 číslic), např. +420 731 573 644.","error"); highlightError("f-phone"); if(btnNode&&btnNode.tagName){btnNode.innerHTML=orig;btnNode.disabled=false;} return; }
 
         const nearBrno = await window.isNearBrno(street + ", " + city);
         if (nearBrno === false) { window.showToast("Mimo oblast působnosti","Momentálně fungujeme jen v Brně a okolí (do 35 km). Mrzí nás to!","error"); highlightError("f-city"); if(btnNode&&btnNode.tagName){btnNode.innerHTML=orig;btnNode.disabled=false;} return; }
@@ -370,7 +376,7 @@ window.publishRequest = async function(btnNode) {
         ["popt-result","popt-tip","popt-chat","popt-finalize"].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.add("hidden");});
         document.getElementById("btn-show-finalize").classList.remove("hidden"); document.getElementById("popt-form").classList.remove("hidden");
         if(btnNode&&btnNode.tagName){btnNode.innerHTML=orig;btnNode.disabled=false;}
-        window.showToast("Poptávka zveřejněna! 🎉","Řemeslníci budou brzy kontaktovat.","success");
+        window.showToast("Poptávka zveřejněna! 🎉","Nabídky od řemeslníků uvidíte v sekci Moje poptávky.","success");
         window.goTab("requests","Moje poptávky");
     } catch(err) { window.showToast("Chyba","Nastala chyba: "+err.message,"error"); if(btnNode&&btnNode.tagName){btnNode.innerHTML=orig;btnNode.disabled=false;} }
 };
