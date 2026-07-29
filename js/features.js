@@ -45,7 +45,7 @@ window.submitRating = async function() {
         try { await window.sb.from("requests").update({ status: "done" }).eq("id", sbId); } catch(e) {}
     }
     window.STATE.requests[index].status = "done";
-    window.refreshRequestsList(); window.refreshDashboard();
+    if(window.refreshRequestsList)window.refreshRequestsList(); if(window.refreshDashboard)window.refreshDashboard();
     btn.innerHTML = orig; btn.disabled = false;
     window.closeRatingModal();
     window.showToast("Hotovo! ⭐", "Hodnocení bylo odesláno. Děkujeme!", "success");
@@ -79,7 +79,7 @@ window._doDeleteRequest = async function(index, sbId) {
         } catch(e){}
     }
     window.STATE.requests.splice(index,1);
-    window.refreshRequestsList(); window.refreshDashboard();
+    if(window.refreshRequestsList)window.refreshRequestsList(); if(window.refreshDashboard)window.refreshDashboard();
     window.showToast("Smazáno","Poptávka byla úspěšně smazána.","info");
 };
 
@@ -140,9 +140,8 @@ window.saveProfile = async function(btnNode) {
         }
         const phoneInput = document.getElementById('prof-phone');
     if (phoneInput) {
-        const cleanPhone = phoneInput.value.replace(/\s+/g, '').replace('+', '');
-        // Počítáme s tím, že tam máš +420 (3 číslice) + 9 číslic = 12 znaků
-        if (cleanPhone.length !== 12 && cleanPhone.length !== 0) {
+        const cleanPhone = phoneInput.value.replace(/[\s\-().]/g, '');
+        if (cleanPhone.length !== 0 && !/^(\+420|00420)?\d{9}$/.test(cleanPhone)) {
             window.showToast("Chyba", "Telefonní číslo musí mít 9 číslic.", "error");
             return;
         }
@@ -366,7 +365,7 @@ window.publishRequest = async function(btnNode) {
         if (!window.STATE) window.STATE = { requests: [], craftJobs: [], marketRequests: [] };
         if (!window.STATE.requests) window.STATE.requests = [];
         window.STATE.requests.unshift({sbId,title,kat,popis:finalPopis,time:new Date().toLocaleTimeString("cs",{hour:"2-digit",minute:"2-digit"}),status:"waiting"});
-        window.refreshRequestsList(); window.refreshDashboard(); window.poptHistoryText=""; window.poptPhotos=[];
+        if(window.refreshRequestsList)window.refreshRequestsList(); if(window.refreshDashboard)window.refreshDashboard(); window.poptHistoryText=""; window.poptPhotos=[];
         
         ["popt-input","f-street","f-city","f-phone","f-budget"].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});
         document.getElementById("popt-chat-msgs").innerHTML=""; 
@@ -481,7 +480,7 @@ window.acceptOffer = async function(offerId, requestId, craftsmanName) {
     await window.sb.from("requests").update({status:"active",craftsman_name:craftsmanName}).eq("id",requestId);
     window.showToast("Nabídka přijata! ✅","Zahajujete spolupráci s "+craftsmanName+".","success");
     const req=window.STATE.requests.find(r=>r.sbId===requestId);if(req){req.status="active";req.craftsman_name=craftsmanName;}
-    window.refreshRequestsList();window.refreshDashboard(); window.activeChatId=String(requestId); window.goTab("messages","Zprávy");
+    if(window.refreshRequestsList)window.refreshRequestsList();if(window.refreshDashboard)window.refreshDashboard(); window.activeChatId=String(requestId); window.goTab("messages","Zprávy");
     setTimeout(()=>window.openConversation(requestId,craftsmanName,"craftsman"+requestId),300);
 };
 
@@ -517,7 +516,7 @@ window.loadCustomerRequestsFromDB = async function() {
     const {data}=await window.sb.from("requests").select("*").eq("customer_id",window.APP_USER.id).order("created_at",{ascending:false});
     if(data&&data.length>0){
         window.STATE.requests=data.map(r=>({sbId:r.id,title:r.title,kat:r.category,popis:r.description,time:new Date(r.created_at).toLocaleTimeString("cs",{hour:"2-digit",minute:"2-digit"}),status:r.status,craftsman_name:r.craftsman_name||null}));
-        window.refreshRequestsList();window.refreshDashboard();
+        if(window.refreshRequestsList)window.refreshRequestsList();if(window.refreshDashboard)window.refreshDashboard();
     }
 };
 
