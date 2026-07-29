@@ -224,6 +224,12 @@ window.goTab = function(id, title) {
     
     if(id==="messages" && window.loadCustomerConversations) window.loadCustomerConversations();
     if(id==="c-messages" && window.loadCraftsmanConversations) window.loadCraftsmanConversations();
+    if(id==="new") {
+        const phoneField = document.getElementById("f-phone");
+        if(phoneField && !phoneField.value && window.APP_USER && window.APP_USER.user_metadata && window.APP_USER.user_metadata.phone) {
+            phoneField.value = window.APP_USER.user_metadata.phone;
+        }
+    }
     if(id==="market") {
         if(window.loadMarketFromDB) window.loadMarketFromDB();
         const mapEl=document.getElementById("market-map"),listEl=document.getElementById("market-list");
