@@ -73,9 +73,9 @@ window.doConfirmDelete = function() {
 window._doDeleteRequest = async function(index, sbId) {
     if(sbId&&window.sb){
         try {
-            await window.sb.from("requests").delete().eq("id",sbId);
             await window.sb.from("offers").delete().eq("request_id",sbId);
             await window.sb.from("messages").delete().eq("conversation_id",String(sbId));
+            await window.sb.from("requests").delete().eq("id",sbId);
         } catch(e){}
     }
     window.STATE.requests.splice(index,1);
@@ -528,7 +528,7 @@ window.loadMarketFromDB = async function() {
     list.innerHTML=data.map((r,i)=>window.createBeautifulCard({id:r.id,sbId:r.id,title:r.title,kat:r.category||"Ostatní",popis:r.description||"",time:new Date(r.created_at).toLocaleDateString("cs"),status:r.status,urgency:r.urgency||"Střední",category:r.category,customer_name:r.customer_name||"Zákazník",price_estimate:r.price_estimate||"Dohodou"},true,i)).join("");
 };
 
-window.toggleMarketView = function(mode) {
+window.toggleMarketView = async function(mode) {
     const listEl=document.getElementById("market-list"),mapEl=document.getElementById("market-map");
     const btnList=document.getElementById("toggle-list"),btnMap=document.getElementById("toggle-map");
     if(!listEl||!mapEl)return;
@@ -536,6 +536,7 @@ window.toggleMarketView = function(mode) {
         listEl.classList.add("hidden");mapEl.classList.remove("hidden");
         if(btnList)btnList.className=btnList.className.replace("bg-remexo-500 text-white","text-slate-500 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700");
         if(btnMap)btnMap.className=btnMap.className.replace("text-slate-500 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700","bg-remexo-500 text-white");
+        if(window.loadMarketFromDB) await window.loadMarketFromDB();
         window.initMarketMap();
     } else {
         mapEl.classList.add("hidden");listEl.classList.remove("hidden");
