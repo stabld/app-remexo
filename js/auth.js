@@ -122,7 +122,7 @@ window.doLogout = async function() { if(window.sb) await window.sb.auth.signOut(
 
 // === OTEVÍRÁNÍ A ZAVÍRÁNÍ OKEN PRO HESLO ===
 window.openForgotPw = function() {
-    const authModal = document.getElementById("auth-modal");
+    const authModal = document.getElementById("auth-screen");
     if(authModal) authModal.classList.add("hidden");
     
     const m = document.getElementById("forgot-pw-modal");
