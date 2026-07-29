@@ -507,7 +507,7 @@ window.loadMarketFromDB = async function() {
 
 window.toggleMarketView = function(mode) {
     const listEl=document.getElementById("market-list"),mapEl=document.getElementById("market-map");
-    const btnList=document.getElementById("view-toggle-list"),btnMap=document.getElementById("view-toggle-map");
+    const btnList=document.getElementById("toggle-list"),btnMap=document.getElementById("toggle-map");
     if(!listEl||!mapEl)return;
     if(mode==="map"){
         listEl.classList.add("hidden");mapEl.classList.remove("hidden");
