@@ -308,6 +308,21 @@ window.showFinalizeForm = function() {
     document.getElementById("popt-finalize").scrollIntoView({behavior:"smooth"});
 };
 
+window.isNearBrno = async function(cityName) {
+    if (/brno/i.test(cityName)) return true;
+    try {
+        const resp = await fetch("https://nominatim.openstreetmap.org/search?format=json&q=" + encodeURIComponent(cityName + ", Česká republika") + "&limit=1", { headers: { "Accept-Language": "cs" } });
+        const geo = await resp.json();
+        if (!geo || geo.length === 0) return null;
+        const lat = parseFloat(geo[0].lat), lon = parseFloat(geo[0].lon);
+        const BRNO_LAT = 49.1951, BRNO_LON = 16.6068, R = 6371;
+        const dLat = (lat - BRNO_LAT) * Math.PI / 180, dLon = (lon - BRNO_LON) * Math.PI / 180;
+        const a = Math.sin(dLat / 2) ** 2 + Math.cos(BRNO_LAT * Math.PI / 180) * Math.cos(lat * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+        const dist = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return dist <= 35;
+    } catch (e) { return null; }
+};
+
 window.publishRequest = async function(btnNode) {
     let orig = "Zveřejnit poptávku na Remexo";
     try {
@@ -323,6 +338,10 @@ window.publishRequest = async function(btnNode) {
         if(street.length<5||!/[a-zA-ZáčďéěíňóřšťúůýžÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ]/.test(street)||!/\d/.test(street)){ window.showToast("Neplatná adresa","Zadejte ulici i číslo popisné.","error"); highlightError("f-street"); if(btnNode&&btnNode.tagName){btnNode.innerHTML=orig;btnNode.disabled=false;} return; }
         if(city.length<2||/\d/.test(city)){ window.showToast("Neplatné město","Zadejte název města bez čísel.","error"); highlightError("f-city"); if(btnNode&&btnNode.tagName){btnNode.innerHTML=orig;btnNode.disabled=false;} return; }
         if(!/^[+]?[\d\s\-().]{7,20}$/.test(phone)){ window.showToast("Neplatné telefonní číslo","Zadejte číslo ve formátu +420 123 456 789.","error"); highlightError("f-phone"); if(btnNode&&btnNode.tagName){btnNode.innerHTML=orig;btnNode.disabled=false;} return; }
+
+        const nearBrno = await window.isNearBrno(city);
+        if (nearBrno === false) { window.showToast("Mimo oblast působnosti","Momentálně fungujeme jen v Brně a okolí (do 35 km). Mrzí nás to!","error"); highlightError("f-city"); if(btnNode&&btnNode.tagName){btnNode.innerHTML=orig;btnNode.disabled=false;} return; }
+        if (nearBrno === null) { window.showToast("Nepodařilo se ověřit město","Zkontrolujte prosím název města a zkuste to znovu.","error"); highlightError("f-city"); if(btnNode&&btnNode.tagName){btnNode.innerHTML=orig;btnNode.disabled=false;} return; }
 
         const detailInfo = ["📍 Adresa: "+street+", "+city,"📞 Telefon: "+phone,"📅 Termín: "+timeframe,"🏠 Typ objektu: "+property,"🚗 Parkování: "+parking,...(budget?["💰 Rozpočet: "+budget]:[])].join('\n');
         let finalPopis=popis+"\n\n---\n📋 DOPLŇUJÍCÍ INFORMACE:\n"+detailInfo;
