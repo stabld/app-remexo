@@ -70,7 +70,7 @@ window.openConversation = async function(requestId, partnerName, partnerSeed, pa
     
     const avatarEl = document.getElementById("chat-partner-avatar");
     if(avatarEl) {
-        avatarEl.dataset.loadedId = ""; 
+        avatarEl.dataset.loadedId = partnerUserId || "";
         const fallbackBg = window.APP_ROLE === "customer" ? "0f172a" : "f59e0b";
         const avUrl = await window.getUserAvatar(partnerUserId, partnerSeed, fallbackBg);
         avatarEl.style.backgroundImage = "url('" + avUrl + "')";
@@ -337,6 +337,12 @@ window.initGlobalNotifications = function() {
                     window.showToast("Nabídka odmítnuta ❌", "Zákazník si vybral někoho jiného.", "error");
                     if (window.loadCraftsmanJobsFromDB) window.loadCraftsmanJobsFromDB();
                 }
+            }
+        })
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'requests' }, payload => {
+            if (window.APP_ROLE === "craftsman" && payload.new.status === "waiting") {
+                window.showToast("Nová poptávka! 🔨", (payload.new.title || "Nová zakázka") + " – mrkněte na Tržiště.", "info");
+                if (window.STATE) window.STATE.marketRequests = null;
             }
         })
         .subscribe(status => console.log("[notif] Stav realtime kanálu:", status));
