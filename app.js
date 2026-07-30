@@ -16,7 +16,15 @@ window.addEventListener('load', async () => {
         const { data: { session } } = await window.sb.auth.getSession();
         if (session && session.user) {
             window.APP_USER = session.user;
-            window.APP_ROLE = session.user.user_metadata?.role || "customer";
+            let pendingRole = null;
+            try { pendingRole = localStorage.getItem("remexo_pending_role"); } catch(e){}
+            if (!session.user.user_metadata?.role && pendingRole) {
+                window.APP_ROLE = pendingRole;
+                try { await window.sb.auth.updateUser({ data: { role: pendingRole } }); } catch(e){}
+            } else {
+                window.APP_ROLE = session.user.user_metadata?.role || "customer";
+            }
+            try { localStorage.removeItem("remexo_pending_role"); } catch(e){}
             const name = session.user.user_metadata?.full_name || "Uživatel";
             const authEl = document.getElementById("auth-screen");
             if (authEl) authEl.classList.add("hidden");
