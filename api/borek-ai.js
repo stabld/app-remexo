@@ -3,7 +3,7 @@ export default async function handler(req, res) {
         return res.status(405).json({ error: 'Metoda není povolena' });
     }
 
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.AI_MODEL_TOKEN;
     if (!apiKey) {
         return res.status(500).json({ error: 'API klíč není nastaven na serveru.' });
     }
