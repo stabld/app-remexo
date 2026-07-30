@@ -1,6 +1,7 @@
 // === AUTH LOGIKA ===
 window.signInWith = async function(provider) {
     if (!window.sb) { alert("Chyba: Supabase není inicializováno"); return; }
+    if (window.APP_ROLE) { try { localStorage.setItem("remexo_pending_role", window.APP_ROLE); } catch(e){} }
     await window.sb.auth.signInWithOAuth({ provider: provider, options: { redirectTo: window.location.origin } });
 };
 
