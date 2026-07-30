@@ -316,13 +316,18 @@ window.showFinalizeForm = function() {
 
 window.isNearBrno = async function(addressStr) {
     try {
-        const resp = await fetch("https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=" + encodeURIComponent(addressStr + ", Česká republika") + "&limit=1", { headers: { "Accept-Language": "cs" } });
-        const geo = await resp.json();
-        if (!geo || geo.length === 0) return null;
+        let resp = await fetch("https://nominatim.openstreetmap.org/search?format=json&q=" + encodeURIComponent(addressStr + ", Česká republika") + "&limit=1", { headers: { "Accept-Language": "cs" } });
+        let geo = await resp.json();
 
-        const enteredNum = (addressStr.match(/\d+[a-zA-Z]?/) || [])[0];
-        const foundNum = geo[0].address && geo[0].address.house_number;
-        if (enteredNum && (!foundNum || foundNum.replace(/\s/g, "").toLowerCase() !== enteredNum.toLowerCase())) return null;
+        if (!geo || geo.length === 0) {
+            const withoutNumber = addressStr.replace(/\d+\/?\d*[a-zA-Z]?\s*$/, "").trim();
+            if (withoutNumber && withoutNumber !== addressStr) {
+                resp = await fetch("https://nominatim.openstreetmap.org/search?format=json&q=" + encodeURIComponent(withoutNumber + ", Česká republika") + "&limit=1", { headers: { "Accept-Language": "cs" } });
+                geo = await resp.json();
+            }
+        }
+
+        if (!geo || geo.length === 0) return null;
 
         const lat = parseFloat(geo[0].lat), lon = parseFloat(geo[0].lon);
         const BRNO_LAT = 49.1951, BRNO_LON = 16.6068, R = 6371;
