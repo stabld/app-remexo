@@ -294,6 +294,7 @@ window.loadCraftsmanConversations = async function() {
 window.initGlobalNotifications = function() {
     if (!window.sb || !window.APP_USER) return;
     if (window.globalNotifSub) { try { window.sb.removeChannel(window.globalNotifSub); } catch(e){} }
+    console.log("[notif] Nastavuji globální notifikace, role:", window.APP_ROLE, "user:", window.APP_USER.id);
 
     window.globalNotifSub = window.sb.channel('global-notifs')
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
@@ -301,6 +302,7 @@ window.initGlobalNotifications = function() {
             const isMyChat = window.APP_ROLE === "customer" 
                 ? (window.STATE.requests || []).some(r => String(r.sbId) === String(msg.conversation_id))
                 : (window.STATE.craftJobs || []).some(j => String(j.requestId) === String(msg.conversation_id));
+            console.log("[notif] Přišla nová zpráva přes realtime:", msg, "| isMyChat:", isMyChat, "| activeChatId:", window.activeChatId);
 
             if (isMyChat && msg.sender_id !== window.APP_USER.id) {
                 if (window.activeChatId !== String(msg.conversation_id)) {
@@ -337,5 +339,5 @@ window.initGlobalNotifications = function() {
                 }
             }
         })
-        .subscribe();
+        .subscribe(status => console.log("[notif] Stav realtime kanálu:", status));
 };
