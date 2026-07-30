@@ -447,6 +447,9 @@ window.submitCraftsmanOffer = async function() {
     try {
         const {error}=await window.sb.from("offers").insert({request_id:requestId,craftsman_id:window.APP_USER.id,craftsman_name:document.getElementById("user-name").innerText,message:msg,price:price||"Dohodou",status:"pending"});
         if(error)throw error;
+        try {
+            await window.sb.from("messages").insert({conversation_id:String(requestId),sender_id:window.APP_USER.id,sender_name:document.getElementById("user-name").innerText,text:msg,senderrole:"craftsman"});
+        } catch(e){}
         btn.innerHTML='<i class="fa-solid fa-check mr-2"></i>Odesláno!';
         btn.className=btn.className.replace("bg-remexo-500 hover:bg-remexo-600","bg-green-500");
         window.showToast("Nabídka odeslána! 🎉","Zákazník obdrží vaši nabídku co nejdříve.","success");
