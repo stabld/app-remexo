@@ -1,5 +1,5 @@
 // Pokud by API hlásilo, že model neexistuje, změň jen tento řádek (např. na "gemini-3.5-flash")
-const MODEL = 'gemini-2.5-flash';
+const MODEL = 'gemini-3.5-flash';
 
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
