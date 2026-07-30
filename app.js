@@ -18,7 +18,7 @@ window.addEventListener('load', async () => {
             window.APP_USER = session.user;
             let pendingRole = null;
             try { pendingRole = localStorage.getItem("remexo_pending_role"); } catch(e){}
-            if (!session.user.user_metadata?.role && pendingRole) {
+            if (pendingRole && pendingRole !== session.user.user_metadata?.role) {
                 window.APP_ROLE = pendingRole;
                 try { await window.sb.auth.updateUser({ data: { role: pendingRole } }); } catch(e){}
             } else {
