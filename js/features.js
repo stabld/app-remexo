@@ -484,15 +484,13 @@ window.submitCraftsmanOffer = async function() {
             throw error;
         }
         if(window._mojeNabidky) window._mojeNabidky.add(String(requestId));
-        try {
-            await window.sb.from("messages").insert({conversation_id:String(requestId),sender_id:window.APP_USER.id,sender_name:document.getElementById("user-name").innerText,text:msg,senderrole:"craftsman"});
-        } catch(e){}
         btn.innerHTML='<i class="fa-solid fa-check mr-2"></i>Odesláno!';
         btn.className=btn.className.replace("bg-remexo-500 hover:bg-remexo-600","bg-green-500");
-        window.showToast("Nabídka odeslána! 🎉","Zákazník obdrží vaši nabídku co nejdříve.","success");
+        window.showToast("Nabídka odeslána! 🎉","Jakmile ji zákazník přijme, otevře se vám chat.","success");
         window.STATE.craftJobs.push({title,requestId,status:"pending",time:new Date().toLocaleTimeString("cs",{hour:"2-digit",minute:"2-digit"})});
-        window.refreshCraftsmanJobs();window.activeChatId=String(requestId);
-        setTimeout(()=>{window.closeOfferModal();btn.innerHTML=orig;btn.disabled=false;btn.className=btn.className.replace("bg-green-500","bg-remexo-500 hover:bg-remexo-600");window.goTab("c-messages","Zprávy");window.openConversation(requestId,"Zákazník","customer"+requestId);},1000);
+        window.refreshCraftsmanJobs();
+        // Do chatu se dostane až ve chvíli, kdy zákazník nabídku přijme
+        setTimeout(()=>{window.closeOfferModal();btn.innerHTML=orig;btn.disabled=false;btn.className=btn.className.replace("bg-green-500","bg-remexo-500 hover:bg-remexo-600");window.goTab("jobs","Moje práce");},1000);
     } catch(e){btn.innerHTML=orig;btn.disabled=false;window.showToast("Chyba odesílání",e.message,"error");}
 };
 
@@ -530,6 +528,26 @@ window.acceptOffer = async function(offerId, requestId, craftsmanName) {
     if(!window.sb)return;
     await window.sb.from("offers").update({status:"accepted"}).eq("id",offerId);
     await window.sb.from("requests").update({status:"active",craftsman_name:craftsmanName}).eq("id",requestId);
+
+    // Teprve teď zakládáme konverzaci – úvodní zprávou je text z přijaté nabídky
+    try {
+        const { data: nabidka } = await window.sb.from("offers")
+            .select("message, craftsman_id, craftsman_name").eq("id", offerId).maybeSingle();
+        if (nabidka && nabidka.message) {
+            const { data: existujici } = await window.sb.from("messages")
+                .select("id").eq("conversation_id", String(requestId)).limit(1);
+            if (!existujici || existujici.length === 0) {
+                await window.sb.from("messages").insert({
+                    conversation_id: String(requestId),
+                    sender_id: nabidka.craftsman_id,
+                    sender_name: nabidka.craftsman_name || craftsmanName,
+                    text: nabidka.message,
+                    senderrole: "craftsman"
+                });
+            }
+        }
+    } catch(e) {}
+
     window.showToast("Nabídka přijata! ✅","Zahajujete spolupráci s "+craftsmanName+".","success");
     const req=window.STATE.requests.find(r=>r.sbId===requestId);if(req){req.status="active";req.craftsman_name=craftsmanName;}
     if(window.refreshRequestsList)window.refreshRequestsList();if(window.refreshDashboard)window.refreshDashboard(); window.activeChatId=String(requestId); window.goTab("messages","Zprávy");
