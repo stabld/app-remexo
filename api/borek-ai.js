@@ -1,4 +1,4 @@
-// Pokud by API hlásilo, že model neexistuje, změň jen tento řádek (např. na "gemini-3.5-flash")
+// Aktuální model. Seznam dostupných modelů: https://generativelanguage.googleapis.com/v1beta/models?key=TVUJ_KLIC
 const MODEL = 'gemini-3.5-flash';
 
 export default async function handler(req, res) {
@@ -31,7 +31,12 @@ export default async function handler(req, res) {
 
         const payload = {
             contents: [{ role: 'user', parts: contentParts }],
-            generationConfig: { maxOutputTokens: 1024 }
+            generationConfig: {
+                maxOutputTokens: 4096,
+                // Nové Gemini modely jinak spotřebují limit na interní "přemýšlení"
+                // a odpověď se usekne v půlce
+                thinkingConfig: { thinkingBudget: 0 }
+            }
         };
 
         if (systemPrompt) {
@@ -60,9 +65,17 @@ export default async function handler(req, res) {
             return res.status(response.status).json({ error: data.error?.message || 'Chyba od API' });
         }
 
-        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        const candidate = data.candidates?.[0];
+        const text = candidate?.content?.parts?.[0]?.text;
+
         if (!text) {
             return res.status(500).json({ error: 'AI nevrátila žádnou odpověď.' });
+        }
+
+        // Když se odpověď usekne kvůli limitu, radši to řekneme narovinu,
+        // než aby frontend spadl na rozbitém JSONu
+        if (candidate.finishReason === 'MAX_TOKENS') {
+            return res.status(500).json({ error: 'Odpověď AI byla příliš dlouhá a usekla se. Zkuste problém popsat stručněji.' });
         }
 
         return res.status(200).json({ text });
