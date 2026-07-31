@@ -422,7 +422,12 @@ window.openOfferModal = function(id) {
     }
 
     if (window.uzJsemNabidl && window.uzJsemNabidl(id)) {
-        window.showToast("Nabídku jste už poslal", "Na jednu poptávku lze reagovat jen jednou. Domluvte se v Zprávách.", "info");
+        const stav = window.stavMeNabidky(id);
+        window.showToast(
+            "Nabídku jste už poslal",
+            stav === "accepted" ? "Tuto zakázku už máte přidělenou." : "Nabídka čeká na rozhodnutí zákazníka.",
+            "info"
+        );
         return;
     }
 
@@ -471,11 +476,24 @@ window.submitCraftsmanOffer = async function() {
     if(!window.sb||!window.APP_USER){window.showToast("Nepřihlášen","Musíte se nejprve přihlásit.","error");return;}
     btn.innerHTML='<i class="fa-solid fa-circle-notch fa-spin mr-2"></i>Odesílám...';btn.disabled=true;
     try {
-        const {error}=await window.sb.from("offers").insert({request_id:requestId,craftsman_id:window.APP_USER.id,craftsman_name:document.getElementById("user-name").innerText,message:msg,price:price||"Dohodou",status:"pending"});
+        const jmenoRemeslnika = document.getElementById("user-name").innerText;
+        const predchoziStav = window.stavMeNabidky ? window.stavMeNabidky(requestId) : null;
+
+        let error;
+        if (predchoziStav === "rejected") {
+            // Zákazník nás minule odmítl – nabídku přepíšeme novou místo zakládání další
+            ({ error } = await window.sb.from("offers")
+                .update({ message: msg, price: price||"Dohodou", status: "pending", craftsman_name: jmenoRemeslnika })
+                .eq("request_id", requestId).eq("craftsman_id", window.APP_USER.id));
+        } else {
+            ({ error } = await window.sb.from("offers")
+                .insert({request_id:requestId,craftsman_id:window.APP_USER.id,craftsman_name:jmenoRemeslnika,message:msg,price:price||"Dohodou",status:"pending"}));
+        }
+
         if(error){
             // 23505 = databáze odmítla druhou nabídku na tutéž poptávku
             if(error.code === "23505"){
-                if(window._mojeNabidky) window._mojeNabidky.add(String(requestId));
+                if(window._mojeNabidky) window._mojeNabidky.set(String(requestId), "pending");
                 window.showToast("Nabídku jste už poslal","Na jednu poptávku lze reagovat jen jednou.","info");
                 btn.innerHTML=orig;btn.disabled=false;
                 window.closeOfferModal();
@@ -483,7 +501,7 @@ window.submitCraftsmanOffer = async function() {
             }
             throw error;
         }
-        if(window._mojeNabidky) window._mojeNabidky.add(String(requestId));
+        if(window._mojeNabidky) window._mojeNabidky.set(String(requestId), "pending");
         btn.innerHTML='<i class="fa-solid fa-check mr-2"></i>Odesláno!';
         btn.className=btn.className.replace("bg-remexo-500 hover:bg-remexo-600","bg-green-500");
         window.showToast("Nabídka odeslána! 🎉","Jakmile ji zákazník přijme, otevře se vám chat.","success");
@@ -700,27 +718,34 @@ window.kategorieSedi = function(kategoriePoptavky, filtr) {
     return a === b || a.startsWith(b) || b.startsWith(a);
 };
 
-// === UŽ ODESLANÉ NABÍDKY ===
-// Na jednu poptávku smí řemeslník reagovat jen jednou
-window._mojeNabidky = new Set();
+// === MOJE NABÍDKY ===
+// Na jednu poptávku smí řemeslník reagovat jen jednou.
+// Po odmítnutí ale může zkusit štěstí znovu s novou nabídkou.
+window._mojeNabidky = new Map(); // id poptávky -> stav (pending / accepted / rejected)
 
 window.nactiMojeNabidky = async function() {
-    window._mojeNabidky = new Set();
+    window._mojeNabidky = new Map();
     if (!window.sb || !window.APP_USER) return;
     try {
         const { data, error } = await window.sb
             .from("offers")
-            .select("request_id")
+            .select("request_id, status")
             .eq("craftsman_id", window.APP_USER.id);
         if (error) throw error;
-        (data || []).forEach(o => window._mojeNabidky.add(String(o.request_id)));
+        (data || []).forEach(o => window._mojeNabidky.set(String(o.request_id), o.status));
     } catch (e) {
         console.error("Nepodařilo se načíst odeslané nabídky:", e.message);
     }
 };
 
+window.stavMeNabidky = function(id) {
+    return window._mojeNabidky.get(String(id)) || null;
+};
+
+// Blokujeme jen čekající a přijaté – odmítnutá nabídka jde poslat znovu
 window.uzJsemNabidl = function(id) {
-    return window._mojeNabidky.has(String(id));
+    const stav = window.stavMeNabidky(id);
+    return stav === "pending" || stav === "accepted";
 };
 
 // === OBLÍBENÉ POPTÁVKY ===
