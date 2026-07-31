@@ -249,9 +249,11 @@ window.sendMsgC = async function() {
 window.loadCustomerConversations = async function() {
     const list=document.getElementById("conv-list");
     if(!list||!window.sb||!window.APP_USER) return;
-    const {data:reqs}=await window.sb.from("requests").select("*").eq("customer_id",window.APP_USER.id).order("created_at",{ascending:false});
+    const {data:vsechny}=await window.sb.from("requests").select("*").eq("customer_id",window.APP_USER.id).order("created_at",{ascending:false});
+    // Chat vzniká až přijetím nabídky – u čekajících poptávek žádný není
+    const reqs=(vsechny||[]).filter(r=>r.status==="active"||r.status==="done");
     if(!reqs||reqs.length===0){
-        list.innerHTML='<div class="p-8 text-center text-sm text-slate-400"><i class="fa-regular fa-comments text-4xl mb-3 block opacity-50"></i>Žádné zprávy.<br>Vytvořte poptávku!</div>';
+        list.innerHTML='<div class="p-8 text-center text-sm text-slate-400"><i class="fa-regular fa-comments text-4xl mb-3 block opacity-50"></i>Zatím žádné konverzace.<br>Chat se otevře, jakmile přijmete nabídku od řemeslníka.</div>';
         return;
     }
     
@@ -295,9 +297,11 @@ window.loadCustomerConversations = async function() {
 window.loadCraftsmanConversations = async function() {
     const list=document.getElementById("conv-list-c");
     if(!list||!window.sb||!window.APP_USER) return;
-    const {data:offers}=await window.sb.from("offers").select("*, requests(*)").eq("craftsman_id",window.APP_USER.id).order("created_at",{ascending:false});
+    const {data:vsechnyNabidky}=await window.sb.from("offers").select("*, requests(*)").eq("craftsman_id",window.APP_USER.id).order("created_at",{ascending:false});
+    // Psát si můžeme až s tím, koho si zákazník vybral
+    const offers=(vsechnyNabidky||[]).filter(o=>o.status==="accepted");
     if(!offers||offers.length===0){
-        list.innerHTML='<div class="p-8 text-center text-sm text-slate-400"><i class="fa-regular fa-comments text-4xl mb-3 block opacity-50"></i>Žádné zprávy.<br>Podejte nabídku!</div>';
+        list.innerHTML='<div class="p-8 text-center text-sm text-slate-400"><i class="fa-regular fa-comments text-4xl mb-3 block opacity-50"></i>Zatím žádné konverzace.<br>Chat se otevře, jakmile zákazník přijme vaši nabídku.</div>';
         return;
     }
     
