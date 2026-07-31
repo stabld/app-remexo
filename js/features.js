@@ -415,6 +415,20 @@ window.najdiPoptavku = function(id) {
 
 // VYLEPŠENÍ 2: Kontrola, jestli má řemeslník profil, než pošle nabídku
 // Popis poptávky bez kontaktních údajů – pro řemeslníky, kteří ještě nemají zakázku přidělenou
+// Vlídná výzva nad Tržištěm – nezavírá dveře, jen říká, co chybí k reakci
+window.vyzvaKProfilu = function() {
+    const chybi = window.chybejiciUdajeProfilu ? window.chybejiciUdajeProfilu() : [];
+    if (chybi.length === 0) return "";
+    return '<div class="mb-6 p-5 rounded-3xl border-2 border-remexo-500/40 bg-remexo-50 dark:bg-remexo-500/10 flex flex-col sm:flex-row sm:items-center gap-4">'
+        + '<div class="w-12 h-12 rounded-2xl bg-remexo-500 text-white flex items-center justify-center shrink-0 shadow-lg shadow-remexo-500/30"><i class="fa-solid fa-user-pen text-lg"></i></div>'
+        + '<div class="flex-1 min-w-0">'
+        + '<p class="font-extrabold dark:text-white leading-tight">Ještě krůček a můžete reagovat</p>'
+        + '<p class="text-sm text-slate-600 dark:text-slate-300 mt-1">Poptávky si můžete prohlížet i teď. Abyste mohl poslat nabídku, doplňte: <strong>' + chybi.join(", ") + '</strong>.</p>'
+        + '</div>'
+        + '<button onclick="window.goTab(\'profile\',\'Můj profil\')" class="shrink-0 bg-remexo-500 hover:bg-remexo-600 text-white px-6 py-3 rounded-xl font-bold text-sm transition shadow-md hover:scale-105">Doplnit profil</button>'
+        + '</div>';
+};
+
 window.popisBezKontaktu = function(popis) {
     const text = popis || "";
     if (!text.includes("---")) return text;
@@ -722,7 +736,7 @@ window.loadMarketFromDB = async function() {
     window.STATE.marketRequests=data;
     if(window.nactiOblibene) await window.nactiOblibene();
     if(window.nactiMojeNabidky) await window.nactiMojeNabidky();
-    list.innerHTML=data.map((r,i)=>window.createBeautifulCard({id:r.id,sbId:r.id,title:r.title,kat:r.category||"Ostatní",popis:r.description||"",time:new Date(r.created_at).toLocaleDateString("cs"),status:r.status,urgency:r.urgency||"Střední",category:r.category,customer_name:r.customer_name||"Zákazník",price_estimate:r.price_estimate||"Dohodou"},true,i)).join("");
+    list.innerHTML=(window.vyzvaKProfilu?window.vyzvaKProfilu():"")+data.map((r,i)=>window.createBeautifulCard({id:r.id,sbId:r.id,title:r.title,kat:r.category||"Ostatní",popis:r.description||"",time:new Date(r.created_at).toLocaleDateString("cs"),status:r.status,urgency:r.urgency||"Střední",category:r.category,customer_name:r.customer_name||"Zákazník",price_estimate:r.price_estimate||"Dohodou"},true,i)).join("");
 };
 
 window.toggleMarketView = async function(mode) {
@@ -987,7 +1001,7 @@ window.filterMarket = function(kat, triggerEl) {
         list.innerHTML = '<div class="text-center text-slate-400 py-10">' + hlaska + '</div>';
         return;
     }
-    list.innerHTML = filtered.map((req, i) => window.createBeautifulCard(req, true, i)).join('');
+    list.innerHTML = (window.vyzvaKProfilu?window.vyzvaKProfilu():"") + filtered.map((req, i) => window.createBeautifulCard(req, true, i)).join('');
 };
 
 window.openPublicProfile = async function(userId) {
