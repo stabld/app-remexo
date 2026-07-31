@@ -479,11 +479,30 @@ window.submitCraftsmanOffer = async function() {
         const jmenoRemeslnika = document.getElementById("user-name").innerText;
         const predchoziStav = window.stavMeNabidky ? window.stavMeNabidky(requestId) : null;
 
+        // Zakázku už mezitím mohl někdo dostat – ověříme si to čerstvě z databáze
+        const { data: aktualni } = await window.sb.from("requests")
+            .select("status").eq("id", requestId).maybeSingle();
+        if (aktualni && aktualni.status !== "waiting") {
+            window.showToast("Zakázka už není volná", "Zákazník si mezitím vybral jiného řemeslníka.", "info");
+            btn.innerHTML=orig;btn.disabled=false;
+            window.closeOfferModal();
+            if (window.loadMarketFromDB) window.loadMarketFromDB();
+            return;
+        }
+
+        let novyPocetPokusu = 1;
         let error;
         if (predchoziStav === "rejected") {
+            novyPocetPokusu = (window.pocetPokusu ? window.pocetPokusu(requestId) : 1) + 1;
+            if (novyPocetPokusu > window.MAX_POKUSU) {
+                window.showToast("Další pokus už nelze poslat", "U jedné poptávky můžete zkusit nabídku nejvýše " + window.MAX_POKUSU + "×.", "error");
+                btn.innerHTML=orig;btn.disabled=false;
+                window.closeOfferModal();
+                return;
+            }
             // Zákazník nás minule odmítl – nabídku přepíšeme novou místo zakládání další
             ({ error } = await window.sb.from("offers")
-                .update({ message: msg, price: price||"Dohodou", status: "pending", craftsman_name: jmenoRemeslnika })
+                .update({ message: msg, price: price||"Dohodou", status: "pending", craftsman_name: jmenoRemeslnika, pokusy: novyPocetPokusu })
                 .eq("request_id", requestId).eq("craftsman_id", window.APP_USER.id));
         } else {
             ({ error } = await window.sb.from("offers")
@@ -493,7 +512,7 @@ window.submitCraftsmanOffer = async function() {
         if(error){
             // 23505 = databáze odmítla druhou nabídku na tutéž poptávku
             if(error.code === "23505"){
-                if(window._mojeNabidky) window._mojeNabidky.set(String(requestId), "pending");
+                if(window._mojeNabidky) window._mojeNabidky.set(String(requestId), { stav: "pending", pokusy: novyPocetPokusu });
                 window.showToast("Nabídku jste už poslal","Na jednu poptávku lze reagovat jen jednou.","info");
                 btn.innerHTML=orig;btn.disabled=false;
                 window.closeOfferModal();
@@ -501,7 +520,7 @@ window.submitCraftsmanOffer = async function() {
             }
             throw error;
         }
-        if(window._mojeNabidky) window._mojeNabidky.set(String(requestId), "pending");
+        if(window._mojeNabidky) window._mojeNabidky.set(String(requestId), { stav: "pending", pokusy: novyPocetPokusu });
         btn.innerHTML='<i class="fa-solid fa-check mr-2"></i>Odesláno!';
         btn.className=btn.className.replace("bg-remexo-500 hover:bg-remexo-600","bg-green-500");
         window.showToast("Nabídka odeslána! 🎉","Jakmile ji zákazník přijme, otevře se vám chat.","success");
@@ -514,6 +533,16 @@ window.submitCraftsmanOffer = async function() {
 
 window.loadOffersForRequest = async function(requestId, requestTitle) {
     if(!window.sb)return;
+
+    // U přidělené nebo dokončené zakázky se už další nabídky přijímat nedají
+    const { data: poptavka } = await window.sb.from("requests")
+        .select("status").eq("id", requestId).maybeSingle();
+    const jeUzavrena = !!(poptavka && poptavka.status !== "waiting");
+    const stavHtml = (o) => '<div class="text-center text-sm font-bold text-slate-400 py-3 border border-dashed border-slate-200 dark:border-slate-700 rounded-xl">'
+        + (o.status === "accepted" ? "✅ Tuto nabídku jste přijal"
+            : (poptavka && poptavka.status === "done" ? "Zakázka je dokončená" : "Zakázka je už přidělená"))
+        + '</div>';
+
     const {data:offers}=await window.sb.from("offers").select("*").eq("request_id",requestId).neq("status", "rejected").order("created_at",{ascending:false});
     
     document.getElementById("offers-modal-title").innerText=requestTitle;
@@ -522,7 +551,7 @@ window.loadOffersForRequest = async function(requestId, requestTitle) {
     if(!offers||offers.length===0){
         modalList.innerHTML='<div class="text-center text-slate-400 py-12"><i class="fa-solid fa-inbox text-4xl mb-4 block"></i><p>Zatím žádné aktivní nabídky.</p></div>';
     } else {
-        modalList.innerHTML=offers.map(o=>'<div class="p-5 border border-slate-200 dark:border-slate-700 rounded-3xl bg-slate-50 dark:bg-slate-800/50"><div class="flex items-center gap-4 mb-4 cursor-pointer hover:opacity-75 transition" onclick="window.openPublicProfile(\'' + o.craftsman_id + '\')"><img src="https://api.dicebear.com/7.x/avataaars/svg?seed=' + encodeURIComponent(o.craftsman_name) + '&backgroundColor=0f172a" class="w-12 h-12 rounded-full bg-white shadow-sm border border-slate-200 dark:border-slate-700"><div><p class="font-extrabold dark:text-white">' + o.craftsman_name + '</p><p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-0.5">' + new Date(o.created_at).toLocaleDateString("cs") + '</p></div><span class="ml-auto font-black text-lg text-remexo-500">' + o.price + '</span></div><p class="text-sm text-slate-600 dark:text-slate-300 mb-5 bg-white dark:bg-[#0f172a] p-4 rounded-2xl border border-slate-100 dark:border-slate-700">' + o.message + '</p><div class="flex gap-2"><button onclick="window.rejectOffer(this, ' + o.id + ',' + requestId + ',\'' + (requestTitle||"").replace(/'/g,"\\'") + '\')" class="px-5 bg-red-50 hover:bg-red-100 dark:bg-red-500/10 dark:hover:bg-red-500/20 text-red-500 rounded-xl transition shadow-sm"><i class="fa-solid fa-times text-lg"></i></button><button onclick="window.acceptOffer(' + o.id + ',' + requestId + ',\'' + (o.craftsman_name||"").replace(/'/g,"\\'") + '\'); window.closeOffersModal();" class="flex-1 bg-slate-900 dark:bg-white text-white dark:text-slate-900 py-3.5 rounded-xl font-bold text-sm transition shadow-md hover:scale-[1.02]">Přijmout a zahájit zprávy</button></div></div>').join("");
+        modalList.innerHTML=offers.map(o=>'<div class="p-5 border border-slate-200 dark:border-slate-700 rounded-3xl bg-slate-50 dark:bg-slate-800/50"><div class="flex items-center gap-4 mb-4 cursor-pointer hover:opacity-75 transition" onclick="window.openPublicProfile(\'' + o.craftsman_id + '\')"><img src="https://api.dicebear.com/7.x/avataaars/svg?seed=' + encodeURIComponent(o.craftsman_name) + '&backgroundColor=0f172a" class="w-12 h-12 rounded-full bg-white shadow-sm border border-slate-200 dark:border-slate-700"><div><p class="font-extrabold dark:text-white">' + o.craftsman_name + '</p><p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-0.5">' + new Date(o.created_at).toLocaleDateString("cs") + '</p></div><span class="ml-auto font-black text-lg text-remexo-500">' + o.price + '</span></div><p class="text-sm text-slate-600 dark:text-slate-300 mb-5 bg-white dark:bg-[#0f172a] p-4 rounded-2xl border border-slate-100 dark:border-slate-700">' + o.message + '</p>' + (jeUzavrena ? stavHtml(o) : '<div class="flex gap-2"><button onclick="window.rejectOffer(this, ' + o.id + ',' + requestId + ',\'' + (requestTitle||"").replace(/'/g,"\\'") + '\')" class="px-5 bg-red-50 hover:bg-red-100 dark:bg-red-500/10 dark:hover:bg-red-500/20 text-red-500 rounded-xl transition shadow-sm"><i class="fa-solid fa-times text-lg"></i></button><button onclick="window.acceptOffer(' + o.id + ',' + requestId + ',\'' + (o.craftsman_name||"").replace(/'/g,"\\'") + '\'); window.closeOffersModal();" class="flex-1 bg-slate-900 dark:bg-white text-white dark:text-slate-900 py-3.5 rounded-xl font-bold text-sm transition shadow-md hover:scale-[1.02]">Přijmout a zahájit zprávy</button></div>') + '</div>').join("");
     }
     const modal=document.getElementById("offers-modal");modal.classList.remove("hidden");void modal.offsetWidth;modal.classList.add("opacity-100");
 };
@@ -544,8 +573,41 @@ window.rejectOffer = async function(btnNode, offerId, requestId, requestTitle) {
 
 window.acceptOffer = async function(offerId, requestId, craftsmanName) {
     if(!window.sb)return;
-    await window.sb.from("offers").update({status:"accepted"}).eq("id",offerId);
-    await window.sb.from("requests").update({status:"active",craftsman_name:craftsmanName}).eq("id",requestId);
+
+    // Zakázka už mohla být přidělena nebo dokončená – jinou nabídku už přijmout nelze
+    const { data: stavPoptavky } = await window.sb.from("requests")
+        .select("status").eq("id", requestId).maybeSingle();
+    if (stavPoptavky && stavPoptavky.status !== "waiting") {
+        window.showToast(
+            stavPoptavky.status === "done" ? "Zakázka je dokončená" : "Zakázka je už přidělená",
+            "Další nabídku k ní přijmout nelze.",
+            "info"
+        );
+        window.closeOffersModal();
+        return;
+    }
+
+    const { error: chybaNabidky } = await window.sb.from("offers").update({status:"accepted"}).eq("id",offerId);
+    if (chybaNabidky) {
+        window.showToast("Nepodařilo se přijmout nabídku", chybaNabidky.message || "Zkuste to prosím znovu.", "error");
+        return;
+    }
+
+    const { error: chybaPoptavky } = await window.sb.from("requests")
+        .update({status:"active",craftsman_name:craftsmanName}).eq("id",requestId);
+    if (chybaPoptavky) {
+        // Vrátíme nabídku zpět, ať nezůstane přijatá u poptávky, která je pořád volná
+        await window.sb.from("offers").update({status:"pending"}).eq("id",offerId);
+        window.showToast("Nepodařilo se přijmout nabídku", chybaPoptavky.message || "Zkuste to prosím znovu.", "error");
+        return;
+    }
+
+    // Ostatní nabídky u téhle poptávky už nemají smysl
+    try {
+        await window.sb.from("offers").update({status:"rejected"})
+            .eq("request_id", requestId).neq("id", offerId).eq("status", "pending");
+    } catch(e) {}
+
 
     // Teprve teď zakládáme konverzaci – úvodní zprávou je text z přijaté nabídky
     try {
@@ -568,8 +630,14 @@ window.acceptOffer = async function(offerId, requestId, craftsmanName) {
 
     window.showToast("Nabídka přijata! ✅","Zahajujete spolupráci s "+craftsmanName+".","success");
     const req=window.STATE.requests.find(r=>r.sbId===requestId);if(req){req.status="active";req.craftsman_name=craftsmanName;}
-    if(window.refreshRequestsList)window.refreshRequestsList();if(window.refreshDashboard)window.refreshDashboard(); window.activeChatId=String(requestId); window.goTab("messages","Zprávy");
-    setTimeout(()=>window.openConversation(requestId,craftsmanName,"craftsman"+requestId),300);
+    if(window.refreshRequestsList)window.refreshRequestsList();if(window.refreshDashboard)window.refreshDashboard();
+    window.activeChatId=String(requestId);
+    window.goTab("messages","Zprávy");
+
+    // Seznam konverzací musí doběhnout dřív, než konverzaci otevřeme
+    if(window.loadCustomerConversations) await window.loadCustomerConversations();
+    const idRemeslnika = (await window.sb.from("offers").select("craftsman_id").eq("id",offerId).maybeSingle()).data?.craftsman_id || null;
+    window.openConversation(requestId, craftsmanName, "craftsman"+requestId, idRemeslnika);
 };
 
 window.closeOffersModal = function() { const modal=document.getElementById("offers-modal"); if(modal){modal.classList.add("hidden");modal.classList.remove("opacity-100");} };
@@ -640,7 +708,12 @@ window.initMarketMap = async function() {
     window._marketMarkers={};
     if(window._marketMap){window._marketMap.eachLayer(l=>{if(l instanceof L.Marker)window._marketMap.removeLayer(l);});}
     else{window._marketMap=L.map("market-map").setView([49.8,15.5],8);L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:"© OpenStreetMap",maxZoom:18}).addTo(window._marketMap);}
-    const requests=window.STATE.marketRequests||[];
+    const vsechny=window.STATE.marketRequests||[];
+    // Mapa musí ukazovat totéž co seznam – tedy podle zvoleného filtru
+    const filtr=window._aktivniFiltr||"all";
+    const requests = filtr==="all" ? vsechny
+        : filtr==="saved" ? vsechny.filter(r=>window.jeOblibena(r.id))
+        : vsechny.filter(r=>window.kategorieSedi(r.category, filtr));
     if(requests.length===0)return;
     const pinIcon=L.divIcon({className:"",html:'<div style="background:#f59e0b;color:white;width:36px;height:36px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(245,158,11,0.45);border:2px solid white;"><i class="fa-solid fa-hammer" style="transform:rotate(45deg);font-size:13px;"></i></div>',iconSize:[36,36],iconAnchor:[18,36],popupAnchor:[0,-38]});
     const bounds=[];
@@ -721,7 +794,10 @@ window.kategorieSedi = function(kategoriePoptavky, filtr) {
 // === MOJE NABÍDKY ===
 // Na jednu poptávku smí řemeslník reagovat jen jednou.
 // Po odmítnutí ale může zkusit štěstí znovu s novou nabídkou.
-window._mojeNabidky = new Map(); // id poptávky -> stav (pending / accepted / rejected)
+// Kolikrát smí řemeslník na jednu poptávku reagovat (původní nabídka + opravné pokusy)
+window.MAX_POKUSU = 2;
+
+window._mojeNabidky = new Map(); // id poptávky -> { stav, pokusy }
 
 window.nactiMojeNabidky = async function() {
     window._mojeNabidky = new Map();
@@ -729,23 +805,39 @@ window.nactiMojeNabidky = async function() {
     try {
         const { data, error } = await window.sb
             .from("offers")
-            .select("request_id, status")
+            .select("request_id, status, pokusy")
             .eq("craftsman_id", window.APP_USER.id);
         if (error) throw error;
-        (data || []).forEach(o => window._mojeNabidky.set(String(o.request_id), o.status));
+        (data || []).forEach(o => window._mojeNabidky.set(String(o.request_id), {
+            stav: o.status,
+            pokusy: o.pokusy || 1
+        }));
     } catch (e) {
         console.error("Nepodařilo se načíst odeslané nabídky:", e.message);
     }
 };
 
 window.stavMeNabidky = function(id) {
-    return window._mojeNabidky.get(String(id)) || null;
+    const zaznam = window._mojeNabidky.get(String(id));
+    return zaznam ? zaznam.stav : null;
 };
 
-// Blokujeme jen čekající a přijaté – odmítnutá nabídka jde poslat znovu
+window.pocetPokusu = function(id) {
+    const zaznam = window._mojeNabidky.get(String(id));
+    return zaznam ? (zaznam.pokusy || 1) : 0;
+};
+
+// Vyčerpal už všechny pokusy?
+window.dosleMiPokusy = function(id) {
+    return window.pocetPokusu(id) >= window.MAX_POKUSU;
+};
+
+// Blokujeme čekající, přijaté a ty, kde už řemeslník vyčerpal pokusy
 window.uzJsemNabidl = function(id) {
     const stav = window.stavMeNabidky(id);
-    return stav === "pending" || stav === "accepted";
+    if (stav === "pending" || stav === "accepted") return true;
+    if (stav === "rejected" && window.dosleMiPokusy(id)) return true;
+    return false;
 };
 
 // === OBLÍBENÉ POPTÁVKY ===
@@ -836,6 +928,11 @@ window.filterMarket = function(kat, triggerEl) {
         activeBtn.classList.remove('bg-white','dark:bg-slate-800','border','border-slate-200','dark:border-slate-700','text-slate-600','dark:text-slate-300');
     }
     window._aktivniFiltr = kat;
+    // Když je zrovna otevřená mapa, překreslíme i ji
+    const mapEl = document.getElementById("market-map");
+    if (mapEl && !mapEl.classList.contains("hidden") && window.initMarketMap) {
+        setTimeout(()=>window.initMarketMap(), 50);
+    }
     const data = Array.isArray(window.STATE?.marketRequests) ? window.STATE.marketRequests : [];
     let filtered;
     if (kat === 'all') filtered = data;
