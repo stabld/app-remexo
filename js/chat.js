@@ -389,7 +389,8 @@ window.spustHlidaniZprav = function() {
 
                 (nabidky || []).forEach(o => {
                     const klic = String(o.request_id);
-                    const puvodni = window._mojeNabidky.get(klic);
+                    const zaznam = window._mojeNabidky.get(klic);
+                    const puvodni = zaznam ? zaznam.stav : null;
                     const nazev = o.requests?.title || "poptávku";
 
                     if (puvodni && puvodni !== o.status) {
@@ -402,7 +403,7 @@ window.spustHlidaniZprav = function() {
                             if (window.loadCraftsmanConversations) window.loadCraftsmanConversations();
                         }
                     }
-                    window._mojeNabidky.set(klic, o.status);
+                    window._mojeNabidky.set(klic, { stav: o.status, pokusy: (zaznam && zaznam.pokusy) || 1 });
                 });
             } catch (e) {}
         }
