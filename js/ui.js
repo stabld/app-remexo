@@ -106,12 +106,13 @@ window.createBeautifulCard = function(req, isMarket, i) {
         let reqPhoto = extracted.photo || req.photo;
         let reqMime = extracted.mime || req.mime;
         let detailsHtml = "";
+        let detailItems = [];
         if (mainDesc.includes("---")) {
             const pts = mainDesc.split("---");
             mainDesc = pts[0].trim();
             if (pts.length > 1) {
                 let rawDetails = pts[1].replace("📋 DOPLŇUJÍCÍ INFORMACE:", "").trim();
-                const detailItems = rawDetails.split(/\r?\n/).map(l => l.trim()).filter(l => l);
+                detailItems = rawDetails.split(/\r?\n/).map(l => l.trim()).filter(l => l);
                 if (detailItems.length > 0) {
                     detailsHtml = '<div class="mt-5 pt-5 border-t border-slate-100 dark:border-slate-700/50"><p class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-3">Doplňující informace</p><div class="flex flex-wrap gap-2">' +
                         detailItems.map(item => '<div class="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300">' + item + '</div>').join('') +
@@ -136,13 +137,29 @@ window.createBeautifulCard = function(req, isMarket, i) {
             const iconMap = {"Instalatérství":"fa-faucet-drip","Elektrikář":"fa-bolt","Malíř":"fa-paint-roller","Tesař":"fa-door-open","Zámečník":"fa-lock","default":"fa-screwdriver-wrench"};
             const reqCat = req.category||"Ostatní";
             const reqUrg = req.urgency||"Střední";
+            const marketDetailItems = detailItems
+                .filter(item => !item.startsWith("📞"))
+                .map(item => {
+                    if (item.startsWith("📍")) {
+                        const parts = item.split(",");
+                        const city = parts.length > 1 ? parts[parts.length - 1].trim() : item.replace(/^📍\s*Adresa:\s*/, "").trim();
+                        return "📍 " + city;
+                    }
+                    return item;
+                });
+            const marketDetailsHtml = marketDetailItems.length > 0
+                ? '<div class="mt-5 pt-5 border-t border-slate-100 dark:border-slate-700/50"><p class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-3">Doplňující informace</p><div class="flex flex-wrap gap-2">' +
+                    marketDetailItems.map(item => '<div class="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300">' + item + '</div>').join('') +
+                    '</div></div>'
+                : '';
+            const firstName = (req.customer_name || 'Zákazník').split(' ')[0];
             return '<div class="market-item bg-white dark:bg-[#0f172a] rounded-3xl border border-slate-200 dark:border-slate-800 p-6 hover:border-remexo-500/50 hover:shadow-xl transition-all duration-300 cursor-pointer fade-up overflow-hidden relative group" data-kat="' + reqCat + '" style="animation-delay:' + (i*60) + 'ms">' +
                 '<div class="absolute top-0 left-0 w-1.5 h-full bg-remexo-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>' +
                 '<div class="pl-2"><div class="flex items-start gap-5"><div class="w-14 h-14 bg-remexo-50 dark:bg-remexo-500/10 text-remexo-500 rounded-2xl flex items-center justify-center text-2xl shrink-0 shadow-inner border border-remexo-100 dark:border-remexo-500/20"><i class="fa-solid ' + (iconMap[reqCat]||iconMap.default) + '"></i></div>' +
                 '<div class="flex-1 min-w-0"><div class="flex items-start justify-between gap-3 mb-2"><h4 class="text-xl font-extrabold dark:text-white leading-tight">' + req.title + '</h4><span class="status-badge ' + (reqUrg==="Vysoká"?"bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400":"status-waiting") + ' shrink-0">' + reqUrg + '</span></div>' +
-                '<div class="flex flex-wrap items-center gap-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-4"><span class="bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded"><i class="fa-solid fa-tag mr-1.5 opacity-70"></i>' + reqCat + '</span><span class="bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded"><i class="fa-solid fa-user mr-1.5 opacity-70"></i>' + (req.customer_name||'Zákazník') + '</span><span class="bg-remexo-50 dark:bg-remexo-500/10 text-remexo-600 dark:text-remexo-400 px-2 py-1 rounded"><i class="fa-solid fa-coins mr-1.5"></i>' + (req.price_estimate||'Dohodou') + '</span></div>' +
+                '<div class="flex flex-wrap items-center gap-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-4"><span class="bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded"><i class="fa-solid fa-tag mr-1.5 opacity-70"></i>' + reqCat + '</span><span class="bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded"><i class="fa-solid fa-user mr-1.5 opacity-70"></i>' + firstName + '</span><span class="bg-remexo-50 dark:bg-remexo-500/10 text-remexo-600 dark:text-remexo-400 px-2 py-1 rounded"><i class="fa-solid fa-coins mr-1.5"></i>' + (req.price_estimate||'Dohodou') + '</span></div>' +
                 '<p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed mb-2">' + mainDesc + '</p>' +
-                detailsHtml +
+                marketDetailsHtml +
                 '<div class="flex gap-3 mt-6 pt-5 border-t border-slate-100 dark:border-slate-800"><button onclick="window.openOfferModal(' + i + ')" class="flex-1 bg-remexo-500 hover:bg-remexo-600 text-white py-3.5 rounded-xl font-bold text-sm transition shadow-md hover:scale-[1.02]">Podat nabídku zákazníkovi</button><button class="w-12 h-12 border-2 border-slate-200 dark:border-slate-700 rounded-xl flex items-center justify-center text-slate-400 hover:text-remexo-500 hover:border-remexo-500 hover:bg-remexo-50 dark:hover:bg-remexo-500/10 transition-colors"><i class="fa-regular fa-bookmark"></i></button></div>' +
                 '</div></div></div></div>';
         }
@@ -206,7 +223,27 @@ window.buildNav = function(items) {
     }).join("");
 };
 
+// Vrátí seznam chybějících údajů v profilu (prázdné pole = profil je v pořádku)
+window.chybejiciUdajeProfilu = function() {
+    const profil = (window.APP_USER && window.APP_USER.user_metadata) || {};
+    const chybi = [];
+    if(!(profil.full_name||"").trim()) chybi.push("jméno a příjmení");
+    if(!(profil.phone||"").trim()) chybi.push("telefon");
+    if(!(profil.city||"").trim()) chybi.push("město");
+    return chybi;
+};
+
 window.goTab = function(id, title) {
+    // Novou poptávku nepustíme zakládat, dokud není vyplněný profil –
+    // radši hned na začátku, než aby o rozdělanou práci přišel
+    if(id === "new"){
+        const chybi = window.chybejiciUdajeProfilu();
+        if(chybi.length > 0){
+            window.showToast("Nejprve vyplňte profil","Před zadáním poptávky doplňte: "+chybi.join(", ")+".","error");
+            return window.goTab("profile","Můj profil");
+        }
+    }
+
     document.querySelectorAll('[id^="view-"]').forEach(el => { el.classList.add("hidden"); el.classList.remove("fade-up"); });
     document.querySelectorAll(".nav-item").forEach(el => { el.classList.remove("active","text-slate-900","dark:text-white"); el.classList.add("text-slate-600","dark:text-slate-400"); });
     document.querySelectorAll('[id^="bnav-"]').forEach(el => { el.classList.remove("text-remexo-500"); el.classList.add("text-slate-400"); });
