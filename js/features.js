@@ -421,6 +421,11 @@ window.openOfferModal = function(id) {
         return;
     }
 
+    if (window.uzJsemNabidl && window.uzJsemNabidl(id)) {
+        window.showToast("Nabídku jste už poslal", "Na jednu poptávku lze reagovat jen jednou. Domluvte se v Zprávách.", "info");
+        return;
+    }
+
     const req=window.najdiPoptavku(id);if(!req)return;
     document.getElementById("co-req-id").value=req.id;
     document.getElementById("co-req-title").value=req.title;
@@ -467,7 +472,18 @@ window.submitCraftsmanOffer = async function() {
     btn.innerHTML='<i class="fa-solid fa-circle-notch fa-spin mr-2"></i>Odesílám...';btn.disabled=true;
     try {
         const {error}=await window.sb.from("offers").insert({request_id:requestId,craftsman_id:window.APP_USER.id,craftsman_name:document.getElementById("user-name").innerText,message:msg,price:price||"Dohodou",status:"pending"});
-        if(error)throw error;
+        if(error){
+            // 23505 = databáze odmítla druhou nabídku na tutéž poptávku
+            if(error.code === "23505"){
+                if(window._mojeNabidky) window._mojeNabidky.add(String(requestId));
+                window.showToast("Nabídku jste už poslal","Na jednu poptávku lze reagovat jen jednou.","info");
+                btn.innerHTML=orig;btn.disabled=false;
+                window.closeOfferModal();
+                return;
+            }
+            throw error;
+        }
+        if(window._mojeNabidky) window._mojeNabidky.add(String(requestId));
         try {
             await window.sb.from("messages").insert({conversation_id:String(requestId),sender_id:window.APP_USER.id,sender_name:document.getElementById("user-name").innerText,text:msg,senderrole:"craftsman"});
         } catch(e){}
@@ -562,6 +578,7 @@ window.loadMarketFromDB = async function() {
     if(error||!data||data.length===0){list.innerHTML='<div class="text-center p-16 bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-3xl"><i class="fa-solid fa-inbox text-5xl text-slate-300 dark:text-slate-600 mb-5 block"></i><p class="font-bold text-slate-500 text-lg">Zatím žádné poptávky ve vašem okolí.</p></div>';return;}
     window.STATE.marketRequests=data;
     if(window.nactiOblibene) await window.nactiOblibene();
+    if(window.nactiMojeNabidky) await window.nactiMojeNabidky();
     list.innerHTML=data.map((r,i)=>window.createBeautifulCard({id:r.id,sbId:r.id,title:r.title,kat:r.category||"Ostatní",popis:r.description||"",time:new Date(r.created_at).toLocaleDateString("cs"),status:r.status,urgency:r.urgency||"Střední",category:r.category,customer_name:r.customer_name||"Zákazník",price_estimate:r.price_estimate||"Dohodou"},true,i)).join("");
 };
 
@@ -663,6 +680,29 @@ window.kategorieSedi = function(kategoriePoptavky, filtr) {
     const b = window.normalizovatKategorii(filtr);
     if (!a || !b) return false;
     return a === b || a.startsWith(b) || b.startsWith(a);
+};
+
+// === UŽ ODESLANÉ NABÍDKY ===
+// Na jednu poptávku smí řemeslník reagovat jen jednou
+window._mojeNabidky = new Set();
+
+window.nactiMojeNabidky = async function() {
+    window._mojeNabidky = new Set();
+    if (!window.sb || !window.APP_USER) return;
+    try {
+        const { data, error } = await window.sb
+            .from("offers")
+            .select("request_id")
+            .eq("craftsman_id", window.APP_USER.id);
+        if (error) throw error;
+        (data || []).forEach(o => window._mojeNabidky.add(String(o.request_id)));
+    } catch (e) {
+        console.error("Nepodařilo se načíst odeslané nabídky:", e.message);
+    }
+};
+
+window.uzJsemNabidl = function(id) {
+    return window._mojeNabidky.has(String(id));
 };
 
 // === OBLÍBENÉ POPTÁVKY ===
