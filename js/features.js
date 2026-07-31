@@ -664,6 +664,54 @@ window.kategorieSedi = function(kategoriePoptavky, filtr) {
     return a === b || a.startsWith(b) || b.startsWith(a);
 };
 
+// === OBLÍBENÉ POPTÁVKY ===
+// Ukládáme v prohlížeči u konkrétního účtu (bez zásahu do databáze)
+window._klicOblibenych = function() {
+    const uid = window.APP_USER?.id || "anon";
+    return "remexo_oblibene_" + uid;
+};
+
+window.nactiOblibene = function() {
+    try {
+        const raw = localStorage.getItem(window._klicOblibenych());
+        const pole = raw ? JSON.parse(raw) : [];
+        return Array.isArray(pole) ? pole.map(String) : [];
+    } catch(e) { return []; }
+};
+
+window.jeOblibena = function(id) {
+    return window.nactiOblibene().includes(String(id));
+};
+
+window.toggleOblibene = function(id, btnEl) {
+    const seznam = window.nactiOblibene();
+    const klic = String(id);
+    const index = seznam.indexOf(klic);
+    let pridano;
+
+    if (index === -1) { seznam.push(klic); pridano = true; }
+    else { seznam.splice(index, 1); pridano = false; }
+
+    try { localStorage.setItem(window._klicOblibenych(), JSON.stringify(seznam)); }
+    catch(e) { window.showToast("Nepodařilo se uložit", "Oblíbené se nepodařilo uložit.", "error"); return; }
+
+    if (btnEl) {
+        const ikona = btnEl.querySelector("i");
+        if (ikona) ikona.className = pridano ? "fa-solid fa-bookmark" : "fa-regular fa-bookmark";
+        btnEl.classList.toggle("text-remexo-500", pridano);
+        btnEl.classList.toggle("border-remexo-500", pridano);
+        btnEl.classList.toggle("text-slate-400", !pridano);
+    }
+
+    const req = window.najdiPoptavku ? window.najdiPoptavku(id) : null;
+    const nazev = req?.title || "Poptávka";
+    window.showToast(
+        pridano ? "Přidáno do oblíbených ⭐" : "Odebráno z oblíbených",
+        nazev,
+        pridano ? "success" : "info"
+    );
+};
+
 window.filterMarket = function(kat, triggerEl) {
     const activeBtn = triggerEl || document.activeElement;
     document.querySelectorAll('.filter-btn').forEach(btn => {
