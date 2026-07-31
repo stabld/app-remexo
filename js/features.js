@@ -267,7 +267,7 @@ window.processPopt = async function(text) {
     const loading = document.getElementById("popt-loading");
     const replyArea = document.getElementById("popt-reply-area");
     loading.classList.remove("hidden"); replyArea.classList.add("hidden");
-    const sp = 'Jsi Bořek, profesionální technik. Vytvoř zadání pro řemeslníka.\nODPOVÍDEJ PŘESNĚ V TOMTO JSON FORMÁTU BEZ DALŠÍHO TEXTU:\n{"status":"question","message":"otázka"} nebo {"status":"done","nazev":"titulek","kategorie":"obor","popis":"popis","nalehavost":"Vysoká/Střední/Nízká","odhad_ceny":"cena Kč","rada":"rada"}';
+    const sp = 'Jsi Bořek, profesionální technik. Vytvoř zadání pro řemeslníka.\nODPOVÍDEJ PŘESNĚ V TOMTO JSON FORMÁTU BEZ DALŠÍHO TEXTU:\n{"status":"question","message":"otázka"} nebo {"status":"done","nazev":"titulek","kategorie":"POUZE JEDNA Z: Instalatérství, Elektrikář, Malíř, Tesař, Zámečník, Ostatní","popis":"popis","nalehavost":"Vysoká/Střední/Nízká","odhad_ceny":"cena Kč","rada":"rada"}';
     let parts = [{text}];
     if (window.poptPhotos && window.poptPhotos.length > 0) {
         window.poptPhotos.forEach(p => {
@@ -649,6 +649,21 @@ window.showRequestDetail = async function(id) {
     }, 150);
 };
 
+// Kategorie píše AI sama, takže se liší velikost písmen i tvar slova
+// ("instalatérství" vs "Instalatér"). Proto porovnáváme volněji.
+window.normalizovatKategorii = function(s) {
+    return (s || '')
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase().trim();
+};
+
+window.kategorieSedi = function(kategoriePoptavky, filtr) {
+    const a = window.normalizovatKategorii(kategoriePoptavky);
+    const b = window.normalizovatKategorii(filtr);
+    if (!a || !b) return false;
+    return a === b || a.startsWith(b) || b.startsWith(a);
+};
+
 window.filterMarket = function(kat, triggerEl) {
     const activeBtn = triggerEl || document.activeElement;
     document.querySelectorAll('.filter-btn').forEach(btn => {
@@ -660,7 +675,7 @@ window.filterMarket = function(kat, triggerEl) {
         activeBtn.classList.remove('bg-white','dark:bg-slate-800','border','border-slate-200','dark:border-slate-700','text-slate-600','dark:text-slate-300');
     }
     const data = Array.isArray(window.STATE?.marketRequests) ? window.STATE.marketRequests : [];
-    const filtered = kat === 'all' ? data : data.filter(r => (r.category || '').trim() === kat);
+    const filtered = kat === 'all' ? data : data.filter(r => window.kategorieSedi(r.category, kat));
     const list = document.getElementById('market-list');
     if (!list) return;
     if (!filtered.length) { list.innerHTML = '<div class="text-center text-slate-400 py-10">Žádné poptávky v této kategorii.</div>'; return; }
