@@ -378,6 +378,35 @@ window.spustHlidaniZprav = function() {
 
     window._hlidaciTimer = setInterval(async () => {
         if (!window.sb || !window.APP_USER) return;
+
+        // Řemeslníkovi hlídáme, jestli zákazník nerozhodl o jeho nabídce
+        if (window.APP_ROLE === "craftsman" && window._mojeNabidky) {
+            try {
+                const { data: nabidky } = await window.sb
+                    .from("offers")
+                    .select("request_id, status, requests(title)")
+                    .eq("craftsman_id", window.APP_USER.id);
+
+                (nabidky || []).forEach(o => {
+                    const klic = String(o.request_id);
+                    const puvodni = window._mojeNabidky.get(klic);
+                    const nazev = o.requests?.title || "poptávku";
+
+                    if (puvodni && puvodni !== o.status) {
+                        if (o.status === "rejected") {
+                            window.showToast("Nabídka odmítnuta ❌", "Zákazník vybral někoho jiného na: " + nazev + ". Můžete poslat novou nabídku.", "error");
+                            if (window.loadMarketFromDB) window.loadMarketFromDB();
+                        } else if (o.status === "accepted") {
+                            window.showToast("Nabídka přijata! ✅", "Zákazník si vybral vás na: " + nazev, "success");
+                            if (window.loadCraftsmanJobsFromDB) window.loadCraftsmanJobsFromDB();
+                            if (window.loadCraftsmanConversations) window.loadCraftsmanConversations();
+                        }
+                    }
+                    window._mojeNabidky.set(klic, o.status);
+                });
+            } catch (e) {}
+        }
+
         try {
             const { data, error } = await window.sb
                 .from("messages")
