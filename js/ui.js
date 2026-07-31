@@ -153,10 +153,17 @@ window.createBeautifulCard = function(req, isMarket, i) {
                     '</div></div>'
                 : '';
             const firstName = (req.customer_name || 'Zákazník').split(' ')[0];
-            const uzNabidl = (typeof window.uzJsemNabidl === "function") ? window.uzJsemNabidl(req.id) : false;
-            const tlacitkoNabidky = uzNabidl
-                ? '<button disabled class="flex-1 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 py-3.5 rounded-xl font-bold text-sm cursor-not-allowed border border-slate-200 dark:border-slate-700"><i class="fa-solid fa-check mr-2"></i>Nabídka už odeslána</button>'
-                : '<button onclick="window.openOfferModal(\'' + req.id + '\')" class="flex-1 bg-remexo-500 hover:bg-remexo-600 text-white py-3.5 rounded-xl font-bold text-sm transition shadow-md hover:scale-[1.02]">Podat nabídku zákazníkovi</button>';
+            const stavNabidky = (typeof window.stavMeNabidky === "function") ? window.stavMeNabidky(req.id) : null;
+            let tlacitkoNabidky;
+            if (stavNabidky === "pending") {
+                tlacitkoNabidky = '<button disabled class="flex-1 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 py-3.5 rounded-xl font-bold text-sm cursor-not-allowed border border-slate-200 dark:border-slate-700"><i class="fa-solid fa-hourglass-half mr-2"></i>Čeká na rozhodnutí zákazníka</button>';
+            } else if (stavNabidky === "accepted") {
+                tlacitkoNabidky = '<button disabled class="flex-1 bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400 py-3.5 rounded-xl font-bold text-sm cursor-not-allowed border border-green-200 dark:border-green-500/30"><i class="fa-solid fa-check mr-2"></i>Zakázka je vaše</button>';
+            } else if (stavNabidky === "rejected") {
+                tlacitkoNabidky = '<button onclick="window.openOfferModal(\'' + req.id + '\')" class="flex-1 bg-white dark:bg-slate-800 border-2 border-remexo-500 text-remexo-600 dark:text-remexo-400 hover:bg-remexo-50 dark:hover:bg-remexo-500/10 py-3.5 rounded-xl font-bold text-sm transition"><i class="fa-solid fa-rotate-right mr-2"></i>Zkusit znovu s novou nabídkou</button>';
+            } else {
+                tlacitkoNabidky = '<button onclick="window.openOfferModal(\'' + req.id + '\')" class="flex-1 bg-remexo-500 hover:bg-remexo-600 text-white py-3.5 rounded-xl font-bold text-sm transition shadow-md hover:scale-[1.02]">Podat nabídku zákazníkovi</button>';
+            }
             const oblibena = (typeof window.jeOblibena === "function") ? window.jeOblibena(req.id) : false;
             const zalozkaIkona = oblibena ? "fa-solid fa-bookmark" : "fa-regular fa-bookmark";
             const zalozkaBarva = oblibena ? "text-remexo-500 border-remexo-500" : "text-slate-400 border-slate-200 dark:border-slate-700";
