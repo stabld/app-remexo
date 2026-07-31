@@ -407,15 +407,21 @@ window.publishRequest = async function(btnNode) {
     } catch(err) { window.showToast("Chyba","Nastala chyba: "+err.message,"error"); if(btnNode&&btnNode.tagName){btnNode.innerHTML=orig;btnNode.disabled=false;} }
 };
 
+// Najde poptávku podle jejího ID (ne podle pořadí v seznamu – to se mění filtrováním)
+window.najdiPoptavku = function(id) {
+    const data = Array.isArray(window.STATE?.marketRequests) ? window.STATE.marketRequests : [];
+    return data.find(r => String(r.id) === String(id)) || null;
+};
+
 // VYLEPŠENÍ 2: Kontrola, jestli má řemeslník profil, než pošle nabídku
-window.openOfferModal = function(index) {
+window.openOfferModal = function(id) {
     if (!window.APP_USER || !window.APP_USER.user_metadata || !window.APP_USER.user_metadata.full_name) {
         window.showToast("Vyplňte si profil", "Než začnete posílat nabídky, uložte si svůj profil a jméno.", "error");
         window.goTab("profile", "Můj profil");
         return;
     }
 
-    const req=window.STATE.marketRequests[index];if(!req)return;
+    const req=window.najdiPoptavku(id);if(!req)return;
     document.getElementById("co-req-id").value=req.id;
     document.getElementById("co-req-title").value=req.title;
     document.getElementById("co-title").innerText=req.title;
@@ -567,7 +573,7 @@ window.toggleMarketView = async function(mode) {
         if(btnList)btnList.className=btnList.className.replace("bg-remexo-500 text-white","text-slate-500 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700");
         if(btnMap)btnMap.className=btnMap.className.replace("text-slate-500 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700","bg-remexo-500 text-white");
         if(window.loadMarketFromDB) await window.loadMarketFromDB();
-        window.initMarketMap();
+        await window.initMarketMap();
     } else {
         mapEl.classList.add("hidden");listEl.classList.remove("hidden");
         if(btnMap)btnMap.className=btnMap.className.replace("bg-remexo-500 text-white","text-slate-500 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700");
@@ -577,6 +583,7 @@ window.toggleMarketView = async function(mode) {
 
 window.initMarketMap = async function() {
     const mapEl=document.getElementById("market-map");if(!mapEl)return;
+    window._marketMarkers={};
     if(window._marketMap){window._marketMap.eachLayer(l=>{if(l instanceof L.Marker)window._marketMap.removeLayer(l);});}
     else{window._marketMap=L.map("market-map").setView([49.8,15.5],8);L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:"© OpenStreetMap",maxZoom:18}).addTo(window._marketMap);}
     const requests=window.STATE.marketRequests||[];
@@ -595,13 +602,51 @@ window.initMarketMap = async function() {
             if(geo&&geo.length>0){
                 const lat=parseFloat(geo[0].lat),lon=parseFloat(geo[0].lon);bounds.push([lat,lon]);
                 const urgencyColor=r.urgency==="Vysoká"?"#ef4444":r.urgency==="Nízká"?"#22c55e":"#f59e0b";
-                const popup=L.popup({maxWidth:280,minWidth:220}).setContent('<div class="remexo-pin-popup"><span class="cat-badge">'+(r.category||"Ostatní")+'</span><p class="title">'+(r.title||"Poptávka")+'</p><p class="addr"><i class="fa-solid fa-location-dot" style="color:#f59e0b;margin-right:4px"></i>'+displayCity+'</p><div style="display:flex;gap:8px;margin-bottom:10px"><span style="font-size:11px;font-weight:700;color:'+urgencyColor+';background:'+urgencyColor+'18;padding:3px 8px;border-radius:6px;">'+(r.urgency||"Střední")+' priorita</span>'+(r.price_estimate?'<span style="font-size:11px;font-weight:700;color:#0f172a;background:#f1f5f9;padding:3px 8px;border-radius:6px;">'+r.price_estimate+'</span>':'')+'</div><button class="offer-btn" onclick="window.openOfferModal('+i+'); document.querySelectorAll(\'.leaflet-popup-close-button\').forEach(b=>b.click());">Poslat nabídku →</button></div>');
-                L.marker([lat,lon],{icon:pinIcon}).addTo(window._marketMap).bindPopup(popup);
+                const popup=L.popup({maxWidth:280,minWidth:220}).setContent('<div class="remexo-pin-popup"><span class="cat-badge">'+(r.category||"Ostatní")+'</span><p class="title">'+(r.title||"Poptávka")+'</p><p class="addr"><i class="fa-solid fa-location-dot" style="color:#f59e0b;margin-right:4px"></i>'+displayCity+'</p><div style="display:flex;gap:8px;margin-bottom:10px"><span style="font-size:11px;font-weight:700;color:'+urgencyColor+';background:'+urgencyColor+'18;padding:3px 8px;border-radius:6px;">'+(r.urgency||"Střední")+' priorita</span>'+(r.price_estimate?'<span style="font-size:11px;font-weight:700;color:#0f172a;background:#f1f5f9;padding:3px 8px;border-radius:6px;">'+r.price_estimate+'</span>':'')+'</div><button class="offer-btn" onclick="window.openOfferModal(\''+r.id+'\'); document.querySelectorAll(\'.leaflet-popup-close-button\').forEach(b=>b.click());">Poslat nabídku →</button><button onclick="window.showRequestDetail(\''+r.id+'\')" style="width:100%;margin-top:6px;padding:8px;border:1px solid #e2e8f0;background:#fff;color:#475569;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;">Zobrazit detail poptávky</button></div>');
+                const marker=L.marker([lat,lon],{icon:pinIcon}).addTo(window._marketMap).bindPopup(popup);
+                window._marketMarkers[r.id]=marker;
             }
         }catch(e){}
     }
     if(bounds.length>0)window._marketMap.fitBounds(bounds,{padding:[40,40],maxZoom:13});
     setTimeout(()=>window._marketMap&&window._marketMap.invalidateSize(),100);
+};
+
+// Ze seznamu na mapu – přepne pohled a otevře bublinu u konkrétní poptávky
+window.showOnMap = async function(id) {
+    const req = window.najdiPoptavku(id);
+    if(!req) return;
+
+    window.showToast("Hledám na mapě…", (req.title||"Poptávka"), "info");
+    await window.toggleMarketView("map");
+
+    const marker = window._marketMarkers && window._marketMarkers[id];
+    if(!marker){
+        window.showToast("Adresu nelze zobrazit","U této poptávky se nepodařilo najít přesné místo na mapě.","error");
+        return;
+    }
+
+    window._marketMap.setView(marker.getLatLng(), 15, { animate: true });
+    marker.openPopup();
+};
+
+// Z mapy zpět do seznamu – najde kartu poptávky a zvýrazní ji
+window.showRequestDetail = async function(id) {
+    document.querySelectorAll(".leaflet-popup-close-button").forEach(b=>b.click());
+    await window.toggleMarketView("list");
+
+    const filterAll = document.getElementById("filter-all");
+    if(filterAll) window.filterMarket("all", filterAll);
+
+    setTimeout(()=>{
+        const karta = document.getElementById("market-card-"+id);
+        if(!karta) return;
+        karta.scrollIntoView({ behavior:"smooth", block:"center" });
+        karta.style.transition = "box-shadow .3s, border-color .3s";
+        karta.style.borderColor = "#f59e0b";
+        karta.style.boxShadow = "0 0 0 4px rgba(245,158,11,0.25)";
+        setTimeout(()=>{ karta.style.borderColor=""; karta.style.boxShadow=""; }, 2500);
+    }, 150);
 };
 
 window.filterMarket = function(kat, triggerEl) {
