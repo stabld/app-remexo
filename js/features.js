@@ -177,6 +177,11 @@ window.saveProfile = async function(btnNode) {
         document.getElementById("user-avatar").src = displayUrl;
         document.querySelectorAll("#prof-avatar-img").forEach(function(img) { img.src = displayUrl; });
         window.showToast("Profil uložen! ✅", "Vaše změny byly úspěšně uloženy.", "success");
+
+        // Pokud čekala poptávka z webu na vyplnění profilu, teď ji dokončíme
+        if (window.PENDING_POPTAVKA && window.applyPendingPoptavka) {
+            setTimeout(() => window.applyPendingPoptavka(), 800);
+        }
     } catch(e) { window.showToast("Chyba ukládání", e.message, "error"); }
     finally { btnNode.innerHTML = orig; btnNode.disabled = false; }
 };
@@ -343,16 +348,12 @@ window.publishRequest = async function(btnNode) {
     try {
         if(btnNode&&btnNode.tagName){orig=btnNode.innerHTML;btnNode.innerHTML='<i class="fa-solid fa-circle-notch fa-spin mr-2"></i>Zpracovávám...';btnNode.disabled=true;}
 
-        // Bez vyplněného profilu poptávku nezveřejníme – řemeslník musí vědět, s kým jedná
-        const profil = window.APP_USER?.user_metadata || {};
-        const chybi = [];
-        if(!(profil.full_name||"").trim()) chybi.push("jméno a příjmení");
-        if(!(profil.phone||"").trim()) chybi.push("telefon");
-        if(!(profil.city||"").trim()) chybi.push("město");
+        // Pojistka pro případ, že by se sem někdo dostal oklikou –
+        // hlavní kontrola probíhá už při otevření Nové poptávky
+        const chybi = window.chybejiciUdajeProfilu ? window.chybejiciUdajeProfilu() : [];
         if(chybi.length > 0){
-            window.showToast("Nejprve vyplňte profil","Chybí: "+chybi.join(", ")+". Přesměrováváme vás do profilu.","error");
+            window.showToast("Nejprve vyplňte profil","Chybí: "+chybi.join(", ")+".","error");
             if(btnNode&&btnNode.tagName){btnNode.innerHTML=orig;btnNode.disabled=false;}
-            setTimeout(()=>{ if(window.goTab) window.goTab("profile","Můj profil"); }, 1200);
             return;
         }
 
@@ -657,6 +658,16 @@ window.closePublicProfile = function() {
 window.applyPendingPoptavka = function() {
     const data = window.PENDING_POPTAVKA;
     if (!data) return;
+
+    // Profil ještě není vyplněný – poptávku si podržíme a doplníme ji,
+    // jakmile profil uloží (jinak by o ni přišel)
+    const chybi = window.chybejiciUdajeProfilu ? window.chybejiciUdajeProfilu() : [];
+    if (chybi.length > 0) {
+        window.showToast("Nejprve vyplňte profil", "Vaši poptávku máme uloženou. Doplňte: " + chybi.join(", ") + ".", "info");
+        window.goTab("profile", "Můj profil");
+        return;
+    }
+
     window.PENDING_POPTAVKA = null;
 
     window.goTab("new", "Nová poptávka");
