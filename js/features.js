@@ -625,6 +625,10 @@ window.acceptOffer = async function(offerId, requestId, craftsmanName) {
         return;
     }
 
+    // Údaje o nabídce potřebujeme na víc míst – načteme je jednou dopředu
+    const { data: nabidka } = await window.sb.from("offers")
+        .select("message, craftsman_id, craftsman_name").eq("id", offerId).maybeSingle();
+
     const { error: chybaNabidky } = await window.sb.from("offers").update({status:"accepted"}).eq("id",offerId);
     if (chybaNabidky) {
         window.showToast("Nepodařilo se přijmout nabídku", chybaNabidky.message || "Zkuste to prosím znovu.", "error");
@@ -632,7 +636,7 @@ window.acceptOffer = async function(offerId, requestId, craftsmanName) {
     }
 
     const { error: chybaPoptavky } = await window.sb.from("requests")
-        .update({status:"active",craftsman_name:craftsmanName}).eq("id",requestId);
+        .update({status:"active",craftsman_name:craftsmanName,craftsman_id:(nabidka?.craftsman_id||null)}).eq("id",requestId);
     if (chybaPoptavky) {
         // Vrátíme nabídku zpět, ať nezůstane přijatá u poptávky, která je pořád volná
         await window.sb.from("offers").update({status:"pending"}).eq("id",offerId);
@@ -649,8 +653,6 @@ window.acceptOffer = async function(offerId, requestId, craftsmanName) {
 
     // Teprve teď zakládáme konverzaci – úvodní zprávou je text z přijaté nabídky
     try {
-        const { data: nabidka } = await window.sb.from("offers")
-            .select("message, craftsman_id, craftsman_name").eq("id", offerId).maybeSingle();
         if (nabidka && nabidka.message) {
             const { data: existujici } = await window.sb.from("messages")
                 .select("id").eq("conversation_id", String(requestId)).limit(1);
@@ -674,7 +676,7 @@ window.acceptOffer = async function(offerId, requestId, craftsmanName) {
 
     // Seznam konverzací musí doběhnout dřív, než konverzaci otevřeme
     if(window.loadCustomerConversations) await window.loadCustomerConversations();
-    const idRemeslnika = (await window.sb.from("offers").select("craftsman_id").eq("id",offerId).maybeSingle()).data?.craftsman_id || null;
+    const idRemeslnika = nabidka?.craftsman_id || null;
     window.openConversation(requestId, craftsmanName, "craftsman"+requestId, idRemeslnika);
 };
 
