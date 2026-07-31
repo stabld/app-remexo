@@ -561,6 +561,7 @@ window.loadMarketFromDB = async function() {
     const {data,error}=await window.sb.from("requests").select("*").eq("status","waiting").order("created_at",{ascending:false});
     if(error||!data||data.length===0){list.innerHTML='<div class="text-center p-16 bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-3xl"><i class="fa-solid fa-inbox text-5xl text-slate-300 dark:text-slate-600 mb-5 block"></i><p class="font-bold text-slate-500 text-lg">Zatím žádné poptávky ve vašem okolí.</p></div>';return;}
     window.STATE.marketRequests=data;
+    if(window.nactiOblibene) await window.nactiOblibene();
     list.innerHTML=data.map((r,i)=>window.createBeautifulCard({id:r.id,sbId:r.id,title:r.title,kat:r.category||"Ostatní",popis:r.description||"",time:new Date(r.created_at).toLocaleDateString("cs"),status:r.status,urgency:r.urgency||"Střední",category:r.category,customer_name:r.customer_name||"Zákazník",price_estimate:r.price_estimate||"Dohodou"},true,i)).join("");
 };
 
@@ -665,51 +666,80 @@ window.kategorieSedi = function(kategoriePoptavky, filtr) {
 };
 
 // === OBLÍBENÉ POPTÁVKY ===
-// Ukládáme v prohlížeči u konkrétního účtu (bez zásahu do databáze)
-window._klicOblibenych = function() {
-    const uid = window.APP_USER?.id || "anon";
-    return "remexo_oblibene_" + uid;
-};
+// Uloženo v databázi (tabulka "oblibene"), takže je řemeslník vidí i na jiném zařízení
+window._oblibene = new Set();
 
-window.nactiOblibene = function() {
+window.nactiOblibene = async function() {
+    window._oblibene = new Set();
+    if (!window.sb || !window.APP_USER) return;
     try {
-        const raw = localStorage.getItem(window._klicOblibenych());
-        const pole = raw ? JSON.parse(raw) : [];
-        return Array.isArray(pole) ? pole.map(String) : [];
-    } catch(e) { return []; }
+        const { data, error } = await window.sb
+            .from("oblibene")
+            .select("request_id")
+            .eq("user_id", window.APP_USER.id);
+        if (error) throw error;
+        (data || []).forEach(r => window._oblibene.add(String(r.request_id)));
+    } catch (e) {
+        console.error("Nepodařilo se načíst oblíbené:", e.message);
+    }
 };
 
 window.jeOblibena = function(id) {
-    return window.nactiOblibene().includes(String(id));
+    return window._oblibene.has(String(id));
 };
 
-window.toggleOblibene = function(id, btnEl) {
-    const seznam = window.nactiOblibene();
-    const klic = String(id);
-    const index = seznam.indexOf(klic);
-    let pridano;
+// Přepne vzhled tlačítka (používáme i pro vrácení stavu, když zápis selže)
+window._vykresliZalozku = function(btnEl, jeOblibena) {
+    if (!btnEl) return;
+    const ikona = btnEl.querySelector("i");
+    if (ikona) ikona.className = jeOblibena ? "fa-solid fa-bookmark" : "fa-regular fa-bookmark";
+    btnEl.classList.toggle("text-remexo-500", jeOblibena);
+    btnEl.classList.toggle("border-remexo-500", jeOblibena);
+    btnEl.classList.toggle("text-slate-400", !jeOblibena);
+};
 
-    if (index === -1) { seznam.push(klic); pridano = true; }
-    else { seznam.splice(index, 1); pridano = false; }
-
-    try { localStorage.setItem(window._klicOblibenych(), JSON.stringify(seznam)); }
-    catch(e) { window.showToast("Nepodařilo se uložit", "Oblíbené se nepodařilo uložit.", "error"); return; }
-
-    if (btnEl) {
-        const ikona = btnEl.querySelector("i");
-        if (ikona) ikona.className = pridano ? "fa-solid fa-bookmark" : "fa-regular fa-bookmark";
-        btnEl.classList.toggle("text-remexo-500", pridano);
-        btnEl.classList.toggle("border-remexo-500", pridano);
-        btnEl.classList.toggle("text-slate-400", !pridano);
+window.toggleOblibene = async function(id, btnEl) {
+    if (!window.sb || !window.APP_USER) {
+        window.showToast("Nejste přihlášen", "Pro ukládání poptávek se přihlaste.", "error");
+        return;
     }
 
-    const req = window.najdiPoptavku ? window.najdiPoptavku(id) : null;
-    const nazev = req?.title || "Poptávka";
-    window.showToast(
-        pridano ? "Přidáno do oblíbených ⭐" : "Odebráno z oblíbených",
-        nazev,
-        pridano ? "success" : "info"
-    );
+    const bylaOblibena = window.jeOblibena(id);
+    const klic = String(id);
+
+    // Nejdřív překlopíme vzhled, ať to reaguje okamžitě
+    if (bylaOblibena) window._oblibene.delete(klic); else window._oblibene.add(klic);
+    window._vykresliZalozku(btnEl, !bylaOblibena);
+
+    try {
+        let error;
+        if (bylaOblibena) {
+            ({ error } = await window.sb.from("oblibene").delete()
+                .eq("user_id", window.APP_USER.id).eq("request_id", id));
+        } else {
+            ({ error } = await window.sb.from("oblibene")
+                .insert({ user_id: window.APP_USER.id, request_id: id }));
+        }
+        if (error) throw error;
+
+        const req = window.najdiPoptavku ? window.najdiPoptavku(id) : null;
+        window.showToast(
+            bylaOblibena ? "Odebráno z uložených" : "Uloženo ⭐",
+            req?.title || "Poptávka",
+            bylaOblibena ? "info" : "success"
+        );
+
+        // Když si prohlíží uložené a jednu odebere, ať karta rovnou zmizí
+        if (window._aktivniFiltr === "saved") {
+            const tlacitko = document.getElementById("filter-saved");
+            window.filterMarket("saved", tlacitko);
+        }
+    } catch (e) {
+        // Zápis selhal – vrátíme stav zpět, ať uživatel nevidí něco jiného, než je uloženo
+        if (bylaOblibena) window._oblibene.add(klic); else window._oblibene.delete(klic);
+        window._vykresliZalozku(btnEl, bylaOblibena);
+        window.showToast("Nepodařilo se uložit", e.message || "Zkuste to prosím znovu.", "error");
+    }
 };
 
 window.filterMarket = function(kat, triggerEl) {
@@ -722,11 +752,22 @@ window.filterMarket = function(kat, triggerEl) {
         activeBtn.classList.add('bg-remexo-500','text-white','shadow-md');
         activeBtn.classList.remove('bg-white','dark:bg-slate-800','border','border-slate-200','dark:border-slate-700','text-slate-600','dark:text-slate-300');
     }
+    window._aktivniFiltr = kat;
     const data = Array.isArray(window.STATE?.marketRequests) ? window.STATE.marketRequests : [];
-    const filtered = kat === 'all' ? data : data.filter(r => window.kategorieSedi(r.category, kat));
+    let filtered;
+    if (kat === 'all') filtered = data;
+    else if (kat === 'saved') filtered = data.filter(r => window.jeOblibena(r.id));
+    else filtered = data.filter(r => window.kategorieSedi(r.category, kat));
+
     const list = document.getElementById('market-list');
     if (!list) return;
-    if (!filtered.length) { list.innerHTML = '<div class="text-center text-slate-400 py-10">Žádné poptávky v této kategorii.</div>'; return; }
+    if (!filtered.length) {
+        const hlaska = kat === 'saved'
+            ? 'Zatím nemáte uložené žádné poptávky. Ukládejte je záložkou na kartě.'
+            : 'Žádné poptávky v této kategorii.';
+        list.innerHTML = '<div class="text-center text-slate-400 py-10">' + hlaska + '</div>';
+        return;
+    }
     list.innerHTML = filtered.map((req, i) => window.createBeautifulCard(req, true, i)).join('');
 };
 
