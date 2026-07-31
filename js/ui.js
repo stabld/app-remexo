@@ -159,8 +159,11 @@ window.createBeautifulCard = function(req, isMarket, i) {
                 tlacitkoNabidky = '<button disabled class="flex-1 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 py-3.5 rounded-xl font-bold text-sm cursor-not-allowed border border-slate-200 dark:border-slate-700"><i class="fa-solid fa-hourglass-half mr-2"></i>Čeká na rozhodnutí zákazníka</button>';
             } else if (stavNabidky === "accepted") {
                 tlacitkoNabidky = '<button disabled class="flex-1 bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400 py-3.5 rounded-xl font-bold text-sm cursor-not-allowed border border-green-200 dark:border-green-500/30"><i class="fa-solid fa-check mr-2"></i>Zakázka je vaše</button>';
+            } else if (stavNabidky === "rejected" && typeof window.dosleMiPokusy === "function" && window.dosleMiPokusy(req.id)) {
+                tlacitkoNabidky = '<button disabled class="flex-1 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 py-3.5 rounded-xl font-bold text-sm cursor-not-allowed border border-slate-200 dark:border-slate-700"><i class="fa-solid fa-ban mr-2"></i>Nabídka odmítnuta</button>';
             } else if (stavNabidky === "rejected") {
-                tlacitkoNabidky = '<button onclick="window.openOfferModal(\'' + req.id + '\')" class="flex-1 bg-white dark:bg-slate-800 border-2 border-remexo-500 text-remexo-600 dark:text-remexo-400 hover:bg-remexo-50 dark:hover:bg-remexo-500/10 py-3.5 rounded-xl font-bold text-sm transition"><i class="fa-solid fa-rotate-right mr-2"></i>Zkusit znovu s novou nabídkou</button>';
+                const zbyva = window.MAX_POKUSU - (window.pocetPokusu ? window.pocetPokusu(req.id) : 1);
+                tlacitkoNabidky = '<button onclick="window.openOfferModal(\'' + req.id + '\')" class="flex-1 bg-white dark:bg-slate-800 border-2 border-remexo-500 text-remexo-600 dark:text-remexo-400 hover:bg-remexo-50 dark:hover:bg-remexo-500/10 py-3.5 rounded-xl font-bold text-sm transition"><i class="fa-solid fa-rotate-right mr-2"></i>Zkusit znovu (zbývá ' + zbyva + ')</button>';
             } else {
                 tlacitkoNabidky = '<button onclick="window.openOfferModal(\'' + req.id + '\')" class="flex-1 bg-remexo-500 hover:bg-remexo-600 text-white py-3.5 rounded-xl font-bold text-sm transition shadow-md hover:scale-[1.02]">Podat nabídku zákazníkovi</button>';
             }
