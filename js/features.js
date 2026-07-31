@@ -724,7 +724,19 @@ window.loadCustomerRequestsFromDB = async function() {
     if(!window.sb||!window.APP_USER)return;
     const {data}=await window.sb.from("requests").select("*").eq("customer_id",window.APP_USER.id).order("created_at",{ascending:false});
     if(data&&data.length>0){
-        window.STATE.requests=data.map(r=>({sbId:r.id,title:r.title,kat:r.category,popis:r.description,time:new Date(r.created_at).toLocaleTimeString("cs",{hour:"2-digit",minute:"2-digit"}),status:r.status,craftsman_name:r.craftsman_name||null}));
+        // Ke každé poptávce spočítáme čekající nabídky, ať je zákazník vidí bez klikání
+        const pocty = {};
+        try {
+            const { data: nabidky } = await window.sb.from("offers")
+                .select("request_id, status")
+                .in("request_id", data.map(r=>r.id));
+            (nabidky||[]).forEach(o=>{
+                if(o.status === "rejected") return;
+                pocty[String(o.request_id)] = (pocty[String(o.request_id)]||0) + 1;
+            });
+        } catch(e) {}
+
+        window.STATE.requests=data.map(r=>({sbId:r.id,title:r.title,kat:r.category,popis:r.description,time:new Date(r.created_at).toLocaleTimeString("cs",{hour:"2-digit",minute:"2-digit"}),status:r.status,craftsman_name:r.craftsman_name||null,pocetNabidek:pocty[String(r.id)]||0}));
         if(window.refreshRequestsList)window.refreshRequestsList();if(window.refreshDashboard)window.refreshDashboard();
     }
 };
