@@ -414,9 +414,33 @@ window.najdiPoptavku = function(id) {
 };
 
 // VYLEPŠENÍ 2: Kontrola, jestli má řemeslník profil, než pošle nabídku
+// Popis poptávky bez kontaktních údajů – pro řemeslníky, kteří ještě nemají zakázku přidělenou
+window.popisBezKontaktu = function(popis) {
+    const text = popis || "";
+    if (!text.includes("---")) return text;
+
+    const casti = text.split("---");
+    const hlavni = (casti[0] || "").trim();
+    const zbytek = (casti[1] || "").replace("📋 DOPLŇUJÍCÍ INFORMACE:", "").trim();
+
+    const radky = zbytek.split(/\r?\n/).map(r => r.trim()).filter(Boolean)
+        .filter(r => !r.startsWith("📞"))          // telefon pryč
+        .map(r => {
+            if (r.startsWith("📍")) {              // z adresy zůstane jen město
+                const c = r.split(",");
+                const mesto = c.length > 1 ? c[c.length - 1].trim() : r.replace(/^📍\s*Adresa:\s*/, "").trim();
+                return "📍 " + mesto;
+            }
+            return r;
+        });
+
+    return hlavni + (radky.length ? "\n\n📋 DOPLŇUJÍCÍ INFORMACE:\n" + radky.join("\n") : "");
+};
+
 window.openOfferModal = function(id) {
-    if (!window.APP_USER || !window.APP_USER.user_metadata || !window.APP_USER.user_metadata.full_name) {
-        window.showToast("Vyplňte si profil", "Než začnete posílat nabídky, uložte si svůj profil a jméno.", "error");
+    const chybiVProfilu = window.chybejiciUdajeProfilu ? window.chybejiciUdajeProfilu() : [];
+    if (chybiVProfilu.length > 0) {
+        window.showToast("Nejprve vyplňte profil", "Než začnete posílat nabídky, doplňte: " + chybiVProfilu.join(", ") + ".", "error");
         window.goTab("profile", "Můj profil");
         return;
     }
@@ -438,7 +462,7 @@ window.openOfferModal = function(id) {
     document.getElementById("co-cat").innerText=req.category||"Ostatní";
     document.getElementById("co-urg").innerText=req.urgency||"Střední";
     let extracted=window.extractPhotoFromDesc(req.description);
-    document.getElementById("co-desc").innerHTML=extracted.desc.replace(/\n/g,"<br>");
+    document.getElementById("co-desc").innerHTML=window.popisBezKontaktu(extracted.desc).replace(/\n/g,"<br>");
     document.getElementById("co-price").value=req.price_estimate||"Dohodou";
     document.getElementById("co-msg").value='Dobrý den, mám zájem o vaši zakázku "' + req.title + '". Mám čas a vybavení, mohu pomoci.';
     
@@ -653,16 +677,31 @@ window.refreshCraftsmanJobs = function() {
         let badge='<span class="status-badge status-waiting">Čekám na odpověď</span>';
         if(job.status==="accepted"||job.status==="active")badge='<span class="status-badge status-active">Aktivní zakázka</span>';
         if(job.status==="done"||job.status==="completed")badge='<span class="status-badge status-done">Dokončeno</span>';
-        d.innerHTML='<div class="flex items-start justify-between mb-4"><div><h4 class="font-extrabold text-lg dark:text-white leading-tight">' + job.title + '</h4><p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1.5">' + job.time + '</p></div>' + badge + '</div><button onclick="window.activeChatId=\'' + job.requestId + '\'; window.goTab(\'c-messages\',\'Zprávy\'); setTimeout(()=>window.openConversation(\'' + job.requestId + '\',\'Zákazník\',\'customer' + job.requestId + '\'),300);" class="text-sm font-bold text-remexo-500 hover:text-remexo-600 transition flex items-center gap-2"><i class="fa-regular fa-comment-dots"></i> Napsat zákazníkovi</button>';
+        // Kontakty na zákazníka se odemknou, až je zakázka opravdu jeho
+        const jeMoje = job.status==="accepted"||job.status==="active"||job.status==="done";
+        let kontaktyHtml = "";
+        if (jeMoje && job.popis && job.popis.includes("---")) {
+            const detaily = (job.popis.split("---")[1]||"").replace("📋 DOPLŇUJÍCÍ INFORMACE:","").trim()
+                .split(/\r?\n/).map(r=>r.trim()).filter(Boolean);
+            if (detaily.length) {
+                kontaktyHtml = '<div class="mt-4 mb-4 p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700">'
+                    + '<p class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-2">Kontakt na zákazníka</p>'
+                    + '<p class="text-sm font-bold dark:text-white mb-2">' + job.zakaznik + '</p>'
+                    + '<div class="flex flex-wrap gap-2">'
+                    + detaily.map(r=>'<span class="text-xs font-medium text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-100 dark:border-slate-700">'+r+'</span>').join("")
+                    + '</div></div>';
+            }
+        }
+        d.innerHTML='<div class="flex items-start justify-between mb-4"><div><h4 class="font-extrabold text-lg dark:text-white leading-tight">' + job.title + '</h4><p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1.5">' + job.time + '</p></div>' + badge + '</div>' + kontaktyHtml + '<button onclick="window.activeChatId=\'' + job.requestId + '\'; window.goTab(\'c-messages\',\'Zprávy\'); setTimeout(()=>window.openConversation(\'' + job.requestId + '\',\'Zákazník\',\'customer' + job.requestId + '\'),300);" class="text-sm font-bold text-remexo-500 hover:text-remexo-600 transition flex items-center gap-2"><i class="fa-regular fa-comment-dots"></i> Napsat zákazníkovi</button>';
         list.appendChild(d);
     });
 };
 
 window.loadCraftsmanJobsFromDB = async function() {
     if(!window.sb||!window.APP_USER)return;
-    const {data}=await window.sb.from("offers").select("*, requests(title, category, status)").eq("craftsman_id",window.APP_USER.id);
+    const {data}=await window.sb.from("offers").select("*, requests(title, category, status, description, customer_name)").eq("craftsman_id",window.APP_USER.id);
     if(data&&data.length>0){
-        window.STATE.craftJobs=data.map(o=>{ let s=o.status;if(o.requests?.status==="done")s="done"; return {title:o.requests?.title||"Zakázka",requestId:o.request_id,status:s,time:new Date(o.created_at).toLocaleTimeString("cs",{hour:"2-digit",minute:"2-digit"})}; });
+        window.STATE.craftJobs=data.map(o=>{ let s=o.status;if(o.requests?.status==="done")s="done"; return {title:o.requests?.title||"Zakázka",requestId:o.request_id,status:s,popis:o.requests?.description||"",zakaznik:o.requests?.customer_name||"Zákazník",time:new Date(o.created_at).toLocaleTimeString("cs",{hour:"2-digit",minute:"2-digit"})}; });
         window.refreshCraftsmanJobs();
     }
 };
