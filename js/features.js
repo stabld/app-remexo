@@ -738,6 +738,7 @@ window.loadCustomerRequestsFromDB = async function() {
 
         window.STATE.requests=data.map(r=>({sbId:r.id,title:r.title,kat:r.category,popis:r.description,time:new Date(r.created_at).toLocaleTimeString("cs",{hour:"2-digit",minute:"2-digit"}),status:r.status,craftsman_name:r.craftsman_name||null,pocetNabidek:pocty[String(r.id)]||0}));
         if(window.refreshRequestsList)window.refreshRequestsList();if(window.refreshDashboard)window.refreshDashboard();
+        if(window.aktualizujBublinuNabidek)window.aktualizujBublinuNabidek();
     }
 };
 
