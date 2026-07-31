@@ -342,6 +342,20 @@ window.publishRequest = async function(btnNode) {
     let orig = "Zveřejnit poptávku na Remexo";
     try {
         if(btnNode&&btnNode.tagName){orig=btnNode.innerHTML;btnNode.innerHTML='<i class="fa-solid fa-circle-notch fa-spin mr-2"></i>Zpracovávám...';btnNode.disabled=true;}
+
+        // Bez vyplněného profilu poptávku nezveřejníme – řemeslník musí vědět, s kým jedná
+        const profil = window.APP_USER?.user_metadata || {};
+        const chybi = [];
+        if(!(profil.full_name||"").trim()) chybi.push("jméno a příjmení");
+        if(!(profil.phone||"").trim()) chybi.push("telefon");
+        if(!(profil.city||"").trim()) chybi.push("město");
+        if(chybi.length > 0){
+            window.showToast("Nejprve vyplňte profil","Chybí: "+chybi.join(", ")+". Přesměrováváme vás do profilu.","error");
+            if(btnNode&&btnNode.tagName){btnNode.innerHTML=orig;btnNode.disabled=false;}
+            setTimeout(()=>{ if(window.goTab) window.goTab("profile","Můj profil"); }, 1200);
+            return;
+        }
+
         const getText=(id,def)=>{const el=document.getElementById(id);return el?el.innerText.trim():def;};
         const getValue=(id,def)=>{const el=document.getElementById(id);return el?el.value.trim():def;};
         const title=getText("r-nazev","Nová poptávka"),kat=getText("r-kat","Ostatní"),popis=getText("r-popis",""),nal=getText("r-nal","Střední"),cena=getText("r-cena","Dohodou");
