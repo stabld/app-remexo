@@ -253,13 +253,12 @@ window.chybejiciUdajeProfilu = function() {
 window.goTab = function(id, title) {
     // Novou poptávku nepustíme zakládat, dokud není vyplněný profil –
     // radši hned na začátku, než aby o rozdělanou práci přišel
-    // Bez vyplněného profilu nepustíme dál ani zákazníka k nové poptávce,
-    // ani řemeslníka k poptávkám ostatních – radši hned, než aby o práci přišel
-    const uzavreneZalozky = ["new", "market", "jobs", "earnings", "messages", "c-messages", "requests", "dash"];
-    if(uzavreneZalozky.includes(id)){
+    // Prohlížet může kdokoliv – profil chceme až ve chvíli, kdy chce někdo jednat.
+    // Kdo přijde a uvidí prázdnou appku, odejde.
+    if(id === "new"){
         const chybi = window.chybejiciUdajeProfilu();
         if(chybi.length > 0){
-            window.showToast("Nejprve vyplňte profil","Pro pokračování doplňte: "+chybi.join(", ")+".","error");
+            window.showToast("Nejprve vyplňte profil","Před zadáním poptávky doplňte: "+chybi.join(", ")+".","error");
             return window.goTab("profile","Můj profil");
         }
     }
