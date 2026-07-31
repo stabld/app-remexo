@@ -375,9 +375,37 @@ window.spustHlidaniZprav = function() {
     if (!window.sb || !window.APP_USER) return;
 
     window._posledniKontrola = new Date().toISOString();
+    window._posledniKontrolaNabidek = window._posledniKontrola;
 
     window._hlidaciTimer = setInterval(async () => {
         if (!window.sb || !window.APP_USER) return;
+
+        // Zákazníkovi hlídáme, jestli mu nepřišla nová nabídka
+        if (window.APP_ROLE === "customer") {
+            try {
+                const mojePoptavky = (window.STATE.requests || []).map(r => r.sbId).filter(Boolean);
+                if (mojePoptavky.length > 0) {
+                    const { data: nove } = await window.sb
+                        .from("offers")
+                        .select("craftsman_name, request_id, price, created_at, requests(title)")
+                        .in("request_id", mojePoptavky)
+                        .gt("created_at", window._posledniKontrolaNabidek)
+                        .order("created_at", { ascending: true });
+
+                    if (nove && nove.length > 0) {
+                        window._posledniKontrolaNabidek = nove[nove.length - 1].created_at;
+                        nove.forEach(o => {
+                            window.showToast(
+                                "Nová nabídka! 🎉",
+                                (o.craftsman_name || "Řemeslník") + " nabízí " + (o.price || "dohodou") + " na: " + (o.requests?.title || "vaši poptávku"),
+                                "success"
+                            );
+                        });
+                        if (window.loadCustomerRequestsFromDB) window.loadCustomerRequestsFromDB();
+                    }
+                }
+            } catch (e) {}
+        }
 
         // Řemeslníkovi hlídáme, jestli zákazník nerozhodl o jeho nabídce
         if (window.APP_ROLE === "craftsman" && window._mojeNabidky) {
