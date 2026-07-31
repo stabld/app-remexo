@@ -221,12 +221,30 @@ window.initCraftsman = function(name) {
     window.goTab("market","Tržiště zakázek");
 };
 
+// Bublina s počtem čekajících nabídek u záložky Moje poptávky
+window.aktualizujBublinuNabidek = function() {
+    const celkem = (window.STATE?.requests || []).reduce((soucet, r) => soucet + (r.pocetNabidek || 0), 0);
+    ["sidebar-offers-badge", "bottom-offers-badge"].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (celkem > 0) {
+            el.innerText = celkem;
+            el.classList.remove("hidden");
+        } else {
+            el.classList.add("hidden");
+        }
+    });
+};
+
 // Generování menu - S přidanou HTML strukturou pro bublinku
 window.buildNav = function(items) {
     document.getElementById("sidebar-nav").innerHTML = items.map(item => {
         let badgeHtml = '';
         if (item.id === 'messages' || item.id === 'c-messages') {
             badgeHtml = '<span id="sidebar-msg-badge" class="hidden ml-auto bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full"></span>';
+        }
+        if (item.id === 'requests') {
+            badgeHtml = '<span id="sidebar-offers-badge" class="hidden ml-auto bg-remexo-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full"></span>';
         }
         return '<button onclick="window.goTab(\'' + item.id + '\',\'' + item.label + '\')" id="nav-' + item.id + '" class="nav-item w-full flex items-center gap-4 px-5 py-3.5 rounded-2xl font-bold transition hover:bg-slate-100 dark:hover:bg-slate-800/50 text-slate-600 dark:text-slate-400 text-sm"><i class="fa-solid ' + item.icon + ' w-5 text-center text-lg"></i> ' + item.label + badgeHtml + '</button>';
     }).join("");
@@ -235,6 +253,9 @@ window.buildNav = function(items) {
         let bBadge = '';
         if (item.id === 'messages' || item.id === 'c-messages') {
             bBadge = '<span id="bottom-msg-badge" class="hidden absolute top-0 right-2 bg-red-500 text-white text-[9px] font-bold w-4 h-4 flex items-center justify-center rounded-full"></span>';
+        }
+        if (item.id === 'requests') {
+            bBadge = '<span id="bottom-offers-badge" class="hidden absolute top-0 right-2 bg-remexo-500 text-white text-[9px] font-bold w-4 h-4 flex items-center justify-center rounded-full"></span>';
         }
         return '<button onclick="window.goTab(\'' + item.id + '\',\'' + item.label + '\')" id="bnav-' + item.id + '" class="flex-1 relative flex flex-col items-center justify-center gap-1 py-1.5 text-slate-400 hover:text-remexo-500 transition min-w-0 px-0.5"><i class="fa-solid ' + item.icon + ' text-lg"></i><span class="text-[9px] font-bold leading-tight truncate max-w-full text-center">' + ({"dash":"Domů","requests":"Poptávky","messages":"Zprávy","payments":"Platby","profile":"Profil","market":"Tržiště","jobs":"Práce","c-messages":"Zprávy","earnings":"Výdělky"}[item.id]||item.label.split(" ")[0]) + '</span>' + bBadge + '</button>';
     }).join("");
