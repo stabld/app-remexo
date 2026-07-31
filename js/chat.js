@@ -28,6 +28,16 @@ window.showMsgPanel = function(role) {
 };
 
 // OPRAVENO: Chytré načítání profilovek s pojistkou proti chybě 404
+// Dokud není zakázka domluvená, ukazujeme jen křestní jméno
+window.zkratitJmeno = function(jmeno) {
+    const j = (jmeno || "").trim();
+    if (!j) return j;
+    return j.split(/\s+/)[0];
+};
+
+// Které konverzace už mají odemknuté plné jméno (nabídka přijata / hotovo)
+window._chatOdhaleno = window._chatOdhaleno || {};
+
 window.getUserAvatar = async function(userId, fallbackSeed, fallbackBg) {
     const fallback = "https://api.dicebear.com/7.x/avataaars/svg?seed=" + encodeURIComponent(fallbackSeed||"user") + "&backgroundColor=" + (fallbackBg||"f59e0b");
     if (!userId || !window.sb) return fallback;
@@ -102,7 +112,8 @@ window.loadMessages = async function(requestId) {
         if (m.sender_id !== window.APP_USER?.id && m.sender_name) {
             const nameEl = document.getElementById("chat-partner-name")||document.getElementById("chat-partner-name-c");
             if (nameEl && (nameEl.innerText === "Řemeslník" || nameEl.innerText === "Zákazník" || nameEl.innerText === "Vyberte konverzaci" || nameEl.innerText === "Zprávy")) {
-                nameEl.innerText = m.sender_name;
+                const odhalenoTady = window._chatOdhaleno ? window._chatOdhaleno[String(requestId)] : true;
+                nameEl.innerText = odhalenoTady ? m.sender_name : window.zkratitJmeno(m.sender_name);
             }
             const avatarEl = document.getElementById("chat-partner-avatar");
             if (avatarEl && !avatarEl.dataset.loadedId) {
@@ -141,7 +152,9 @@ window.renderMessage = function(m, boxId) {
     const time=new Date(m.created_at).toLocaleTimeString("cs",{hour:"2-digit",minute:"2-digit"});
     box.querySelector(".text-center")?.remove();
     const d=document.createElement("div");
-    const safeSender = window.escapeHtml(senderName || (isMe?"Já":"Uživatel"));
+    const odhaleno = window._chatOdhaleno ? window._chatOdhaleno[String(m?.conversation_id)] : true;
+    const jmenoKZobrazeni = (isMe || odhaleno) ? senderName : window.zkratitJmeno(senderName);
+    const safeSender = window.escapeHtml(jmenoKZobrazeni || (isMe?"Já":"Uživatel"));
     const safeText = window.escapeHtml(m.text || "").replace(/\n/g, "<br>");
     d.className="flex "+(isMe?"justify-end":"justify-start");
     d.innerHTML='<div class="max-w-[75%]"><p class="text-[10px] font-bold mb-1.5 uppercase tracking-wide ' + (isMe?"text-remexo-500 text-right mr-2":"text-slate-400 ml-2") + '">' + safeSender + '</p><div class="px-5 py-3 rounded-2xl text-sm shadow-sm ' + (isMe?"bg-remexo-500 text-white rounded-br-sm":"bg-white dark:bg-slate-800 text-slate-800 dark:text-white border border-slate-100 dark:border-slate-700 rounded-bl-sm") + '"><p class="leading-relaxed">' + safeText + '</p><p class="text-[10px] opacity-50 mt-1.5 font-medium ' + (isMe?"text-right":"") + '">' + time + '</p></div></div>';
@@ -157,7 +170,8 @@ window.subscribeMessages = function(requestId) {
             window.renderMessage(payload.new,boxId);
             const nameEl = document.getElementById("chat-partner-name")||document.getElementById("chat-partner-name-c");
             if (nameEl && payload.new.sender_name && (nameEl.innerText === "Řemeslník" || nameEl.innerText === "Zákazník" || nameEl.innerText === "Vyberte konverzaci" || nameEl.innerText === "Zprávy")) {
-                nameEl.innerText = payload.new.sender_name;
+                const odhalenoTady = window._chatOdhaleno ? window._chatOdhaleno[String(requestId)] : true;
+                nameEl.innerText = odhalenoTady ? payload.new.sender_name : window.zkratitJmeno(payload.new.sender_name);
             }
             const avatarEl = document.getElementById("chat-partner-avatar");
             if (avatarEl && payload.new.sender_id && !avatarEl.dataset.loadedId) {
@@ -210,7 +224,11 @@ window.loadCustomerConversations = async function() {
     
     list.innerHTML = reqs.map(r => {
         const statusDot = r.status === 'active' ? '#22c55e' : r.status === 'done' ? '#94a3b8' : '#f59e0b';
-        const safeName = (r.craftsman_name || "Řemeslník").replace(/'/g, "\\'");
+        const odhaleno = (r.status === 'active' || r.status === 'done');
+        window._chatOdhaleno[String(r.id)] = odhaleno;
+        const plneJmeno = r.craftsman_name || "Řemeslník";
+        const zobrazeneJmeno = odhaleno ? plneJmeno : window.zkratitJmeno(plneJmeno);
+        const safeName = zobrazeneJmeno.replace(/'/g, "\\'");
         const craftIdParam = r.craftsman_id ? `'${r.craftsman_id}'` : 'null';
         const seed = encodeURIComponent(r.craftsman_name || 'c');
         const unreadCount = (window.STATE.unreadChats && window.STATE.unreadChats[r.id]) || 0;
@@ -219,7 +237,7 @@ window.loadCustomerConversations = async function() {
 
         return '<div id="conv-' + r.id + '" onclick="window.openConversation(' + r.id + ',\'' + safeName + '\',\'craftsman' + r.id + '\',' + craftIdParam + ')" class="conv-item px-4 py-3.5 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/60 border-b border-slate-100 dark:border-slate-800/80 transition-all duration-150 flex items-center gap-3 ' + isActiveClass + '">' +
         '<div class="relative shrink-0"><img id="cav-' + r.id + '" src="https://api.dicebear.com/7.x/avataaars/svg?seed=' + seed + '&backgroundColor=0f172a" class="w-10 h-10 rounded-full border-2 border-slate-200 dark:border-slate-700 bg-slate-100 object-cover"><span style="position:absolute;bottom:0;right:0;width:10px;height:10px;border-radius:50%;background:' + statusDot + ';border:2px solid white;"></span></div>' +
-        '<div class="flex-1 min-w-0"><p class="font-bold text-sm dark:text-white truncate leading-tight" id="clist-name-' + r.id + '">' + (r.craftsman_name || "Řemeslník") + '</p><p class="text-xs text-slate-400 mt-0.5 truncate">' + r.title + '</p></div>' +
+        '<div class="flex-1 min-w-0"><p class="font-bold text-sm dark:text-white truncate leading-tight" id="clist-name-' + r.id + '">' + zobrazeneJmeno + '</p><p class="text-xs text-slate-400 mt-0.5 truncate">' + r.title + '</p></div>' +
         unreadBadge +
         '</div>';
     }).join("");
@@ -260,7 +278,11 @@ window.loadCraftsmanConversations = async function() {
     
     list.innerHTML = uniqueOffers.map(o => {
         const statusDot = o.requests?.status === 'active' ? '#22c55e' : o.requests?.status === 'done' ? '#94a3b8' : '#f59e0b';
-        const safeName = (o.requests?.customer_name || "Zákazník").replace(/'/g, "\\'");
+        const isRevealed = o.requests?.status === 'active' || o.requests?.status === 'done';
+        window._chatOdhaleno[String(o.request_id)] = isRevealed;
+        const fullCustomerName = o.requests?.customer_name || "Zákazník";
+        const displayName = isRevealed ? fullCustomerName : fullCustomerName.split(' ')[0];
+        const safeName = displayName.replace(/'/g, "\\'");
         const customerIdParam = o.requests?.customer_id ? `'${o.requests.customer_id}'` : 'null';
         const seed = encodeURIComponent(o.requests?.customer_name || 'u');
         const unreadCount = (window.STATE.unreadChats && window.STATE.unreadChats[o.request_id]) || 0;
@@ -270,17 +292,18 @@ window.loadCraftsmanConversations = async function() {
         // Tady se předává i ID zákazníka, aby fungovalo chytré načítání fotky!
         return '<div id="conv-' + o.request_id + '" onclick="window.openConversation(' + o.request_id + ',\'' + safeName + '\',\'customer' + o.request_id + '\',' + customerIdParam + ')" class="conv-item px-4 py-3.5 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/60 border-b border-slate-100 dark:border-slate-800/80 transition-all duration-150 flex items-center gap-3 ' + isActiveClass + '">' +
         '<div class="relative shrink-0"><img id="cav-c-' + o.request_id + '" src="https://api.dicebear.com/7.x/avataaars/svg?seed=' + seed + '&backgroundColor=f59e0b" class="w-10 h-10 rounded-full border-2 border-slate-200 dark:border-slate-700 bg-slate-100 object-cover"><span style="position:absolute;bottom:0;right:0;width:10px;height:10px;border-radius:50%;background:' + statusDot + ';border:2px solid white;"></span></div>' +
-        '<div class="flex-1 min-w-0"><p class="font-bold text-sm dark:text-white truncate leading-tight" id="clist-name-c-' + o.request_id + '">' + (o.requests?.customer_name || "Zákazník") + '</p><p class="text-xs text-slate-400 mt-0.5 truncate">' + (o.requests?.title || "Poptávka") + '</p></div>' +
+        '<div class="flex-1 min-w-0"><p class="font-bold text-sm dark:text-white truncate leading-tight" id="clist-name-c-' + o.request_id + '">' + displayName + '</p><p class="text-xs text-slate-400 mt-0.5 truncate">' + (o.requests?.title || "Poptávka") + '</p></div>' +
         unreadBadge +
         '</div>';
     }).join("");
 
     uniqueOffers.forEach(async o => {
+        const isRevealed = o.requests?.status === 'active' || o.requests?.status === 'done';
         if (!o.requests?.customer_name || o.requests?.customer_name === "Zákazník") {
             const {data} = await window.sb.from("messages").select("sender_name").eq("conversation_id", String(o.request_id)).neq("sender_id", window.APP_USER.id).limit(1);
             if (data && data.length > 0 && data[0].sender_name) {
                 const el = document.getElementById("clist-name-c-" + o.request_id);
-                if(el) el.innerText = data[0].sender_name;
+                if(el) el.innerText = isRevealed ? data[0].sender_name : data[0].sender_name.split(' ')[0];
             }
         }
         if (o.requests?.customer_id && window.getUserAvatar) {
@@ -345,5 +368,10 @@ window.initGlobalNotifications = function() {
                 if (window.STATE) window.STATE.marketRequests = null;
             }
         })
-        .subscribe(status => console.log("[notif] Stav realtime kanálu:", status));
+        .subscribe(status => {
+            console.log("[notif] Stav realtime kanálu:", status);
+            if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+                setTimeout(() => { if (window.initGlobalNotifications) window.initGlobalNotifications(); }, 2000);
+            }
+        });
 };
