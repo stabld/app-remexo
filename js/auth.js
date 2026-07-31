@@ -98,6 +98,17 @@ window.doLogin = async function() {
         if (error) throw error;
         window.showOk("Přihlášeno! Spouštím aplikaci...");
         window.APP_USER = data.user;
+
+        // Roli vybranou na úvodní obrazovce uložíme k účtu –
+        // jinak by se po refreshi vrátila ta původní z registrace
+        if (window.APP_ROLE && window.APP_ROLE !== data.user.user_metadata?.role) {
+            try {
+                await window.sb.auth.updateUser({ data: { role: window.APP_ROLE } });
+                const čerstvý = (await window.sb.auth.getUser()).data?.user;
+                if (čerstvý) window.APP_USER = čerstvý;
+            } catch(e) {}
+        }
+
         const name = data.user.user_metadata?.full_name || "Uživatel";
         setTimeout(() => window.launchApp(window.APP_ROLE, name), 900);
     } catch(e) { window.showErr("Špatný e-mail nebo heslo."); }
