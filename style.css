@@ -11,10 +11,10 @@ body { font-family: "Plus Jakarta Sans", sans-serif; }
 .status-badge { display:inline-flex; align-items:center; gap:6px; padding:6px 14px; border-radius:999px; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.05em; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
 .status-waiting { background:#fef3c7; color:#b45309; }
 .status-active { background:#dcfce7; color:#166534; }
-.status-done { background:#f1f5f9; color:#475569; }
+.status-done { background:#16a34a; color:#ffffff; }
 .dark .status-waiting { background:rgba(245,158,11,0.2); color:#fbbf24; border: 1px solid rgba(245,158,11,0.3); }
 .dark .status-active { background:rgba(34,197,94,0.2); color:#4ade80; border: 1px solid rgba(34,197,94,0.3); }
-.dark .status-done { background:rgba(100,116,139,0.2); color:#94a3b8; border: 1px solid rgba(100,116,139,0.3); }
+.dark .status-done { background:rgba(34,197,94,0.25); color:#4ade80; border: 1px solid rgba(34,197,94,0.5); }
 @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
 .fade-up { animation: fadeUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 @keyframes loader-draw { from{stroke-dashoffset:300} to{stroke-dashoffset:0} }
