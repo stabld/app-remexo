@@ -48,13 +48,29 @@ window.getUserAvatar = async function(userId, fallbackSeed, fallbackBg) {
     const fallback = "https://api.dicebear.com/7.x/avataaars/svg?seed=" + encodeURIComponent(fallbackSeed||"user") + "&backgroundColor=" + (fallbackBg||"f59e0b");
     if (!userId || !window.sb) return fallback;
     if (window._avatarCache[userId]) return window._avatarCache[userId];
-    
+
     try {
+        // Vlastní fotka – máme ji rovnou v účtu
         if (window.APP_USER && window.APP_USER.id === userId) {
             const url = window.APP_USER.user_metadata?.avatar_url;
             if (url) { window._avatarCache[userId] = url; return url; }
         }
-        
+
+        // Fotka někoho jiného: primárně z veřejného profilu.
+        // Pokrývá i fotky z přihlášení přes Google, které v úložišti vůbec nejsou.
+        try {
+            const { data: profil } = await window.sb
+                .from("public_profiles")
+                .select("avatar_url")
+                .eq("id", userId)
+                .maybeSingle();
+            if (profil && profil.avatar_url) {
+                window._avatarCache[userId] = profil.avatar_url;
+                return profil.avatar_url;
+            }
+        } catch(e) {}
+
+        // Záloha: ručně nahraná fotka v úložišti
         const { data } = window.sb.storage.from("avatars").getPublicUrl(userId + ".jpg");
         if (data && data.publicUrl) {
             // Tady to zjistí, jestli fotka fakt existuje, dřív než ji to nacpe do UI
@@ -72,7 +88,7 @@ window.getUserAvatar = async function(userId, fallbackSeed, fallbackBg) {
             });
         }
     } catch(e) {}
-    
+
     window._avatarCache[userId] = fallback;
     return fallback;
 };
@@ -391,7 +407,7 @@ window.spustHlidaniZprav = function() {
                 else if (window.loadCraftsmanConversations) window.loadCraftsmanConversations();
             });
         } catch (e) {}
-    }, 12000);
+    }, 7000);
 };
 
 window.initGlobalNotifications = function() {
