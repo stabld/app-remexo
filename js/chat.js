@@ -38,6 +38,12 @@ window.zkratitJmeno = function(jmeno) {
 // Které konverzace už mají odemknuté plné jméno (nabídka přijata / hotovo)
 window._chatOdhaleno = window._chatOdhaleno || {};
 
+// ID protistrany u konverzace (záloha, když ho poptávka sama neobsahuje)
+window._idProtistrany = window._idProtistrany || {};
+
+// Konverzace, které patří přihlášenému uživateli (pro hlídání nových zpráv)
+window._mojeKonverzace = window._mojeKonverzace || new Set();
+
 window.getUserAvatar = async function(userId, fallbackSeed, fallbackBg) {
     const fallback = "https://api.dicebear.com/7.x/avataaars/svg?seed=" + encodeURIComponent(fallbackSeed||"user") + "&backgroundColor=" + (fallbackBg||"f59e0b");
     if (!userId || !window.sb) return fallback;
@@ -73,6 +79,7 @@ window.getUserAvatar = async function(userId, fallbackSeed, fallbackBg) {
 
 window.openConversation = async function(requestId, partnerName, partnerSeed, partnerUserId) {
     window.activeChatId = String(requestId);
+    if (!partnerUserId && window._idProtistrany) partnerUserId = window._idProtistrany[String(requestId)] || null;
     const nameEl = document.getElementById("chat-partner-name")||document.getElementById("chat-partner-name-c");
     if(nameEl) nameEl.innerText = partnerName;
     var role = window.APP_ROLE === "customer" ? "customer" : "craftsman";
@@ -100,6 +107,7 @@ window.openConversation = async function(requestId, partnerName, partnerSeed, pa
 window.loadMessages = async function(requestId) {
     const boxId = window.APP_ROLE==="customer"?"chat-msgs":"chat-msgs-c";
     const box = document.getElementById(boxId); if(!box)return;
+    window._videneZpravy = new Set();
     box.innerHTML='<div class="text-center text-slate-400 text-sm py-8"><i class="fa-solid fa-circle-notch fa-spin text-2xl text-remexo-500 mb-3 block"></i>Načítám zprávy...</div>';
     if(!window.sb){box.innerHTML='<div class="text-center text-slate-400 text-sm py-8">Nepřipojeno.</div>';return;}
     const {data,error}=await window.sb.from("messages").select("*").eq("conversation_id",String(requestId)).order("created_at",{ascending:true});
@@ -121,7 +129,8 @@ window.loadMessages = async function(requestId) {
                 const fallbackBg = window.APP_ROLE === "customer" ? "0f172a" : "f59e0b";
                 window.getUserAvatar(m.sender_id, m.sender_name, fallbackBg).then(avUrl => {
                     avatarEl.style.backgroundImage = "url('" + avUrl + "')";
-                    const cavEl = document.getElementById("cav-" + requestId);
+                    // Seznam konverzací má u zákazníka i řemeslníka jiné id elementu
+                    const cavEl = document.getElementById("cav-" + requestId) || document.getElementById("cav-c-" + requestId);
                     if(cavEl) cavEl.src = avUrl;
                 });
             }
@@ -134,8 +143,16 @@ window.escapeHtml = function(value) {
     return String(value == null ? "" : value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 };
 
+window._videneZpravy = window._videneZpravy || new Set();
+
 window.renderMessage = function(m, boxId) {
     const box=document.getElementById(boxId);if(!box)return;
+    // Stejnou zprávu můžeme dostat dvakrát (realtime i kontrola na pozadí)
+    if (m && m.id != null) {
+        const klic = String(m.id);
+        if (window._videneZpravy.has(klic)) return;
+        window._videneZpravy.add(klic);
+    }
     const myUserId = window.APP_USER?.id ? String(window.APP_USER.id) : "";
     const senderId = m?.sender_id ? String(m.sender_id) : "";
     const senderRole = (m?.senderrole || "").trim();
@@ -226,6 +243,7 @@ window.loadCustomerConversations = async function() {
         const statusDot = r.status === 'active' ? '#22c55e' : r.status === 'done' ? '#94a3b8' : '#f59e0b';
         const odhaleno = (r.status === 'active' || r.status === 'done');
         window._chatOdhaleno[String(r.id)] = odhaleno;
+        window._mojeKonverzace.add(String(r.id));
         const plneJmeno = r.craftsman_name || "Řemeslník";
         const zobrazeneJmeno = odhaleno ? plneJmeno : window.zkratitJmeno(plneJmeno);
         const safeName = zobrazeneJmeno.replace(/'/g, "\\'");
@@ -280,6 +298,7 @@ window.loadCraftsmanConversations = async function() {
         const statusDot = o.requests?.status === 'active' ? '#22c55e' : o.requests?.status === 'done' ? '#94a3b8' : '#f59e0b';
         const isRevealed = o.requests?.status === 'active' || o.requests?.status === 'done';
         window._chatOdhaleno[String(o.request_id)] = isRevealed;
+        window._mojeKonverzace.add(String(o.request_id));
         const fullCustomerName = o.requests?.customer_name || "Zákazník";
         const displayName = isRevealed ? fullCustomerName : fullCustomerName.split(' ')[0];
         const safeName = displayName.replace(/'/g, "\\'");
@@ -299,25 +318,88 @@ window.loadCraftsmanConversations = async function() {
 
     uniqueOffers.forEach(async o => {
         const isRevealed = o.requests?.status === 'active' || o.requests?.status === 'done';
-        if (!o.requests?.customer_name || o.requests?.customer_name === "Zákazník") {
-            const {data} = await window.sb.from("messages").select("sender_name").eq("conversation_id", String(o.request_id)).neq("sender_id", window.APP_USER.id).limit(1);
-            if (data && data.length > 0 && data[0].sender_name) {
+        let idProtistrany = o.requests?.customer_id || null;
+        let jmenoProtistrany = o.requests?.customer_name || null;
+
+        // Když u poptávky chybí údaje o zákazníkovi, zjistíme je z odeslaných zpráv
+        if (!idProtistrany || !jmenoProtistrany || jmenoProtistrany === "Zákazník") {
+            const {data} = await window.sb.from("messages").select("sender_id, sender_name")
+                .eq("conversation_id", String(o.request_id))
+                .neq("sender_id", window.APP_USER.id).limit(1);
+            if (data && data.length > 0) {
+                idProtistrany = idProtistrany || data[0].sender_id;
+                if (!jmenoProtistrany || jmenoProtistrany === "Zákazník") jmenoProtistrany = data[0].sender_name;
                 const el = document.getElementById("clist-name-c-" + o.request_id);
-                if(el) el.innerText = isRevealed ? data[0].sender_name : data[0].sender_name.split(' ')[0];
+                if (el && jmenoProtistrany) el.innerText = isRevealed ? jmenoProtistrany : window.zkratitJmeno(jmenoProtistrany);
             }
         }
-        if (o.requests?.customer_id && window.getUserAvatar) {
-            const avUrl = await window.getUserAvatar(o.requests.customer_id, o.requests?.customer_name || "u", "f59e0b");
-            const img = document.getElementById("cav-c-" + o.request_id);
-            if (img) img.src = avUrl;
+
+        if (idProtistrany) {
+            window._idProtistrany[String(o.request_id)] = idProtistrany;
+            if (window.getUserAvatar) {
+                const avUrl = await window.getUserAvatar(idProtistrany, jmenoProtistrany || "u", "f59e0b");
+                const img = document.getElementById("cav-c-" + o.request_id);
+                if (img) img.src = avUrl;
+            }
         }
     });
+};
+
+// === ZÁLOŽNÍ HLÍDÁNÍ NOVÝCH ZPRÁV ===
+// Realtime spojení Supabase je nespolehlivé, proto se pravidelně sami ptáme,
+// jestli nepřišlo něco nového. Funguje i když realtime úplně vypadne.
+window._posledniKontrola = null;
+
+window.spustHlidaniZprav = function() {
+    if (window._hlidaciTimer) clearInterval(window._hlidaciTimer);
+    if (!window.sb || !window.APP_USER) return;
+
+    window._posledniKontrola = new Date().toISOString();
+
+    window._hlidaciTimer = setInterval(async () => {
+        if (!window.sb || !window.APP_USER) return;
+        try {
+            const { data, error } = await window.sb
+                .from("messages")
+                .select("*")
+                .gt("created_at", window._posledniKontrola)
+                .neq("sender_id", window.APP_USER.id)
+                .order("created_at", { ascending: true });
+
+            if (error || !data || data.length === 0) return;
+            window._posledniKontrola = data[data.length - 1].created_at;
+
+            data.forEach(msg => {
+                const konverzace = String(msg.conversation_id);
+
+                // Zprávy z cizích konverzací nás nezajímají
+                if (window._mojeKonverzace.size > 0 && !window._mojeKonverzace.has(konverzace)) return;
+
+                // Otevřenou konverzaci rovnou doplníme, jinak jen upozorníme
+                if (window.activeChatId === konverzace) {
+                    const boxId = window.APP_ROLE === "customer" ? "chat-msgs" : "chat-msgs-c";
+                    window.renderMessage(msg, boxId);
+                    return;
+                }
+
+                window.showToast("Nová zpráva! 💬", "Napsal vám: " + (msg.sender_name || "Uživatel"), "info", true);
+
+                if (!window.STATE.unreadChats) window.STATE.unreadChats = {};
+                window.STATE.unreadChats[konverzace] = (window.STATE.unreadChats[konverzace] || 0) + 1;
+
+                if (window.APP_ROLE === "customer" && window.loadCustomerConversations) window.loadCustomerConversations();
+                else if (window.loadCraftsmanConversations) window.loadCraftsmanConversations();
+            });
+        } catch (e) {}
+    }, 12000);
 };
 
 window.initGlobalNotifications = function() {
     if (!window.sb || !window.APP_USER) return;
     if (window.globalNotifSub) { try { window.sb.removeChannel(window.globalNotifSub); } catch(e){} }
     console.log("[notif] Nastavuji globální notifikace, role:", window.APP_ROLE, "user:", window.APP_USER.id);
+
+    window.spustHlidaniZprav();
 
     window.globalNotifSub = window.sb.channel('global-notifs')
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
