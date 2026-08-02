@@ -414,14 +414,16 @@ window.spustHlidaniZprav = function() {
             try {
                 const { data: nabidky } = await window.sb
                     .from("offers")
-                    .select("request_id, status, requests(title)")
+                    .select("request_id, status, requests(title, status)")
                     .eq("craftsman_id", window.APP_USER.id);
 
-                (nabidky || []).forEach(o => {
+                for (const o of (nabidky || [])) {
                     const klic = String(o.request_id);
                     const zaznam = window._mojeNabidky.get(klic);
                     const puvodni = zaznam ? zaznam.stav : null;
+                    const puvodniZakazka = zaznam ? zaznam.stavZakazky : null;
                     const nazev = o.requests?.title || "poptávku";
+                    const stavZakazky = o.requests?.status || null;
 
                     if (puvodni && puvodni !== o.status) {
                         if (o.status === "rejected") {
@@ -433,8 +435,30 @@ window.spustHlidaniZprav = function() {
                             if (window.loadCraftsmanConversations) window.loadCraftsmanConversations();
                         }
                     }
-                    window._mojeNabidky.set(klic, { stav: o.status, pokusy: (zaznam && zaznam.pokusy) || 1 });
-                });
+
+                    // Zákazník potvrdil, že je hotovo – to si zaslouží poděkování
+                    if (o.status === "accepted" && puvodniZakazka && puvodniZakazka !== "done" && stavZakazky === "done") {
+                        let hvezdy = "";
+                        try {
+                            const { data: h } = await window.sb.from("hodnoceni")
+                                .select("hvezdicky").eq("request_id", o.request_id).maybeSingle();
+                            if (h && h.hvezdicky) hvezdy = " a ohodnotil vás " + "⭐".repeat(h.hvezdicky);
+                        } catch (e) {}
+
+                        window.showToast(
+                            "Zakázka dokončena! 🎉",
+                            "Zákazník potvrdil dokončení práce na: " + nazev + hvezdy + ". Díky za odvedenou práci!",
+                            "success"
+                        );
+                        if (window.loadCraftsmanJobsFromDB) window.loadCraftsmanJobsFromDB();
+                    }
+
+                    window._mojeNabidky.set(klic, {
+                        stav: o.status,
+                        stavZakazky: stavZakazky,
+                        pokusy: (zaznam && zaznam.pokusy) || 1
+                    });
+                }
             } catch (e) {}
         }
 
