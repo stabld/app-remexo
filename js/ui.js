@@ -122,6 +122,19 @@ window.createBeautifulCard = function(req, isMarket, i) {
         }
         const photoHtml = reqPhoto ? '<div class="w-full md:w-48 h-32 md:h-full shrink-0 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700/50 shadow-sm relative group cursor-pointer" onclick="window.openLightbox(this.querySelector(\'img\').src)">' + '<img src="data:' + (reqMime||'image/jpeg') + ';base64,' + reqPhoto + '" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">' + '<div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center"><i class="fa-solid fa-expand text-white opacity-0 group-hover:opacity-100 text-2xl transition-all"></i></div></div>' : '';
         if (!isMarket) {
+            // Text tlačítka se řídí stavem zakázky, ne jen počtem čekajících nabídek
+            let barvaNabidek, textNabidek;
+            if (req.status === 'active' || req.status === 'done') {
+                barvaNabidek = 'bg-slate-900 dark:bg-white text-white dark:text-slate-900';
+                textNabidek = '<i class="fa-solid fa-user-check"></i>' + (req.craftsman_name ? 'Vybrán: ' + req.craftsman_name : 'Zobrazit vybranou nabídku');
+            } else if (req.pocetNabidek > 0) {
+                barvaNabidek = 'bg-remexo-500 hover:bg-remexo-600 text-white';
+                textNabidek = '<span class="w-6 h-6 rounded-full bg-white text-remexo-600 text-xs font-black flex items-center justify-center">' + req.pocetNabidek + '</span>'
+                    + (req.pocetNabidek === 1 ? 'Máte novou nabídku!' : 'Máte ' + req.pocetNabidek + (req.pocetNabidek < 5 ? ' nabídky' : ' nabídek') + ' – vyberte si');
+            } else {
+                barvaNabidek = 'bg-slate-900 dark:bg-white text-white dark:text-slate-900';
+                textNabidek = 'Zatím žádné nabídky';
+            }
             return '<div class="req-card relative bg-white dark:bg-[#0f172a] p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all duration-300 group fade-up overflow-hidden">' +
                 '<div class="absolute top-0 left-0 w-1.5 h-full ' + (req.status==='done'?'bg-slate-300 dark:bg-slate-700':'bg-remexo-500') + '"></div>' +
                 '<div class="absolute top-5 right-5 opacity-0 group-hover:opacity-100 transition-opacity z-10"><button onclick="window.deleteRequest(' + i + ',' + (req.sbId||'null') + ')" class="w-9 h-9 flex items-center justify-center rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all shadow-sm"><i class="fa-solid fa-trash-can text-sm"></i></button></div>' +
@@ -130,7 +143,7 @@ window.createBeautifulCard = function(req, isMarket, i) {
                 '<div class="flex flex-col md:flex-row gap-5 mb-2">' + photoHtml + '<div class="flex-1 min-w-0"><p class="text-sm md:text-base text-slate-600 dark:text-slate-300 leading-relaxed">' + mainDesc + '</p></div></div>' +
                 detailsHtml +
                 '<div class="flex flex-wrap gap-3 mt-6 pt-5 border-t border-slate-100 dark:border-slate-800">' +
-                '<button onclick="window.loadOffersForRequest(' + (req.sbId||0) + ',\'' + (req.title||'').replace(/'/g,"\\'") + '\')" class="flex-1 ' + (req.pocetNabidek > 0 ? 'bg-remexo-500 hover:bg-remexo-600 text-white' : 'bg-slate-900 dark:bg-white text-white dark:text-slate-900') + ' py-3.5 rounded-xl font-bold text-sm hover:scale-[1.02] transition-transform shadow-md flex items-center justify-center gap-2">' + (req.pocetNabidek > 0 ? '<span class="w-6 h-6 rounded-full bg-white text-remexo-600 text-xs font-black flex items-center justify-center">' + req.pocetNabidek + '</span>' + (req.pocetNabidek === 1 ? 'Máte novou nabídku!' : 'Máte ' + req.pocetNabidek + (req.pocetNabidek < 5 ? ' nabídky' : ' nabídek') + ' – vyberte si') : 'Zatím žádné nabídky') + '</button>' +
+                '<button onclick="window.loadOffersForRequest(' + (req.sbId||0) + ',\'' + (req.title||'').replace(/'/g,"\\'") + '\')" class="flex-1 ' + barvaNabidek + ' py-3.5 rounded-xl font-bold text-sm hover:scale-[1.02] transition-transform shadow-md flex items-center justify-center gap-2">' + textNabidek + '</button>' +
                 (req.status==='active' ? '<button onclick="window.openRatingModal(' + i + ',' + (req.sbId||'null') + ')" class="px-6 py-3.5 rounded-xl border-2 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"><i class="fa-solid fa-check mr-2"></i>Označit hotovo</button>' : '') +
                 '</div></div></div>';
         } else {
