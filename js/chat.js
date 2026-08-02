@@ -371,7 +371,9 @@ window.loadCraftsmanConversations = async function() {
 window._posledniKontrola = null;
 
 window.spustHlidaniZprav = function() {
-    if (window._hlidaciTimer) clearInterval(window._hlidaciTimer);
+    // Když už hlídání běží, nesaháme na něj – jinak by ho opakované
+    // pokusy o obnovení realtime pořád nulovaly a nikdy by nedoběhlo
+    if (window._hlidaciTimer) return;
     if (!window.sb || !window.APP_USER) return;
 
     window._posledniKontrola = new Date().toISOString();
@@ -436,6 +438,22 @@ window.spustHlidaniZprav = function() {
             } catch (e) {}
         }
 
+        // Seznam vlastních konverzací se plnil jen při otevření Zpráv –
+        // bez toho by nová zakázka nikdy nezačala hlídat
+        try {
+            if (window.APP_ROLE === "customer") {
+                const { data: moje } = await window.sb.from("requests")
+                    .select("id, status").eq("customer_id", window.APP_USER.id)
+                    .in("status", ["active", "done"]);
+                (moje || []).forEach(r => window._mojeKonverzace.add(String(r.id)));
+            } else {
+                const { data: moje } = await window.sb.from("offers")
+                    .select("request_id").eq("craftsman_id", window.APP_USER.id)
+                    .eq("status", "accepted");
+                (moje || []).forEach(o => window._mojeKonverzace.add(String(o.request_id)));
+            }
+        } catch (e) {}
+
         try {
             const { data, error } = await window.sb
                 .from("messages")
@@ -451,7 +469,7 @@ window.spustHlidaniZprav = function() {
                 const konverzace = String(msg.conversation_id);
 
                 // Zprávy z cizích konverzací nás nezajímají
-                if (window._mojeKonverzace.size > 0 && !window._mojeKonverzace.has(konverzace)) return;
+                if (!window._mojeKonverzace.has(konverzace)) return;
 
                 // Otevřenou konverzaci rovnou doplníme, jinak jen upozorníme
                 if (window.activeChatId === konverzace) {
@@ -530,8 +548,16 @@ window.initGlobalNotifications = function() {
         })
         .subscribe(status => {
             console.log("[notif] Stav realtime kanálu:", status);
+            if (status === "SUBSCRIBED") { window._pokusyORealtime = 0; return; }
             if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
-                setTimeout(() => { if (window.initGlobalNotifications) window.initGlobalNotifications(); }, 2000);
+                // Realtime je jen bonus – hlídání na pozadí funguje i bez něj,
+                // proto to nezkoušíme donekonečna
+                window._pokusyORealtime = (window._pokusyORealtime || 0) + 1;
+                if (window._pokusyORealtime <= 3) {
+                    setTimeout(() => { if (window.initGlobalNotifications) window.initGlobalNotifications(); }, 5000);
+                } else {
+                    console.log("[notif] Realtime se nedaří navázat, jedeme na kontrole každých 7 s.");
+                }
             }
         });
 };
