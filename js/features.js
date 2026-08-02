@@ -733,7 +733,8 @@ window.loadCustomerRequestsFromDB = async function() {
                 .select("request_id, status")
                 .in("request_id", data.map(r=>r.id));
             (nabidky||[]).forEach(o=>{
-                if(o.status === "rejected") return;
+                // Zajímají nás jen nabídky, o kterých ještě zákazník nerozhodl
+                if(o.status !== "pending") return;
                 pocty[String(o.request_id)] = (pocty[String(o.request_id)]||0) + 1;
             });
         } catch(e) {}
