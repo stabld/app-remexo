@@ -129,7 +129,27 @@ window.loadMessages = async function(requestId) {
     const {data,error}=await window.sb.from("messages").select("*").eq("conversation_id",String(requestId)).order("created_at",{ascending:true});
     if(error){box.innerHTML='<div class="text-center text-red-400 text-sm py-8">Chyba načítání.</div>';return;}
     box.innerHTML="";
-    if(data.length===0){box.innerHTML='<div class="text-center text-slate-400 text-sm py-10"><i class="fa-regular fa-comments text-4xl mb-3 block opacity-50"></i>Zatím žádné zprávy. Napište první!</div>';return;}
+
+    // Text přijaté nabídky bereme rovnou z nabídky – konverzaci tím otevírá
+    // řemeslník, aniž bychom mu museli podstrkovat zprávu jeho jménem
+    try {
+        const { data: prijata } = await window.sb.from("offers")
+            .select("id, message, craftsman_id, craftsman_name, created_at")
+            .eq("request_id", requestId).eq("status", "accepted").maybeSingle();
+        if (prijata && prijata.message) {
+            window.renderMessage({
+                id: "nabidka-" + prijata.id,
+                conversation_id: String(requestId),
+                sender_id: prijata.craftsman_id,
+                sender_name: prijata.craftsman_name || "Řemeslník",
+                text: prijata.message,
+                senderrole: "craftsman",
+                created_at: prijata.created_at
+            }, boxId);
+        }
+    } catch (e) {}
+
+    if(data.length===0 && !box.querySelector(".flex")){box.innerHTML='<div class="text-center text-slate-400 text-sm py-10"><i class="fa-regular fa-comments text-4xl mb-3 block opacity-50"></i>Zatím žádné zprávy. Napište první!</div>';return;}
     
     data.forEach(m => {
         window.renderMessage(m, boxId);
