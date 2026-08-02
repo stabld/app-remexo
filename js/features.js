@@ -35,6 +35,26 @@ window.setRating = function(val) {
     });
 };
 
+// Řemeslník oznámí, že je hotovo – potvrdit to musí zákazník
+window.navrhnoutDokonceni = async function(requestId, btnEl) {
+    if (!window.sb) return;
+    const orig = btnEl ? btnEl.innerHTML : "";
+    if (btnEl) { btnEl.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-2"></i>Odesílám...'; btnEl.disabled = true; }
+
+    const { error } = await window.sb.from("requests")
+        .update({ dokonceni_navrzeno: new Date().toISOString() })
+        .eq("id", requestId);
+
+    if (error) {
+        window.showToast("Nepodařilo se odeslat", error.message || "Zkuste to prosím znovu.", "error");
+        if (btnEl) { btnEl.innerHTML = orig; btnEl.disabled = false; }
+        return;
+    }
+
+    window.showToast("Odesláno zákazníkovi ✅", "Až práci potvrdí, zakázka se uzavře a můžete dostat hodnocení.", "success");
+    if (window.loadCraftsmanJobsFromDB) window.loadCraftsmanJobsFromDB();
+};
+
 window.submitRating = async function() {
     const index = document.getElementById("rating-req-index").value;
     const sbId = document.getElementById("rating-req-sbid").value;
@@ -127,6 +147,19 @@ window.doConfirmDelete = function() {
 };
 
 window._doDeleteRequest = async function(index, sbId) {
+    // Rozdělanou zakázku smazat nejde – řemeslník na ní pracuje
+    const poptavka = window.STATE.requests[index];
+    if (poptavka && poptavka.status !== "waiting") {
+        window.showToast(
+            "Tuto poptávku nelze smazat",
+            poptavka.status === "done"
+                ? "Dokončené zakázky zůstávají v historii kvůli hodnocení."
+                : "Řemeslník už na ní pracuje. Nejdřív zakázku uzavřete.",
+            "error"
+        );
+        return;
+    }
+
     if(sbId&&window.sb){
         try {
             await window.sb.from("offers").delete().eq("request_id",sbId);
@@ -827,7 +860,14 @@ window.refreshCraftsmanJobs = function() {
                     + fotkyHtml + '</div>';
             }
         }
-        d.innerHTML='<div class="flex items-start justify-between mb-4"><div><h4 class="font-extrabold text-lg dark:text-white leading-tight">' + job.title + '</h4><p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1.5">' + job.time + '</p></div>' + badge + '</div>' + kontaktyHtml + '<button onclick="window.activeChatId=\'' + job.requestId + '\'; window.goTab(\'c-messages\',\'Zprávy\'); setTimeout(()=>window.openConversation(\'' + job.requestId + '\',\'Zákazník\',\'customer' + job.requestId + '\'),300);" class="text-sm font-bold text-remexo-500 hover:text-remexo-600 transition flex items-center gap-2"><i class="fa-regular fa-comment-dots"></i> Napsat zákazníkovi</button>';
+        // Hotovo hlásí řemeslník, uzavírá to ale zákazník
+        let dokonceniHtml = "";
+        if (job.status === "accepted" || job.status === "active") {
+            dokonceniHtml = job.dokonceniNavrzeno
+                ? '<div class="mb-4 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-sm font-bold text-slate-500 dark:text-slate-400 text-center"><i class="fa-regular fa-hourglass-half mr-2"></i>Čeká na potvrzení zákazníkem</div>'
+                : '<button onclick="window.navrhnoutDokonceni(\'' + job.requestId + '\', this)" class="w-full mb-4 py-3 rounded-2xl border-2 border-green-500 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-500/10 font-bold text-sm transition"><i class="fa-solid fa-check mr-2"></i>Označit práci za hotovou</button>';
+        }
+        d.innerHTML='<div class="flex items-start justify-between mb-4"><div><h4 class="font-extrabold text-lg dark:text-white leading-tight">' + job.title + '</h4><p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1.5">' + job.time + '</p></div>' + badge + '</div>' + kontaktyHtml + dokonceniHtml + '<button onclick="window.activeChatId=\'' + job.requestId + '\'; window.goTab(\'c-messages\',\'Zprávy\'); setTimeout(()=>window.openConversation(\'' + job.requestId + '\',\'Zákazník\',\'customer' + job.requestId + '\'),300);" class="text-sm font-bold text-remexo-500 hover:text-remexo-600 transition flex items-center gap-2"><i class="fa-regular fa-comment-dots"></i> Napsat zákazníkovi</button>';
         list.appendChild(d);
     });
 };
@@ -846,9 +886,9 @@ window.loadCraftsmanJobsFromDB = async function() {
             : "Zatím bez hodnocení";
     }
 
-    const {data}=await window.sb.from("offers").select("*, requests(title, category, status, description, customer_name)").eq("craftsman_id",window.APP_USER.id);
+    const {data}=await window.sb.from("offers").select("*, requests(title, category, status, description, customer_name, dokonceni_navrzeno)").eq("craftsman_id",window.APP_USER.id);
     if(data&&data.length>0){
-        window.STATE.craftJobs=data.map(o=>{ let s=o.status;if(o.requests?.status==="done")s="done"; return {title:o.requests?.title||"Zakázka",requestId:o.request_id,status:s,popis:o.requests?.description||"",zakaznik:o.requests?.customer_name||"Zákazník",vytvoreno:o.created_at,time:window.formatDatumCas(o.created_at)}; });
+        window.STATE.craftJobs=data.map(o=>{ let s=o.status;if(o.requests?.status==="done")s="done"; return {title:o.requests?.title||"Zakázka",requestId:o.request_id,status:s,popis:o.requests?.description||"",zakaznik:o.requests?.customer_name||"Zákazník",dokonceniNavrzeno:o.requests?.dokonceni_navrzeno||null,vytvoreno:o.created_at,time:window.formatDatumCas(o.created_at)}; });
         window.refreshCraftsmanJobs();
     }
 };
@@ -870,7 +910,7 @@ window.loadCustomerRequestsFromDB = async function() {
             });
         } catch(e) {}
 
-        window.STATE.requests=data.map(r=>({sbId:r.id,title:r.title,kat:r.category,popis:r.description,vytvoreno:r.created_at,time:window.formatDatumCas(r.created_at),status:r.status,craftsman_name:r.craftsman_name||null,pocetNabidek:pocty[String(r.id)]||0}));
+        window.STATE.requests=data.map(r=>({sbId:r.id,title:r.title,kat:r.category,popis:r.description,vytvoreno:r.created_at,time:window.formatDatumCas(r.created_at),status:r.status,craftsman_name:r.craftsman_name||null,dokonceniNavrzeno:r.dokonceni_navrzeno||null,pocetNabidek:pocty[String(r.id)]||0}));
         if(window.refreshRequestsList)window.refreshRequestsList();if(window.refreshDashboard)window.refreshDashboard();
         if(window.aktualizujBublinuNabidek)window.aktualizujBublinuNabidek();
     }
