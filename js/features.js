@@ -990,11 +990,12 @@ window.nactiMojeNabidky = async function() {
     try {
         const { data, error } = await window.sb
             .from("offers")
-            .select("request_id, status, pokusy")
+            .select("request_id, status, pokusy, requests(status)")
             .eq("craftsman_id", window.APP_USER.id);
         if (error) throw error;
         (data || []).forEach(o => window._mojeNabidky.set(String(o.request_id), {
             stav: o.status,
+            stavZakazky: o.requests?.status || null,
             pokusy: o.pokusy || 1
         }));
     } catch (e) {
