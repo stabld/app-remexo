@@ -646,6 +646,30 @@ window.loadOffersForRequest = async function(requestId, requestTitle) {
 
     const {data:offers}=await window.sb.from("offers").select("*").eq("request_id",requestId).neq("status", "rejected").order("created_at",{ascending:false});
     
+    // Hodnocení řemeslníků – zákazník podle nich vybírá
+    const hodnoceniPodleId = {};
+    try {
+        const ids = (offers||[]).map(o=>o.craftsman_id).filter(Boolean);
+        if (ids.length) {
+            const { data: vsechna } = await window.sb.from("hodnoceni")
+                .select("craftsman_id, hvezdicky").in("craftsman_id", ids);
+            (vsechna||[]).forEach(h => {
+                const k = String(h.craftsman_id);
+                if (!hodnoceniPodleId[k]) hodnoceniPodleId[k] = { soucet: 0, pocet: 0 };
+                hodnoceniPodleId[k].soucet += (h.hvezdicky || 0);
+                hodnoceniPodleId[k].pocet += 1;
+            });
+        }
+    } catch(e) {}
+
+    const hodnoceniHtml = (craftsmanId) => {
+        const h = hodnoceniPodleId[String(craftsmanId)];
+        if (!h || !h.pocet) return '<span class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Nový na Remexu</span>';
+        const prumer = (h.soucet / h.pocet).toFixed(1);
+        return '<span class="text-[11px] font-bold text-yellow-600 dark:text-yellow-500">⭐ ' + prumer
+            + ' <span class="text-slate-400">(' + h.pocet + ')</span></span>';
+    };
+
     document.getElementById("offers-modal-title").innerText=requestTitle;
     const modalList=document.getElementById("offers-modal-list");
     
