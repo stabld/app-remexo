@@ -114,3 +114,65 @@ body { font-family: "Plus Jakarta Sans", sans-serif; }
     .p-8 { padding: 1.25rem !important; }
     .md\:p-12 { padding: 1.25rem !important; }
 }
+
+/* ===== MOBIL: prvky přidané při rozšiřování appky ===== */
+@media (max-width: 767px) {
+    /* Tlačítka na kartě zakázky (nabídka / mapa / záložka) se na úzkém
+       displeji mačkala do sebe – radši je poskládáme pod sebe */
+    .market-item .flex.gap-3.mt-6 {
+        flex-wrap: wrap !important;
+        gap: 0.5rem !important;
+    }
+    .market-item .flex.gap-3.mt-6 > button:first-child {
+        flex: 1 1 100% !important;
+        order: -1;
+    }
+    .market-item .flex.gap-3.mt-6 > button:not(:first-child) {
+        flex: 1 1 auto !important;
+    }
+
+    /* Tlačítka pod poptávkou zákazníka na celou šířku */
+    .req-card .flex.flex-wrap.gap-3.mt-6 > button {
+        flex: 1 1 100% !important;
+    }
+
+    /* Nabídky řemeslníků: cena pod jménem, ne namačkaná vedle */
+    #offers-modal-list .flex.items-center.gap-4 {
+        flex-wrap: wrap !important;
+        gap: 0.75rem !important;
+    }
+    #offers-modal-list .ml-auto {
+        margin-left: 0 !important;
+        width: 100% !important;
+    }
+
+    /* Statistiky u řemeslníka – tři sloupce jsou na mobilu moc těsné */
+    #view-jobs .grid.grid-cols-3 {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        gap: 0.5rem !important;
+    }
+    #view-jobs .grid.grid-cols-3 > div { padding: 0.85rem !important; }
+    #view-jobs .grid.grid-cols-3 .text-4xl { font-size: 1.5rem !important; }
+    #view-jobs .grid.grid-cols-3 .text-\[11px\] { font-size: 9px !important; line-height: 1.2 !important; }
+
+    /* Kontakt na zákazníka – ať se dlouhé údaje lámou a nepřetékají */
+    #my-jobs-list .flex.flex-wrap.gap-2 > span {
+        max-width: 100% !important;
+        word-break: break-word !important;
+    }
+
+    /* Výzva k doplnění profilu */
+    #market-list .border-remexo-500\/40 { padding: 1rem !important; }
+
+    /* Filtry kategorií jdou posouvat prstem, ať nekrájí poslední tlačítko */
+    #view-market .overflow-x-auto { padding-right: 1rem !important; }
+
+    /* Mapa: 520 px zabralo skoro celý displej, stačí méně */
+    #market-map { height: 60vh !important; min-height: 320px !important; border-radius: 1.25rem !important; }
+}
+
+@media (max-width: 480px) {
+    /* Delší popisky tlačítek by jinak přetekly */
+    .market-item .flex.gap-3.mt-6 > button { font-size: 0.8rem !important; }
+    .req-card .flex.flex-wrap.gap-3.mt-6 > button { font-size: 0.8rem !important; }
+}
