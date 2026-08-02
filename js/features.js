@@ -430,7 +430,9 @@ window.vyzvaKProfilu = function() {
 };
 
 window.popisBezKontaktu = function(popis) {
-    const text = popis || "";
+    // Pojistka: kdyby sem přišel popis i s daty fotek, odřízneme je
+    let text = popis || "";
+    if (text.includes("||PHOTO||")) text = window.extractPhotoFromDesc(text).desc || "";
     if (!text.includes("---")) return text;
 
     const casti = text.split("---");
@@ -696,16 +698,29 @@ window.refreshCraftsmanJobs = function() {
         // Kontakty na zákazníka se odemknou, až je zakázka opravdu jeho
         const jeMoje = job.status==="accepted"||job.status==="active"||job.status==="done";
         let kontaktyHtml = "";
-        if (jeMoje && job.popis && job.popis.includes("---")) {
-            const detaily = (job.popis.split("---")[1]||"").replace("📋 DOPLŇUJÍCÍ INFORMACE:","").trim()
-                .split(/\r?\n/).map(r=>r.trim()).filter(Boolean);
-            if (detaily.length) {
+        if (jeMoje && job.popis) {
+            // Nejdřív oddělíme data fotek, jinak by se vysypala mezi kontaktní údaje
+            const rozdeleno = window.extractPhotoFromDesc(job.popis);
+            const cistyPopis = rozdeleno.desc || "";
+            const detaily = cistyPopis.includes("---")
+                ? (cistyPopis.split("---")[1]||"").replace("📋 DOPLŇUJÍCÍ INFORMACE:","").trim()
+                    .split(/\r?\n/).map(r=>r.trim()).filter(Boolean)
+                : [];
+
+            // Fotky závady patří řemeslníkovi, který zakázku dostal
+            const fotkyHtml = (rozdeleno.photos || []).length
+                ? '<div class="flex flex-wrap gap-2 mt-3">' + rozdeleno.photos.map(f =>
+                    '<img src="data:' + f.mime + ';base64,' + f.photo + '" class="w-16 h-16 rounded-xl object-cover border border-slate-200 dark:border-slate-700">'
+                  ).join("") + '</div>'
+                : '';
+            if (detaily.length || fotkyHtml) {
                 kontaktyHtml = '<div class="mt-4 mb-4 p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700">'
                     + '<p class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-2">Kontakt na zákazníka</p>'
                     + '<p class="text-sm font-bold dark:text-white mb-2">' + job.zakaznik + '</p>'
-                    + '<div class="flex flex-wrap gap-2">'
-                    + detaily.map(r=>'<span class="text-xs font-medium text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-100 dark:border-slate-700">'+r+'</span>').join("")
-                    + '</div></div>';
+                    + (detaily.length ? '<div class="flex flex-wrap gap-2">'
+                        + detaily.map(r=>'<span class="text-xs font-medium text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-100 dark:border-slate-700">'+r+'</span>').join("")
+                        + '</div>' : '')
+                    + fotkyHtml + '</div>';
             }
         }
         d.innerHTML='<div class="flex items-start justify-between mb-4"><div><h4 class="font-extrabold text-lg dark:text-white leading-tight">' + job.title + '</h4><p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1.5">' + job.time + '</p></div>' + badge + '</div>' + kontaktyHtml + '<button onclick="window.activeChatId=\'' + job.requestId + '\'; window.goTab(\'c-messages\',\'Zprávy\'); setTimeout(()=>window.openConversation(\'' + job.requestId + '\',\'Zákazník\',\'customer' + job.requestId + '\'),300);" class="text-sm font-bold text-remexo-500 hover:text-remexo-600 transition flex items-center gap-2"><i class="fa-regular fa-comment-dots"></i> Napsat zákazníkovi</button>';
