@@ -202,7 +202,18 @@ window.refreshRequestsList = function() {
     list.querySelectorAll(".req-card").forEach(c => c.remove());
     if(window.STATE.requests.length===0){if(empty)empty.classList.remove("hidden");return;}
     if(empty)empty.classList.add("hidden");
-    window.STATE.requests.forEach((req,i) => {
+    // Řadíme jen pro zobrazení – karty si musí nést původní pozici,
+    // jinak by tlačítko smazat mazalo jinou poptávku
+    const kPodleStavu = window.STATE.requests
+        .map((req, i) => ({ req, i }))
+        .sort((a, b) => {
+            const priorita = st => st === "active" ? 0 : st === "done" ? 2 : 1;
+            const rozdil = priorita(a.req.status) - priorita(b.req.status);
+            if (rozdil !== 0) return rozdil;
+            return new Date(b.req.vytvoreno || 0) - new Date(a.req.vytvoreno || 0);
+        });
+
+    kPodleStavu.forEach(({ req, i }) => {
         const div = document.createElement("div");
         div.innerHTML = window.createBeautifulCard(req,false,i);
         list.insertBefore(div.firstElementChild, list.querySelector("#empty-req"));
