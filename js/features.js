@@ -676,8 +676,16 @@ window.loadOffersForRequest = async function(requestId, requestTitle) {
     if(!offers||offers.length===0){
         modalList.innerHTML='<div class="text-center text-slate-400 py-12"><i class="fa-solid fa-inbox text-4xl mb-4 block"></i><p>Zatím žádné aktivní nabídky.</p></div>';
     } else {
-        modalList.innerHTML=offers.map(o=>'<div class="p-5 border border-slate-200 dark:border-slate-700 rounded-3xl bg-slate-50 dark:bg-slate-800/50"><div class="flex items-center gap-4 mb-4 cursor-pointer hover:opacity-75 transition" onclick="window.openPublicProfile(\'' + o.craftsman_id + '\')"><img src="https://api.dicebear.com/7.x/avataaars/svg?seed=' + encodeURIComponent(o.craftsman_name) + '&backgroundColor=0f172a" class="w-12 h-12 rounded-full bg-white shadow-sm border border-slate-200 dark:border-slate-700"><div><p class="font-extrabold dark:text-white">' + o.craftsman_name + '</p><div class="flex items-center gap-2 mt-0.5">' + hodnoceniHtml(o.craftsman_id) + '<span class="text-xs font-bold text-slate-400">· ' + new Date(o.created_at).toLocaleDateString("cs") + '</span></div></div><span class="ml-auto font-black text-lg text-remexo-500">' + o.price + '</span></div><p class="text-sm text-slate-600 dark:text-slate-300 mb-5 bg-white dark:bg-[#0f172a] p-4 rounded-2xl border border-slate-100 dark:border-slate-700">' + o.message + '</p>' + (jeUzavrena ? stavHtml(o) : '<div class="flex gap-2"><button onclick="window.rejectOffer(this, ' + o.id + ',' + requestId + ',\'' + (requestTitle||"").replace(/'/g,"\\'") + '\')" class="px-5 bg-red-50 hover:bg-red-100 dark:bg-red-500/10 dark:hover:bg-red-500/20 text-red-500 rounded-xl transition shadow-sm"><i class="fa-solid fa-times text-lg"></i></button><button onclick="window.acceptOffer(' + o.id + ',' + requestId + ',\'' + (o.craftsman_name||"").replace(/'/g,"\\'") + '\'); window.closeOffersModal();" class="flex-1 bg-slate-900 dark:bg-white text-white dark:text-slate-900 py-3.5 rounded-xl font-bold text-sm transition shadow-md hover:scale-[1.02]">Přijmout a zahájit zprávy</button></div>') + '</div>').join("");
+        modalList.innerHTML=offers.map(o=>'<div class="p-5 border border-slate-200 dark:border-slate-700 rounded-3xl bg-slate-50 dark:bg-slate-800/50"><div class="flex items-center gap-4 mb-4 cursor-pointer hover:opacity-75 transition" onclick="window.openPublicProfile(\'' + o.craftsman_id + '\')"><img id="offer-av-' + o.id + '" src="https://api.dicebear.com/7.x/avataaars/svg?seed=' + encodeURIComponent(o.craftsman_name) + '&backgroundColor=0f172a" class="w-12 h-12 rounded-full bg-white shadow-sm border border-slate-200 dark:border-slate-700 object-cover"><div><p class="font-extrabold dark:text-white">' + o.craftsman_name + '</p><div class="flex items-center gap-2 mt-0.5">' + hodnoceniHtml(o.craftsman_id) + '<span class="text-xs font-bold text-slate-400">· ' + new Date(o.created_at).toLocaleDateString("cs") + '</span></div></div><span class="ml-auto font-black text-lg text-remexo-500">' + o.price + '</span></div><p class="text-sm text-slate-600 dark:text-slate-300 mb-5 bg-white dark:bg-[#0f172a] p-4 rounded-2xl border border-slate-100 dark:border-slate-700">' + o.message + '</p>' + (jeUzavrena ? stavHtml(o) : '<div class="flex gap-2"><button onclick="window.rejectOffer(this, ' + o.id + ',' + requestId + ',\'' + (requestTitle||"").replace(/'/g,"\\'") + '\')" class="px-5 bg-red-50 hover:bg-red-100 dark:bg-red-500/10 dark:hover:bg-red-500/20 text-red-500 rounded-xl transition shadow-sm"><i class="fa-solid fa-times text-lg"></i></button><button onclick="window.acceptOffer(' + o.id + ',' + requestId + ',\'' + (o.craftsman_name||"").replace(/'/g,"\\'") + '\'); window.closeOffersModal();" class="flex-1 bg-slate-900 dark:bg-white text-white dark:text-slate-900 py-3.5 rounded-xl font-bold text-sm transition shadow-md hover:scale-[1.02]">Přijmout a zahájit zprávy</button></div>') + '</div>').join("");
     }
+    // Skutečné profilovky doplníme až po vykreslení, ať se okno neotevírá pomalu
+    (offers||[]).forEach(async o => {
+        if (!o.craftsman_id || !window.getUserAvatar) return;
+        const url = await window.getUserAvatar(o.craftsman_id, o.craftsman_name, "0f172a");
+        const img = document.getElementById("offer-av-" + o.id);
+        if (img) img.src = url;
+    });
+
     const modal=document.getElementById("offers-modal");modal.classList.remove("hidden");void modal.offsetWidth;modal.classList.add("opacity-100");
 };
 
@@ -745,23 +753,6 @@ window.acceptOffer = async function(offerId, requestId, craftsmanName) {
     } catch(e) { console.error("Ostatní nabídky se nepodařilo uzavřít:", e.message); }
 
 
-    // Teprve teď zakládáme konverzaci – úvodní zprávou je text z přijaté nabídky
-    try {
-        if (nabidka && nabidka.message) {
-            const { data: existujici } = await window.sb.from("messages")
-                .select("id").eq("conversation_id", String(requestId)).limit(1);
-            if (!existujici || existujici.length === 0) {
-                const { error: chybaZpravy } = await window.sb.from("messages").insert({
-                    conversation_id: String(requestId),
-                    sender_id: nabidka.craftsman_id,
-                    sender_name: nabidka.craftsman_name || craftsmanName,
-                    text: nabidka.message,
-                    senderrole: "craftsman"
-                });
-                if (chybaZpravy) console.error("Úvodní zprávu se nepodařilo uložit:", chybaZpravy.message);
-            }
-        }
-    } catch(e) {}
 
     window.showToast("Nabídka přijata! ✅","Zahajujete spolupráci s "+craftsmanName+".","success");
     const req=window.STATE.requests.find(r=>r.sbId===requestId);if(req){req.status="active";req.craftsman_name=craftsmanName;}
@@ -1186,7 +1177,15 @@ window.openPublicProfile = async function(userId) {
             document.getElementById("pp-name").innerText = data.full_name || "Uživatel";
             document.getElementById("pp-role").innerText = data.role === "customer" ? "Zákazník" : "Řemeslník";
             document.getElementById("pp-city").innerHTML = data.city ? `<i class="fa-solid fa-location-dot mr-1"></i> ${data.city}` : "";
-            document.getElementById("pp-rating").innerText = data.rating ? Number(data.rating).toFixed(1) : "5.0";
+            // Skutečný průměr z hodnocení, ne natvrdo napsaná pětka
+            const ratingEl = document.getElementById("pp-rating");
+            if (ratingEl) {
+                ratingEl.innerText = "–";
+                if (window.nactiHodnoceni) {
+                    const { prumer, pocet } = await window.nactiHodnoceni(userId);
+                    ratingEl.innerText = pocet > 0 ? prumer.toFixed(1) : "–";
+                }
+            }
             document.getElementById("pp-bio").innerText = data.bio || "Tento uživatel zatím nevyplnil žádný popis.";
             document.getElementById("pp-avatar").src = data.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(data.full_name)}&backgroundColor=0f172a`;
         } else {
