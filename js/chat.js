@@ -402,6 +402,29 @@ window.spustHlidaniZprav = function() {
     window._hlidaciTimer = setInterval(async () => {
         if (!window.sb || !window.APP_USER) return;
 
+        // Zákazníkovi hlídáme, jestli řemeslník neohlásil hotovo
+        if (window.APP_ROLE === "customer" && window.STATE.requests) {
+            try {
+                const { data: aktualni } = await window.sb.from("requests")
+                    .select("id, title, status, dokonceni_navrzeno")
+                    .eq("customer_id", window.APP_USER.id)
+                    .eq("status", "active")
+                    .not("dokonceni_navrzeno", "is", null);
+
+                (aktualni || []).forEach(r => {
+                    const puvodni = (window.STATE.requests.find(x => String(x.sbId) === String(r.id)) || {}).dokonceniNavrzeno;
+                    if (!puvodni) {
+                        window.showToast(
+                            "Práce je hotová! 🔨",
+                            "Řemeslník dokončil: " + (r.title || "vaši zakázku") + ". Potvrďte prosím dokončení a ohodnoťte ho.",
+                            "success"
+                        );
+                        if (window.loadCustomerRequestsFromDB) window.loadCustomerRequestsFromDB();
+                    }
+                });
+            } catch (e) {}
+        }
+
         // Zákazníkovi hlídáme, jestli mu nepřišla nová nabídka
         if (window.APP_ROLE === "customer") {
             try {
