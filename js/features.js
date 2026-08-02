@@ -969,7 +969,15 @@ window.normalizovatKategorii = function(s) {
         .toLowerCase().trim();
 };
 
+// Kategorie, na které máme vlastní tlačítko
+window.ZNAME_KATEGORIE = ["Instalatérství", "Elektrikář", "Malíř", "Tesař", "Zámečník"];
+
 window.kategorieSedi = function(kategoriePoptavky, filtr) {
+    // "Ostatní" = vše, co nespadá pod žádné z ostatních tlačítek
+    // (sem patří i starší poptávky s kategoriemi jako "Truhlářství")
+    if (window.normalizovatKategorii(filtr) === "ostatni") {
+        return !window.ZNAME_KATEGORIE.some(k => window.kategorieSedi(kategoriePoptavky, k));
+    }
     const a = window.normalizovatKategorii(kategoriePoptavky);
     const b = window.normalizovatKategorii(filtr);
     if (!a || !b) return false;
