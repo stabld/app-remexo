@@ -391,7 +391,8 @@ window.publishRequest = async function(btnNode) {
         }
         if (!window.STATE) window.STATE = { requests: [], craftJobs: [], marketRequests: [] };
         if (!window.STATE.requests) window.STATE.requests = [];
-        window.STATE.requests.unshift({sbId,title,kat,popis:finalPopis,time:new Date().toLocaleTimeString("cs",{hour:"2-digit",minute:"2-digit"}),status:"waiting"});
+        const tedPoptavka=new Date().toISOString();
+        window.STATE.requests.unshift({sbId,title,kat,popis:finalPopis,vytvoreno:tedPoptavka,time:window.formatDatumCas(tedPoptavka),status:"waiting",pocetNabidek:0});
         if(window.refreshRequestsList)window.refreshRequestsList(); if(window.refreshDashboard)window.refreshDashboard(); window.poptHistoryText=""; window.poptPhotos=[];
         
         ["popt-input","f-street","f-city","f-phone","f-budget"].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});
@@ -564,7 +565,8 @@ window.submitCraftsmanOffer = async function() {
         btn.innerHTML='<i class="fa-solid fa-check mr-2"></i>Odesláno!';
         btn.className=btn.className.replace("bg-remexo-500 hover:bg-remexo-600","bg-green-500");
         window.showToast("Nabídka odeslána! 🎉","Jakmile ji zákazník přijme, otevře se vám chat.","success");
-        window.STATE.craftJobs.push({title,requestId,status:"pending",time:new Date().toLocaleTimeString("cs",{hour:"2-digit",minute:"2-digit"})});
+        const ted=new Date().toISOString();
+        window.STATE.craftJobs.push({title,requestId,status:"pending",vytvoreno:ted,time:window.formatDatumCas(ted)});
         window.refreshCraftsmanJobs();
         // Do chatu se dostane až ve chvíli, kdy zákazník nabídku přijme
         setTimeout(()=>{window.closeOfferModal();btn.innerHTML=orig;btn.disabled=false;btn.className=btn.className.replace("bg-green-500","bg-remexo-500 hover:bg-remexo-600");window.goTab("jobs","Moje práce");},1000);
@@ -684,13 +686,33 @@ window.acceptOffer = async function(offerId, requestId, craftsmanName) {
 
 window.closeOffersModal = function() { const modal=document.getElementById("offers-modal"); if(modal){modal.classList.add("hidden");modal.classList.remove("opacity-100");} };
 
+// Datum a čas v jednom – "2. 8. 2026, 14:32"
+window.formatDatumCas = function(kdy) {
+    if (!kdy) return "";
+    const d = new Date(kdy);
+    if (isNaN(d)) return "";
+    return d.toLocaleDateString("cs", { day: "numeric", month: "numeric", year: "numeric" })
+         + ", " + d.toLocaleTimeString("cs", { hour: "2-digit", minute: "2-digit" });
+};
+
+// Pořadí: aktivní nahoře, pak čekající, dokončené naposled – uvnitř vždy od nejnovější
+window.seraditZakazky = function(zakazky) {
+    const priorita = st => (st === "accepted" || st === "active") ? 0
+                        : (st === "done" || st === "completed") ? 2 : 1;
+    return [...zakazky].sort((a, b) => {
+        const rozdil = priorita(a.status) - priorita(b.status);
+        if (rozdil !== 0) return rozdil;
+        return new Date(b.vytvoreno || 0) - new Date(a.vytvoreno || 0);
+    });
+};
+
 window.refreshCraftsmanJobs = function() {
     const completed=window.STATE.craftJobs.filter(j=>j.status==="done"||j.status==="completed").length;
     const cnt=document.getElementById("jobs-active-count");if(cnt)cnt.innerText=window.STATE.craftJobs.length-completed;
     const doneCnt=document.getElementById("jobs-done-count");if(doneCnt)doneCnt.innerText=completed;
     const list=document.getElementById("my-jobs-list");if(!list)return;
     list.querySelector(".text-center")?.remove();list.innerHTML="";
-    window.STATE.craftJobs.forEach(job=>{
+    window.seraditZakazky(window.STATE.craftJobs).forEach(job=>{
         const d=document.createElement("div"); d.className="bg-white dark:bg-[#0f172a] p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm fade-up";
         let badge='<span class="status-badge status-waiting">Čekám na odpověď</span>';
         if(job.status==="accepted"||job.status==="active")badge='<span class="status-badge status-active">Aktivní zakázka</span>';
@@ -732,7 +754,7 @@ window.loadCraftsmanJobsFromDB = async function() {
     if(!window.sb||!window.APP_USER)return;
     const {data}=await window.sb.from("offers").select("*, requests(title, category, status, description, customer_name)").eq("craftsman_id",window.APP_USER.id);
     if(data&&data.length>0){
-        window.STATE.craftJobs=data.map(o=>{ let s=o.status;if(o.requests?.status==="done")s="done"; return {title:o.requests?.title||"Zakázka",requestId:o.request_id,status:s,popis:o.requests?.description||"",zakaznik:o.requests?.customer_name||"Zákazník",time:new Date(o.created_at).toLocaleTimeString("cs",{hour:"2-digit",minute:"2-digit"})}; });
+        window.STATE.craftJobs=data.map(o=>{ let s=o.status;if(o.requests?.status==="done")s="done"; return {title:o.requests?.title||"Zakázka",requestId:o.request_id,status:s,popis:o.requests?.description||"",zakaznik:o.requests?.customer_name||"Zákazník",vytvoreno:o.created_at,time:window.formatDatumCas(o.created_at)}; });
         window.refreshCraftsmanJobs();
     }
 };
@@ -754,7 +776,7 @@ window.loadCustomerRequestsFromDB = async function() {
             });
         } catch(e) {}
 
-        window.STATE.requests=data.map(r=>({sbId:r.id,title:r.title,kat:r.category,popis:r.description,time:new Date(r.created_at).toLocaleTimeString("cs",{hour:"2-digit",minute:"2-digit"}),status:r.status,craftsman_name:r.craftsman_name||null,pocetNabidek:pocty[String(r.id)]||0}));
+        window.STATE.requests=data.map(r=>({sbId:r.id,title:r.title,kat:r.category,popis:r.description,vytvoreno:r.created_at,time:window.formatDatumCas(r.created_at),status:r.status,craftsman_name:r.craftsman_name||null,pocetNabidek:pocty[String(r.id)]||0}));
         if(window.refreshRequestsList)window.refreshRequestsList();if(window.refreshDashboard)window.refreshDashboard();
         if(window.aktualizujBublinuNabidek)window.aktualizujBublinuNabidek();
     }
