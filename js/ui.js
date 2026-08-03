@@ -244,7 +244,8 @@ window.initCustomer = function(name) {
 
 window.initCraftsman = function(name) {
     window.buildNav([{id:"market",icon:"fa-map-location-dot",label:"Tržiště zakázek"},{id:"jobs",icon:"fa-hammer",label:"Moje práce"},{id:"c-messages",icon:"fa-comment-dots",label:"Zprávy"},{id:"earnings",icon:"fa-wallet",label:"Výdělky"},{id:"profile",icon:"fa-user",label:"Můj profil"}]);
-    document.getElementById("header-cta").innerHTML = '<button onclick="window.goTab(\'new\',\'Nov\u00e1 popt\u00e1vka\')" class="bg-remexo-500 hover:bg-remexo-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg transition hover:scale-105"><i class="fa-solid fa-hard-hat"></i> <span>Nov\u00e1 popt\u00e1vka</span></button>';
+    // Řemeslník poptávky nezadává – zákaznické tlačítko sem nepatří
+    document.getElementById("header-cta").innerHTML = "";
     if (window.craftsmanHTML) { document.getElementById("main-content").innerHTML = window.craftsmanHTML(name); }
     window.goTab("market","Tržiště zakázek");
 };
@@ -305,6 +306,11 @@ window.goTab = function(id, title) {
     // Prohlížet může kdokoliv – profil chceme až ve chvíli, kdy chce někdo jednat.
     // Kdo přijde a uvidí prázdnou appku, odejde.
     if(id === "new"){
+        // Poptávky zadává zákazník, ne řemeslník
+        if (window.APP_ROLE === "craftsman") {
+            window.showToast("Poptávky zadávají zákazníci", "Vy si vybíráte zakázky na Tržišti.", "info");
+            return window.goTab("market","Tržiště zakázek");
+        }
         const chybi = window.chybejiciUdajeProfilu();
         if(chybi.length > 0){
             window.showToast("Nejprve vyplňte profil","Před zadáním poptávky doplňte: "+chybi.join(", ")+".","error");
