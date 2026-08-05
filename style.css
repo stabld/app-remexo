@@ -12,9 +12,11 @@ body { font-family: "Plus Jakarta Sans", sans-serif; }
 .status-waiting { background:#fef3c7; color:#b45309; }
 .status-active { background:#dcfce7; color:#166534; }
 .status-done { background:#16a34a; color:#ffffff; }
+.status-cancelled { background:#f1f5f9; color:#64748b; text-decoration:line-through; }
 .dark .status-waiting { background:rgba(245,158,11,0.2); color:#fbbf24; border: 1px solid rgba(245,158,11,0.3); }
 .dark .status-active { background:rgba(34,197,94,0.2); color:#4ade80; border: 1px solid rgba(34,197,94,0.3); }
 .dark .status-done { background:rgba(34,197,94,0.25); color:#4ade80; border: 1px solid rgba(34,197,94,0.5); }
+.dark .status-cancelled { background:rgba(100,116,139,0.2); color:#94a3b8; border:1px solid rgba(100,116,139,0.3); text-decoration:line-through; }
 @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
 .fade-up { animation: fadeUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 @keyframes loader-draw { from{stroke-dashoffset:300} to{stroke-dashoffset:0} }
