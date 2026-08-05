@@ -479,6 +479,12 @@ window.spustHlidaniZprav = function() {
                         }
                     }
 
+                    // Zákazník zakázku zrušil
+                    if (o.status === "accepted" && puvodniZakazka && puvodniZakazka !== "cancelled" && stavZakazky === "cancelled") {
+                        window.showToast("Zakázka zrušena ❌", "Zákazník zrušil: " + nazev + ". Podrobnosti najdete v Moje práce.", "error");
+                        if (window.loadCraftsmanJobsFromDB) window.loadCraftsmanJobsFromDB();
+                    }
+
                     // Zákazník potvrdil, že je hotovo – to si zaslouží poděkování
                     if (o.status === "accepted" && puvodniZakazka && puvodniZakazka !== "done" && stavZakazky === "done") {
                         let hvezdy = "";
