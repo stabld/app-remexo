@@ -124,8 +124,17 @@ window.uzavritBezPotvrzeni = async function(requestId, btnEl) {
     const orig = btnEl ? btnEl.innerHTML : "";
     if (btnEl) { btnEl.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-2"></i>Uzavírám...'; btnEl.disabled = true; }
 
-    const { error } = await window.sb.from("requests")
-        .update({ status: "done" }).eq("id", requestId);
+    // Uzavřít jde jen rozdělaná zakázka. Bez podmínky by šlo přes API
+    // přepsat na "done" i zakázku, kterou zákazník mezitím zrušil.
+    const { data: zmenene, error } = await window.sb.from("requests")
+        .update({ status: "done" }).eq("id", requestId).eq("status", "active").select("id");
+
+    if (!error && (!zmenene || zmenene.length === 0)) {
+        window.showToast("Zakázku nelze uzavřít", "Její stav se mezitím změnil. Načtěte prosím stránku znovu.", "info");
+        if (btnEl) { btnEl.innerHTML = orig; btnEl.disabled = false; }
+        if (window.loadCraftsmanJobsFromDB) window.loadCraftsmanJobsFromDB();
+        return;
+    }
 
     if (error) {
         window.showToast("Nepodařilo se uzavřít", error.message || "Zkuste to prosím znovu.", "error");
@@ -386,7 +395,18 @@ window.saveProfile = async function(btnNode) {
 };
 
 window.callGeminiAPI = async function(parts, systemPrompt, useJson) {
-    const res = await fetch('/api/borek-ai', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({parts, systemPrompt, useJson}) });
+    // Endpoint běží na veřejné adrese, takže si ověřuje, kdo se ptá.
+    // Bez tokenu vrátí 401 a Gemini se vůbec nezavolá.
+    let token = null;
+    try {
+        const { data } = await window.sb.auth.getSession();
+        token = data?.session?.access_token || null;
+    } catch (e) {}
+
+    const hlavicky = { 'Content-Type': 'application/json' };
+    if (token) hlavicky['Authorization'] = 'Bearer ' + token;
+
+    const res = await fetch('/api/borek-ai', { method:'POST', headers: hlavicky, body: JSON.stringify({parts, systemPrompt, useJson}) });
     const data = await res.json();
     if(!res.ok) throw new Error(data.error || 'API chyba');
     return data.text;
@@ -877,6 +897,11 @@ window.rejectOffer = async function(btnNode, offerId, requestId, requestTitle) {
 window.acceptOffer = async function(offerId, requestId, craftsmanName) {
     if(!window.sb)return;
 
+    // Dvojklik na "Přijmout" jinak spustí celý postup dvakrát naráz
+    if (window._prijimamNabidku) return;
+    window._prijimamNabidku = true;
+    setTimeout(() => { window._prijimamNabidku = false; }, 4000);
+
     // Zakázka už mohla být přidělena nebo dokončená – jinou nabídku už přijmout nelze
     const { data: stavPoptavky } = await window.sb.from("requests")
         .select("status").eq("id", requestId).maybeSingle();
@@ -900,8 +925,22 @@ window.acceptOffer = async function(offerId, requestId, craftsmanName) {
         return;
     }
 
-    const { error: chybaPoptavky } = await window.sb.from("requests")
-        .update({status:"active",craftsman_name:craftsmanName,craftsman_id:(nabidka?.craftsman_id||null)}).eq("id",requestId);
+    // Podmínka .eq("status","waiting") je tu schválně: mezi kontrolou výše
+    // a tímto zápisem může uběhnout vteřina, během které zákazník stihne
+    // kliknout podruhé nebo přijmout jinou nabídku v druhé záložce.
+    // Databáze tak přidělí zakázku jen jednou – druhý pokus nezmění nic.
+    const { data: zmenene, error: chybaPoptavky } = await window.sb.from("requests")
+        .update({status:"active",craftsman_name:craftsmanName,craftsman_id:(nabidka?.craftsman_id||null)})
+        .eq("id",requestId).eq("status","waiting").select("id");
+
+    if (!chybaPoptavky && (!zmenene || zmenene.length === 0)) {
+        await window.sb.from("offers").update({status:"pending"}).eq("id",offerId);
+        window.showToast("Zakázka už je přidělená", "Nabídku se nepodařilo přijmout, zkuste stránku načíst znovu.", "info");
+        window.closeOffersModal();
+        if (window.loadCustomerRequestsFromDB) window.loadCustomerRequestsFromDB();
+        return;
+    }
+
     if (chybaPoptavky) {
         // Vrátíme nabídku zpět, ať nezůstane přijatá u poptávky, která je pořád volná
         await window.sb.from("offers").update({status:"pending"}).eq("id",offerId);
