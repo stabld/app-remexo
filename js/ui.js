@@ -115,6 +115,19 @@ window.createBeautifulCard = function(req, isMarket, i) {
         let reqMime = extracted.mime || req.mime;
         let detailsHtml = "";
         let detailItems = [];
+
+        // Všechno, co psal uživatel, ošetříme na jednom místě. Popis
+        // a detaily se dál rozdělují, takže se escapují až při vkládání
+        // do HTML níže – tady jen texty, které jdou do stránky rovnou.
+        const bezpTitle = window.escapeHtml(req.title || "");
+        const bezpKat = window.escapeHtml(req.kat || req.category || "Ostatní");
+        const bezpCena = window.escapeHtml(req.price_estimate || "Dohodou");
+        const bezpCas = window.escapeHtml(req.time || "");
+        const bezpRemeslnik = window.escapeHtml(req.craftsman_name || "");
+        // Do onclick jde titulek v apostrofech – kromě HTML je potřeba
+        // ošetřit i zpětné lomítko a apostrof, jinak se dá vyskočit z řetězce
+        const titleDoOnclick = window.escapeHtml((req.title || "").replace(/\\/g, "\\\\").replace(/'/g, "\\'"));
+
         if (mainDesc.includes("---")) {
             const pts = mainDesc.split("---");
             mainDesc = pts[0].trim();
@@ -123,7 +136,7 @@ window.createBeautifulCard = function(req, isMarket, i) {
                 detailItems = rawDetails.split(/\r?\n/).map(l => l.trim()).filter(l => l);
                 if (detailItems.length > 0) {
                     detailsHtml = '<div class="mt-5 pt-5 border-t border-slate-100 dark:border-slate-700/50"><p class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-3">Doplňující informace</p><div class="flex flex-wrap gap-2">' +
-                        detailItems.map(item => '<div class="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300">' + item + '</div>').join('') +
+                        detailItems.map(item => '<div class="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300">' + window.escapeHtml(item) + '</div>').join('') +
                         '</div></div>';
                 }
             }
@@ -134,7 +147,7 @@ window.createBeautifulCard = function(req, isMarket, i) {
             let barvaNabidek, textNabidek;
             if (req.status === 'active' || req.status === 'done') {
                 barvaNabidek = 'bg-slate-900 dark:bg-white text-white dark:text-slate-900';
-                textNabidek = '<i class="fa-solid fa-user-check"></i>' + (req.craftsman_name ? 'Vybrán: ' + req.craftsman_name : 'Zobrazit vybranou nabídku');
+                textNabidek = '<i class="fa-solid fa-user-check"></i>' + (req.craftsman_name ? 'Vybrán: ' + bezpRemeslnik : 'Zobrazit vybranou nabídku');
             } else if (req.pocetNabidek > 0) {
                 barvaNabidek = 'bg-remexo-500 hover:bg-remexo-600 text-white';
                 textNabidek = '<span class="w-6 h-6 rounded-full bg-white text-remexo-600 text-xs font-black flex items-center justify-center">' + req.pocetNabidek + '</span>'
@@ -146,12 +159,12 @@ window.createBeautifulCard = function(req, isMarket, i) {
             return '<div class="req-card relative bg-white dark:bg-[#0f172a] p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all duration-300 group fade-up overflow-hidden">' +
                 '<div class="absolute top-0 left-0 w-1.5 h-full ' + (req.status==='done'?'bg-slate-300 dark:bg-slate-700':'bg-remexo-500') + '"></div>' +
                 ((req.status === 'waiting' || req.status === 'cancelled') ? '<div class="absolute top-5 right-5 opacity-0 group-hover:opacity-100 transition-opacity z-10"><button onclick="window.deleteRequest(' + i + ',' + (req.sbId||'null') + ')" class="w-9 h-9 flex items-center justify-center rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all shadow-sm"><i class="fa-solid fa-trash-can text-sm"></i></button></div>' : '') +
-                '<div class="pl-2"><div class="flex items-center gap-3 mb-3 pr-10"><span class="px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/50 text-[11px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wide"><i class="fa-solid fa-tag mr-1.5 opacity-70"></i>' + req.kat + '</span><span class="text-[11px] text-slate-400 font-bold uppercase tracking-wide"><i class="fa-regular fa-clock mr-1.5 opacity-70"></i>' + req.time + '</span></div>' +
-                '<div class="flex items-start justify-between gap-4 mb-4"><h4 class="text-xl md:text-2xl font-extrabold dark:text-white leading-tight">' + req.title + '</h4><span class="status-badge ' + (badgeMap[req.status]||'status-waiting') + ' shrink-0">' + (statusMap[req.status]||'Čeká') + '</span></div>' +
-                '<div class="flex flex-col md:flex-row gap-5 mb-2">' + photoHtml + '<div class="flex-1 min-w-0"><p class="text-sm md:text-base text-slate-600 dark:text-slate-300 leading-relaxed">' + mainDesc + '</p></div></div>' +
+                '<div class="pl-2"><div class="flex items-center gap-3 mb-3 pr-10"><span class="px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/50 text-[11px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wide"><i class="fa-solid fa-tag mr-1.5 opacity-70"></i>' + bezpKat + '</span><span class="text-[11px] text-slate-400 font-bold uppercase tracking-wide"><i class="fa-regular fa-clock mr-1.5 opacity-70"></i>' + bezpCas + '</span></div>' +
+                '<div class="flex items-start justify-between gap-4 mb-4"><h4 class="text-xl md:text-2xl font-extrabold dark:text-white leading-tight">' + bezpTitle + '</h4><span class="status-badge ' + (badgeMap[req.status]||'status-waiting') + ' shrink-0">' + (statusMap[req.status]||'Čeká') + '</span></div>' +
+                '<div class="flex flex-col md:flex-row gap-5 mb-2">' + photoHtml + '<div class="flex-1 min-w-0"><p class="text-sm md:text-base text-slate-600 dark:text-slate-300 leading-relaxed">' + window.escapeHtml(mainDesc) + '</p></div></div>' +
                 detailsHtml +
                 '<div class="flex flex-wrap gap-3 mt-6 pt-5 border-t border-slate-100 dark:border-slate-800">' +
-                '<button onclick="window.loadOffersForRequest(' + (req.sbId||0) + ',\'' + (req.title||'').replace(/'/g,"\\'") + '\')" class="flex-1 ' + barvaNabidek + ' py-3.5 rounded-xl font-bold text-sm hover:scale-[1.02] transition-transform shadow-md flex items-center justify-center gap-2">' + textNabidek + '</button>' +
+                '<button onclick="window.loadOffersForRequest(' + (req.sbId||0) + ',\'' + titleDoOnclick + '\')" class="flex-1 ' + barvaNabidek + ' py-3.5 rounded-xl font-bold text-sm hover:scale-[1.02] transition-transform shadow-md flex items-center justify-center gap-2">' + textNabidek + '</button>' +
                 (req.status==='active' ? '<button onclick="window.zrusitZakazku(' + i + ',' + (req.sbId||'null') + ')" class="px-5 py-3.5 rounded-xl border-2 border-slate-200 dark:border-slate-700 text-slate-400 hover:text-red-500 hover:border-red-200 font-bold text-sm transition"><i class="fa-solid fa-xmark mr-2"></i>Zrušit</button>' : '') +
                 (req.odstoupeni ? '<div class="w-full p-4 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 text-sm text-amber-700 dark:text-amber-400">'
                     + '<p class="font-bold"><i class="fa-solid fa-circle-info mr-2"></i>' + window.escapeHtml(req.odstoupeni.craftsman_name || 'Řemeslník') + ' ze zakázky odstoupil</p>'
@@ -182,10 +195,10 @@ window.createBeautifulCard = function(req, isMarket, i) {
                 });
             const marketDetailsHtml = marketDetailItems.length > 0
                 ? '<div class="mt-5 pt-5 border-t border-slate-100 dark:border-slate-700/50"><p class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-3">Doplňující informace</p><div class="flex flex-wrap gap-2">' +
-                    marketDetailItems.map(item => '<div class="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300">' + item + '</div>').join('') +
+                    marketDetailItems.map(item => '<div class="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300">' + window.escapeHtml(item) + '</div>').join('') +
                     '</div></div>'
                 : '';
-            const firstName = (req.customer_name || 'Zákazník').split(' ')[0];
+            const firstName = window.escapeHtml((req.customer_name || 'Zákazník').split(' ')[0]);
             const stavNabidky = (typeof window.stavMeNabidky === "function") ? window.stavMeNabidky(req.id) : null;
             let tlacitkoNabidky;
             if (stavNabidky === "pending") {
@@ -203,12 +216,12 @@ window.createBeautifulCard = function(req, isMarket, i) {
             const oblibena = (typeof window.jeOblibena === "function") ? window.jeOblibena(req.id) : false;
             const zalozkaIkona = oblibena ? "fa-solid fa-bookmark" : "fa-regular fa-bookmark";
             const zalozkaBarva = oblibena ? "text-remexo-500 border-remexo-500" : "text-slate-400 border-slate-200 dark:border-slate-700";
-            return '<div id="market-card-' + req.id + '" class="market-item bg-white dark:bg-[#0f172a] rounded-3xl border border-slate-200 dark:border-slate-800 p-6 hover:border-remexo-500/50 hover:shadow-xl transition-all duration-300 cursor-pointer fade-up overflow-hidden relative group" data-kat="' + reqCat + '" style="animation-delay:' + (i*60) + 'ms">' +
+            return '<div id="market-card-' + req.id + '" class="market-item bg-white dark:bg-[#0f172a] rounded-3xl border border-slate-200 dark:border-slate-800 p-6 hover:border-remexo-500/50 hover:shadow-xl transition-all duration-300 cursor-pointer fade-up overflow-hidden relative group" data-kat="' + window.escapeHtml(reqCat) + '" style="animation-delay:' + (i*60) + 'ms">' +
                 '<div class="absolute top-0 left-0 w-1.5 h-full bg-remexo-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>' +
                 '<div class="pl-2"><div class="flex items-start gap-5"><div class="w-14 h-14 bg-remexo-50 dark:bg-remexo-500/10 text-remexo-500 rounded-2xl flex items-center justify-center text-2xl shrink-0 shadow-inner border border-remexo-100 dark:border-remexo-500/20"><i class="fa-solid ' + (iconMap[reqCat]||iconMap.default) + '"></i></div>' +
-                '<div class="flex-1 min-w-0"><div class="flex items-start justify-between gap-3 mb-2"><h4 class="text-xl font-extrabold dark:text-white leading-tight">' + req.title + '</h4><span class="status-badge ' + (reqUrg==="Vysoká"?"bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400":"status-waiting") + ' shrink-0">' + reqUrg + '</span></div>' +
-                '<div class="flex flex-wrap items-center gap-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-4"><span class="bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded"><i class="fa-solid fa-tag mr-1.5 opacity-70"></i>' + reqCat + '</span><span class="bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded"><i class="fa-solid fa-user mr-1.5 opacity-70"></i>' + firstName + '</span><span class="bg-remexo-50 dark:bg-remexo-500/10 text-remexo-600 dark:text-remexo-400 px-2 py-1 rounded"><i class="fa-solid fa-coins mr-1.5"></i>' + (req.price_estimate||'Dohodou') + '</span></div>' +
-                '<p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed mb-2">' + mainDesc + '</p>' +
+                '<div class="flex-1 min-w-0"><div class="flex items-start justify-between gap-3 mb-2"><h4 class="text-xl font-extrabold dark:text-white leading-tight">' + bezpTitle + '</h4><span class="status-badge ' + (reqUrg==="Vysoká"?"bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400":"status-waiting") + ' shrink-0">' + window.escapeHtml(reqUrg) + '</span></div>' +
+                '<div class="flex flex-wrap items-center gap-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-4"><span class="bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded"><i class="fa-solid fa-tag mr-1.5 opacity-70"></i>' + window.escapeHtml(reqCat) + '</span><span class="bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded"><i class="fa-solid fa-user mr-1.5 opacity-70"></i>' + firstName + '</span><span class="bg-remexo-50 dark:bg-remexo-500/10 text-remexo-600 dark:text-remexo-400 px-2 py-1 rounded"><i class="fa-solid fa-coins mr-1.5"></i>' + bezpCena + '</span></div>' +
+                '<p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed mb-2">' + window.escapeHtml(mainDesc) + '</p>' +
                 marketDetailsHtml +
                 '<div class="flex gap-3 mt-6 pt-5 border-t border-slate-100 dark:border-slate-800">' + tlacitkoNabidky + '<button onclick="window.showOnMap(\'' + req.id + '\')" title="Zobrazit na mapě" class="px-4 h-12 border-2 border-slate-200 dark:border-slate-700 rounded-xl flex items-center justify-center gap-2 text-slate-500 dark:text-slate-400 hover:text-remexo-500 hover:border-remexo-500 hover:bg-remexo-50 dark:hover:bg-remexo-500/10 transition-colors font-bold text-sm"><i class="fa-solid fa-map-location-dot"></i><span>Na mapě</span></button><button onclick="window.toggleOblibene(\'' + req.id + '\', this)" title="Uložit do oblíbených" class="w-12 h-12 border-2 ' + zalozkaBarva + ' rounded-xl flex items-center justify-center hover:text-remexo-500 hover:border-remexo-500 hover:bg-remexo-50 dark:hover:bg-remexo-500/10 transition-colors shrink-0"><i class="' + zalozkaIkona + '"></i></button></div>' +
                 '</div></div></div></div>';
