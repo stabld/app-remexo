@@ -1026,10 +1026,26 @@ window.loadCraftsmanJobsFromDB = async function() {
             : "Zatím bez hodnocení";
     }
 
-    // Zrušené a odmítnuté nabídky sem nepatří – refreshCraftsmanJobs zná
-    // jen tři stavy a všechno ostatní vykreslí jako "Čekám na odpověď",
-    // takže by zakázka, ze které jsem odstoupil, vypadala jako živá
-    const {data}=await window.sb.from("offers").select("*, requests(title, category, status, description, customer_name, dokonceni_navrzeno)").eq("craftsman_id",window.APP_USER.id).neq("status","rejected");
+    // Zrušené nabídky sem nepatří vůbec
+    const { data: nabidky } = await window.sb.from("offers")
+        .select("*, requests(title, category, status, description, customer_name, dokonceni_navrzeno, craftsman_id)")
+        .eq("craftsman_id", window.APP_USER.id)
+        .neq("status", "rejected");
+
+    // O tom, co je moje práce, rozhoduje stav POPTÁVKY, ne nabídky.
+    // Nabídka zůstává "accepted", i když zákazník zakázku zrušil nebo
+    // jsem z ní odstoupil – podle ní by karta zůstala viset navždy.
+    const data = (nabidky || []).filter(o => {
+        const p = o.requests;
+        if (!p) return false;
+        // Zakázka je přidělená mně – patří sem, ať je rozdělaná nebo hotová
+        if (p.craftsman_id && p.craftsman_id === window.APP_USER.id) return true;
+        // Poptávka je pořád volná a čekám na rozhodnutí zákazníka
+        if (p.status === "waiting" && o.status === "pending") return true;
+        // Zbytek: zrušeno zákazníkem, odstoupil jsem, nebo vybral někoho jiného
+        return false;
+    });
+
     if(data&&data.length>0){
         // Kontakt dostaneme z databáze jen u zakázek, které nám byly přiděleny
         const kontakty = {};
