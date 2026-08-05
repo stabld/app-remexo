@@ -13,6 +13,14 @@
     window.addEventListener('load', function() { setTimeout(hideLoader, 1800); });
 })();
 
+// Text psaný uživatelem (důvod odstoupení, zpráva) nikdy nevkládáme
+// do HTML syrový – jinak by stačilo napsat <script> a spustí se
+window.escapeHtml = function(s) {
+    return String(s == null ? "" : s)
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+};
+
 window.showToast = function(title, message, type, isMessage) {
     type = type || 'success';
     const container = document.getElementById('toast-container');
@@ -145,7 +153,13 @@ window.createBeautifulCard = function(req, isMarket, i) {
                 '<div class="flex flex-wrap gap-3 mt-6 pt-5 border-t border-slate-100 dark:border-slate-800">' +
                 '<button onclick="window.loadOffersForRequest(' + (req.sbId||0) + ',\'' + (req.title||'').replace(/'/g,"\\'") + '\')" class="flex-1 ' + barvaNabidek + ' py-3.5 rounded-xl font-bold text-sm hover:scale-[1.02] transition-transform shadow-md flex items-center justify-center gap-2">' + textNabidek + '</button>' +
                 (req.status==='active' ? '<button onclick="window.zrusitZakazku(' + i + ',' + (req.sbId||'null') + ')" class="px-5 py-3.5 rounded-xl border-2 border-slate-200 dark:border-slate-700 text-slate-400 hover:text-red-500 hover:border-red-200 font-bold text-sm transition"><i class="fa-solid fa-xmark mr-2"></i>Zrušit</button>' : '') +
-                (req.status==='cancelled' && req.zrusenoKym === 'remeslnik' ? '<div class="w-full p-4 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 text-sm font-bold text-amber-700 dark:text-amber-400"><i class="fa-solid fa-circle-info mr-2"></i>Řemeslník ze zakázky odstoupil' + (req.zrusenoDuvod ? ': ' + req.zrusenoDuvod : '') + '</div>' : '') +
+                (req.odstoupeni ? '<div class="w-full p-4 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 text-sm text-amber-700 dark:text-amber-400">'
+                    + '<p class="font-bold"><i class="fa-solid fa-circle-info mr-2"></i>' + window.escapeHtml(req.odstoupeni.craftsman_name || 'Řemeslník') + ' ze zakázky odstoupil</p>'
+                    + (req.odstoupeni.duvod
+                        ? '<p class="mt-1.5 font-medium">„' + window.escapeHtml(req.odstoupeni.duvod) + '"</p>'
+                        : '<p class="mt-1.5 font-medium opacity-70">Důvod neuvedl.</p>')
+                    + (req.status === 'waiting' ? '<p class="mt-1.5 text-xs font-bold opacity-70">Poptávka je zpět na Tržišti, můžete vybrat jiného řemeslníka.</p>' : '')
+                    + '</div>' : '') +
                 (req.status==='active'
                     ? (req.dokonceniNavrzeno
                         ? '<button onclick="window.openRatingModal(' + i + ',' + (req.sbId||'null') + ')" class="flex-1 px-6 py-3.5 rounded-xl bg-green-500 hover:bg-green-600 text-white font-bold text-sm transition shadow-md hover:scale-[1.02]"><i class="fa-solid fa-check mr-2"></i>Řemeslník hlásí hotovo – potvrdit a ohodnotit</button>'
