@@ -696,7 +696,7 @@ window.openOfferModal = function(id) {
     document.getElementById("co-cat").innerText=req.category||"Ostatní";
     document.getElementById("co-urg").innerText=req.urgency||"Střední";
     let extracted=window.extractPhotoFromDesc(req.description);
-    document.getElementById("co-desc").innerHTML=window.popisBezKontaktu(extracted.desc).replace(/\n/g,"<br>");
+    document.getElementById("co-desc").innerHTML=window.escapeHtml(window.popisBezKontaktu(extracted.desc)).replace(/\n/g,"<br>");
     document.getElementById("co-price").value=req.price_estimate||"Dohodou";
     document.getElementById("co-msg").value='Dobrý den, mám zájem o vaši zakázku "' + req.title + '". Mám čas a vybavení, mohu pomoci.';
     
@@ -834,7 +834,13 @@ window.loadOffersForRequest = async function(requestId, requestTitle) {
     if(!offers||offers.length===0){
         modalList.innerHTML='<div class="text-center text-slate-400 py-12"><i class="fa-solid fa-inbox text-4xl mb-4 block"></i><p>Zatím žádné aktivní nabídky.</p></div>';
     } else {
-        modalList.innerHTML=offers.map(o=>'<div class="p-5 border border-slate-200 dark:border-slate-700 rounded-3xl bg-slate-50 dark:bg-slate-800/50"><div class="flex items-center gap-4 mb-4 cursor-pointer hover:opacity-75 transition" onclick="window.openPublicProfile(\'' + o.craftsman_id + '\')"><img id="offer-av-' + o.id + '" src="https://api.dicebear.com/7.x/avataaars/svg?seed=' + encodeURIComponent(o.craftsman_name) + '&backgroundColor=0f172a" class="w-12 h-12 rounded-full bg-white shadow-sm border border-slate-200 dark:border-slate-700 object-cover"><div><p class="font-extrabold dark:text-white">' + o.craftsman_name + '</p><div class="flex items-center gap-2 mt-0.5">' + hodnoceniHtml(o.craftsman_id) + '<span class="text-xs font-bold text-slate-400">· ' + new Date(o.created_at).toLocaleDateString("cs") + '</span></div></div><span class="ml-auto font-black text-lg text-remexo-500">' + o.price + '</span></div><p class="text-sm text-slate-600 dark:text-slate-300 mb-5 bg-white dark:bg-[#0f172a] p-4 rounded-2xl border border-slate-100 dark:border-slate-700">' + o.message + '</p>' + (jeUzavrena ? stavHtml(o) : '<div class="flex gap-2"><button onclick="window.rejectOffer(this, ' + o.id + ',' + requestId + ',\'' + (requestTitle||"").replace(/'/g,"\\'") + '\')" class="px-5 bg-red-50 hover:bg-red-100 dark:bg-red-500/10 dark:hover:bg-red-500/20 text-red-500 rounded-xl transition shadow-sm"><i class="fa-solid fa-times text-lg"></i></button><button onclick="window.acceptOffer(' + o.id + ',' + requestId + ',\'' + (o.craftsman_name||"").replace(/'/g,"\\'") + '\'); window.closeOffersModal();" class="flex-1 bg-slate-900 dark:bg-white text-white dark:text-slate-900 py-3.5 rounded-xl font-bold text-sm transition shadow-md hover:scale-[1.02]">Přijmout a zahájit zprávy</button></div>') + '</div>').join("");
+        modalList.innerHTML=offers.map(o=>{
+            // Zprávu i jméno píše řemeslník – do stránky nesmí syrové
+            const bezpJmeno = window.escapeHtml(o.craftsman_name || "Řemeslník");
+            const bezpZprava = window.escapeHtml(o.message || "").replace(/\n/g, "<br>");
+            const bezpCena = window.escapeHtml(o.price || "Dohodou");
+            return '<div class="p-5 border border-slate-200 dark:border-slate-700 rounded-3xl bg-slate-50 dark:bg-slate-800/50"><div class="flex items-center gap-4 mb-4 cursor-pointer hover:opacity-75 transition" onclick="window.openPublicProfile(\'' + o.craftsman_id + '\')"><img id="offer-av-' + o.id + '" src="https://api.dicebear.com/7.x/avataaars/svg?seed=' + encodeURIComponent(o.craftsman_name || '') + '&backgroundColor=0f172a" class="w-12 h-12 rounded-full bg-white shadow-sm border border-slate-200 dark:border-slate-700 object-cover"><div><p class="font-extrabold dark:text-white">' + bezpJmeno + '</p><div class="flex items-center gap-2 mt-0.5">' + hodnoceniHtml(o.craftsman_id) + '<span class="text-xs font-bold text-slate-400">· ' + new Date(o.created_at).toLocaleDateString("cs") + '</span></div></div><span class="ml-auto font-black text-lg text-remexo-500">' + bezpCena + '</span></div><p class="text-sm text-slate-600 dark:text-slate-300 mb-5 bg-white dark:bg-[#0f172a] p-4 rounded-2xl border border-slate-100 dark:border-slate-700">' + bezpZprava + '</p>' + (jeUzavrena ? stavHtml(o) : '<div class="flex gap-2"><button onclick="window.rejectOffer(this, ' + o.id + ',' + requestId + ',\'' + (requestTitle||"").replace(/'/g,"\\'") + '\')" class="px-5 bg-red-50 hover:bg-red-100 dark:bg-red-500/10 dark:hover:bg-red-500/20 text-red-500 rounded-xl transition shadow-sm"><i class="fa-solid fa-times text-lg"></i></button><button onclick="window.acceptOffer(' + o.id + ',' + requestId + ',\'' + window.escapeHtml((o.craftsman_name||"").replace(/\\/g,"\\\\").replace(/'/g,"\\'")) + '\'); window.closeOffersModal();" class="flex-1 bg-slate-900 dark:bg-white text-white dark:text-slate-900 py-3.5 rounded-xl font-bold text-sm transition shadow-md hover:scale-[1.02]">Přijmout a zahájit zprávy</button></div>') + '</div>';
+        }).join("");
     }
     // Skutečné profilovky doplníme až po vykreslení, ať se okno neotevírá pomalu
     (offers||[]).forEach(async o => {
@@ -992,15 +998,15 @@ window.refreshCraftsmanJobs = function() {
             if (detaily.length || fotkyHtml) {
                 kontaktyHtml = '<div class="mt-4 mb-4 p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700">'
                     + '<p class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-2">Kontakt na zákazníka</p>'
-                    + '<p class="text-sm font-bold dark:text-white mb-2">' + job.zakaznik + '</p>'
+                    + '<p class="text-sm font-bold dark:text-white mb-2">' + window.escapeHtml(job.zakaznik || 'Zákazník') + '</p>'
                     + (job.kontakt
                         ? '<div class="flex flex-wrap gap-2 mb-2">'
-                          + (job.kontakt.ulice ? '<span class="text-xs font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700">\uD83D\uDCCD ' + job.kontakt.ulice + (job.kontakt.mesto ? ', ' + job.kontakt.mesto : '') + '</span>' : '')
-                          + (job.kontakt.telefon ? '<a href="tel:' + String(job.kontakt.telefon).replace(/\s/g,'') + '" class="text-xs font-bold text-remexo-600 dark:text-remexo-400 bg-white dark:bg-slate-900 px-3 py-1.5 rounded-lg border border-remexo-200 dark:border-remexo-500/30">\uD83D\uDCDE ' + job.kontakt.telefon + '</a>' : '')
+                          + (job.kontakt.ulice ? '<span class="text-xs font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700">\uD83D\uDCCD ' + window.escapeHtml(job.kontakt.ulice) + (job.kontakt.mesto ? ', ' + window.escapeHtml(job.kontakt.mesto) : '') + '</span>' : '')
+                          + (job.kontakt.telefon ? '<a href="tel:' + window.escapeHtml(String(job.kontakt.telefon).replace(/[^\d+]/g,'')) + '" class="text-xs font-bold text-remexo-600 dark:text-remexo-400 bg-white dark:bg-slate-900 px-3 py-1.5 rounded-lg border border-remexo-200 dark:border-remexo-500/30">\uD83D\uDCDE ' + window.escapeHtml(job.kontakt.telefon) + '</a>' : '')
                           + '</div>'
                         : '')
                     + (detaily.length ? '<div class="flex flex-wrap gap-2">'
-                        + detaily.map(r=>'<span class="text-xs font-medium text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-100 dark:border-slate-700">'+r+'</span>').join("")
+                        + detaily.map(r=>'<span class="text-xs font-medium text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-100 dark:border-slate-700">'+window.escapeHtml(r)+'</span>').join("")
                         + '</div>' : '')
                     + fotkyHtml + '</div>';
             }
@@ -1021,7 +1027,7 @@ window.refreshCraftsmanJobs = function() {
             }
             dokonceniHtml += '<button onclick="window.odstoupitZeZakazky(\'' + job.requestId + '\')" class="w-full mb-4 py-2.5 rounded-2xl text-slate-400 hover:text-red-500 font-bold text-xs transition"><i class="fa-solid fa-arrow-right-from-bracket mr-2"></i>Odstoupit ze zakázky</button>';
         }
-        d.innerHTML='<div class="flex items-start justify-between mb-4"><div><h4 class="font-extrabold text-lg dark:text-white leading-tight">' + job.title + '</h4><p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1.5">' + job.time + '</p></div>' + badge + '</div>' + zruseniHtml + kontaktyHtml + dokonceniHtml + '<button onclick="window.activeChatId=\'' + job.requestId + '\'; window.goTab(\'c-messages\',\'Zprávy\'); setTimeout(()=>window.openConversation(\'' + job.requestId + '\',\'Zákazník\',\'customer' + job.requestId + '\'),300);" class="text-sm font-bold text-remexo-500 hover:text-remexo-600 transition flex items-center gap-2"><i class="fa-regular fa-comment-dots"></i> Napsat zákazníkovi</button>';
+        d.innerHTML='<div class="flex items-start justify-between mb-4"><div><h4 class="font-extrabold text-lg dark:text-white leading-tight">' + window.escapeHtml(job.title || 'Zakázka') + '</h4><p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1.5">' + job.time + '</p></div>' + badge + '</div>' + zruseniHtml + kontaktyHtml + dokonceniHtml + '<button onclick="window.activeChatId=\'' + job.requestId + '\'; window.goTab(\'c-messages\',\'Zprávy\'); setTimeout(()=>window.openConversation(\'' + job.requestId + '\',\'Zákazník\',\'customer' + job.requestId + '\'),300);" class="text-sm font-bold text-remexo-500 hover:text-remexo-600 transition flex items-center gap-2"><i class="fa-regular fa-comment-dots"></i> Napsat zákazníkovi</button>';
         list.appendChild(d);
     });
 };
@@ -1183,7 +1189,7 @@ window.initMarketMap = async function() {
             if(lat!=null && lon!=null && !isNaN(lat) && !isNaN(lon)){
                 bounds.push([lat,lon]);
                 const urgencyColor=r.urgency==="Vysoká"?"#ef4444":r.urgency==="Nízká"?"#22c55e":"#f59e0b";
-                const popup=L.popup({maxWidth:280,minWidth:220}).setContent('<div class="remexo-pin-popup"><span class="cat-badge">'+(r.category||"Ostatní")+'</span><p class="title">'+(r.title||"Poptávka")+'</p><p class="addr"><i class="fa-solid fa-location-dot" style="color:#f59e0b;margin-right:4px"></i>'+displayCity+'</p><div style="display:flex;gap:8px;margin-bottom:10px"><span style="font-size:11px;font-weight:700;color:'+urgencyColor+';background:'+urgencyColor+'18;padding:3px 8px;border-radius:6px;">'+(r.urgency||"Střední")+' priorita</span>'+(r.price_estimate?'<span style="font-size:11px;font-weight:700;color:#0f172a;background:#f1f5f9;padding:3px 8px;border-radius:6px;">'+r.price_estimate+'</span>':'')+'</div><button class="offer-btn" onclick="window.openOfferModal(\''+r.id+'\'); document.querySelectorAll(\'.leaflet-popup-close-button\').forEach(b=>b.click());">Poslat nabídku →</button><button onclick="window.showRequestDetail(\''+r.id+'\')" style="width:100%;margin-top:6px;padding:8px;border:1px solid #e2e8f0;background:#fff;color:#475569;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;">Zobrazit detail poptávky</button></div>');
+                const popup=L.popup({maxWidth:280,minWidth:220}).setContent('<div class="remexo-pin-popup"><span class="cat-badge">'+window.escapeHtml(r.category||"Ostatní")+'</span><p class="title">'+window.escapeHtml(r.title||"Poptávka")+'</p><p class="addr"><i class="fa-solid fa-location-dot" style="color:#f59e0b;margin-right:4px"></i>'+window.escapeHtml(displayCity)+'</p><div style="display:flex;gap:8px;margin-bottom:10px"><span style="font-size:11px;font-weight:700;color:'+urgencyColor+';background:'+urgencyColor+'18;padding:3px 8px;border-radius:6px;">'+window.escapeHtml(r.urgency||"Střední")+' priorita</span>'+(r.price_estimate?'<span style="font-size:11px;font-weight:700;color:#0f172a;background:#f1f5f9;padding:3px 8px;border-radius:6px;">'+window.escapeHtml(r.price_estimate)+'</span>':'')+'</div><button class="offer-btn" onclick="window.openOfferModal(\''+r.id+'\'); document.querySelectorAll(\'.leaflet-popup-close-button\').forEach(b=>b.click());">Poslat nabídku →</button><button onclick="window.showRequestDetail(\''+r.id+'\')" style="width:100%;margin-top:6px;padding:8px;border:1px solid #e2e8f0;background:#fff;color:#475569;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;">Zobrazit detail poptávky</button></div>');
                 const marker=L.marker([lat,lon],{icon:pinIcon}).addTo(window._marketMap).bindPopup(popup);
                 window._marketMarkers[r.id]=marker;
             }
@@ -1430,7 +1436,7 @@ window.openPublicProfile = async function(userId) {
         if (data) {
             document.getElementById("pp-name").innerText = data.full_name || "Uživatel";
             document.getElementById("pp-role").innerText = data.role === "customer" ? "Zákazník" : "Řemeslník";
-            document.getElementById("pp-city").innerHTML = data.city ? `<i class="fa-solid fa-location-dot mr-1"></i> ${data.city}` : "";
+            document.getElementById("pp-city").innerHTML = data.city ? `<i class="fa-solid fa-location-dot mr-1"></i> ${window.escapeHtml(data.city)}` : "";
             // Skutečný průměr z hodnocení, ne natvrdo napsaná pětka
             const ratingEl = document.getElementById("pp-rating");
             if (ratingEl) {
