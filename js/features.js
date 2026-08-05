@@ -94,28 +94,24 @@ window.odstoupitZeZakazky = function(requestId) {
         "Odstoupit ze zakázky?",
         "Zakázka se vrátí na Tržiště, aby si zákazník mohl vybrat někoho jiného. Vaše nabídka se zruší.",
         async (duvod) => {
-            const { error } = await window.sb.from("requests").update({
-                status: "waiting",
-                craftsman_id: null,
-                craftsman_name: null,
-                dokonceni_navrzeno: null,
-                zruseno_kym: "remeslnik",
-                zruseno_kdy: new Date().toISOString(),
-                zruseno_duvod: duvod || null
-            }).eq("id", requestId);
+            if (!window.sb) return;
+
+            // Přímý update tady padal na pravidlech databáze: nový řádek
+            // už neměl craftsman_id, takže nesplnil podmínku, která ho
+            // pustila dovnitř. Zápis důvodu, uvolnění zakázky i zrušení
+            // nabídky proto řeší databázová funkce jedním voláním.
+            const { error } = await window.sb.rpc("odstoupit_ze_zakazky", {
+                p_request_id: String(requestId),
+                p_duvod: duvod || null
+            });
 
             if (error) {
                 window.showToast("Nepodařilo se odstoupit", error.message || "Zkuste to prosím znovu.", "error");
                 return;
             }
 
-            try {
-                await window.sb.from("offers").update({ status: "rejected" })
-                    .eq("request_id", requestId).eq("craftsman_id", window.APP_USER.id);
-            } catch (e) {}
-
             window.zavritZruseni();
-            window.showToast("Odstoupil jste ze zakázky", "Zákazník dostal zprávu a vybere si jiného řemeslníka.", "info");
+            window.showToast("Odstoupil jste ze zakázky", "Zákazník uvidí váš důvod a vybere si jiného řemeslníka.", "info");
             if (window.loadCraftsmanJobsFromDB) window.loadCraftsmanJobsFromDB();
             if (window.nactiMojeNabidky) window.nactiMojeNabidky();
         }
@@ -1030,7 +1026,10 @@ window.loadCraftsmanJobsFromDB = async function() {
             : "Zatím bez hodnocení";
     }
 
-    const {data}=await window.sb.from("offers").select("*, requests(title, category, status, description, customer_name, dokonceni_navrzeno)").eq("craftsman_id",window.APP_USER.id);
+    // Zrušené a odmítnuté nabídky sem nepatří – refreshCraftsmanJobs zná
+    // jen tři stavy a všechno ostatní vykreslí jako "Čekám na odpověď",
+    // takže by zakázka, ze které jsem odstoupil, vypadala jako živá
+    const {data}=await window.sb.from("offers").select("*, requests(title, category, status, description, customer_name, dokonceni_navrzeno)").eq("craftsman_id",window.APP_USER.id).neq("status","rejected");
     if(data&&data.length>0){
         // Kontakt dostaneme z databáze jen u zakázek, které nám byly přiděleny
         const kontakty = {};
@@ -1044,20 +1043,26 @@ window.loadCraftsmanJobsFromDB = async function() {
         } catch(e) {}
 
         window.STATE.craftJobs=data.map(o=>{ let s=o.status;if(o.requests?.status==="done")s="done"; return {title:o.requests?.title||"Zakázka",requestId:o.request_id,status:s,popis:o.requests?.description||"",zakaznik:o.requests?.customer_name||"Zákazník",kontakt:kontakty[String(o.request_id)]||null,dokonceniNavrzeno:o.requests?.dokonceni_navrzeno||null,vytvoreno:o.created_at,time:window.formatDatumCas(o.created_at)}; });
-        window.refreshCraftsmanJobs();
+    } else {
+        // Bez tohohle by po odstoupení z jediné zakázky zůstal na
+        // obrazovce starý seznam, dokud uživatel nenačte stránku znovu
+        window.STATE.craftJobs = [];
     }
+    window.refreshCraftsmanJobs();
 };
 
 window.loadCustomerRequestsFromDB = async function() {
     if(!window.sb||!window.APP_USER)return;
     const {data}=await window.sb.from("requests").select("*").eq("customer_id",window.APP_USER.id).order("created_at",{ascending:false});
     if(data&&data.length>0){
+        const idcka = data.map(r=>r.id);
+
         // Ke každé poptávce spočítáme čekající nabídky, ať je zákazník vidí bez klikání
         const pocty = {};
         try {
             const { data: nabidky } = await window.sb.from("offers")
                 .select("request_id, status")
-                .in("request_id", data.map(r=>r.id));
+                .in("request_id", idcka);
             (nabidky||[]).forEach(o=>{
                 // Zajímají nás jen nabídky, o kterých ještě zákazník nerozhodl
                 if(o.status !== "pending") return;
@@ -1065,7 +1070,20 @@ window.loadCustomerRequestsFromDB = async function() {
             });
         } catch(e) {}
 
-        window.STATE.requests=data.map(r=>({sbId:r.id,title:r.title,kat:r.category,popis:r.description,vytvoreno:r.created_at,time:window.formatDatumCas(r.created_at),status:r.status,craftsman_name:r.craftsman_name||null,dokonceniNavrzeno:r.dokonceni_navrzeno||null,zrusenoKym:r.zruseno_kym||null,zrusenoDuvod:r.zruseno_duvod||null,pocetNabidek:pocty[String(r.id)]||0}));
+        // Odstoupení řemeslníka – u poptávky nás zajímá vždy to poslední
+        const odstoupeni = {};
+        try {
+            const { data: zaznamy } = await window.sb.from("odstoupeni")
+                .select("request_id, craftsman_name, duvod, created_at")
+                .in("request_id", idcka)
+                .order("created_at",{ascending:false});
+            (zaznamy||[]).forEach(z=>{
+                const klic = String(z.request_id);
+                if(!odstoupeni[klic]) odstoupeni[klic] = z;
+            });
+        } catch(e) {}
+
+        window.STATE.requests=data.map(r=>({sbId:r.id,title:r.title,kat:r.category,popis:r.description,vytvoreno:r.created_at,time:window.formatDatumCas(r.created_at),status:r.status,craftsman_name:r.craftsman_name||null,dokonceniNavrzeno:r.dokonceni_navrzeno||null,zrusenoKym:r.zruseno_kym||null,zrusenoDuvod:r.zruseno_duvod||null,odstoupeni:odstoupeni[String(r.id)]||null,pocetNabidek:pocty[String(r.id)]||0}));
         if(window.refreshRequestsList)window.refreshRequestsList();if(window.refreshDashboard)window.refreshDashboard();
         if(window.aktualizujBublinuNabidek)window.aktualizujBublinuNabidek();
     }
