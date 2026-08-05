@@ -948,7 +948,9 @@ window.seraditZakazky = function(zakazky) {
 
 window.refreshCraftsmanJobs = function() {
     const completed=window.STATE.craftJobs.filter(j=>j.status==="done"||j.status==="completed").length;
-    const cnt=document.getElementById("jobs-active-count");if(cnt)cnt.innerText=window.STATE.craftJobs.length-completed;
+    // Zrušené se nepočítají ani mezi aktivní, ani mezi dokončené
+    const zrusene=window.STATE.craftJobs.filter(j=>j.status==="cancelled").length;
+    const cnt=document.getElementById("jobs-active-count");if(cnt)cnt.innerText=window.STATE.craftJobs.length-completed-zrusene;
     const doneCnt=document.getElementById("jobs-done-count");if(doneCnt)doneCnt.innerText=completed;
     const list=document.getElementById("my-jobs-list");if(!list)return;
     list.querySelector(".text-center")?.remove();list.innerHTML="";
@@ -957,6 +959,18 @@ window.refreshCraftsmanJobs = function() {
         let badge='<span class="status-badge status-waiting">Čekám na odpověď</span>';
         if(job.status==="accepted"||job.status==="active")badge='<span class="status-badge status-active">Aktivní zakázka</span>';
         if(job.status==="done"||job.status==="completed")badge='<span class="status-badge status-done">Dokončeno</span>';
+        if(job.status==="cancelled")badge='<span class="status-badge status-cancelled">Zrušeno zákazníkem</span>';
+
+        // Zrušení je konec zakázky – řemeslník má vědět proč, ne jen že
+        let zruseniHtml = "";
+        if (job.status === "cancelled") {
+            zruseniHtml = '<div class="mb-4 p-4 rounded-2xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-sm text-red-700 dark:text-red-400">'
+                + '<p class="font-bold"><i class="fa-solid fa-circle-info mr-2"></i>Zákazník zakázku zrušil</p>'
+                + (job.zrusenoDuvod
+                    ? '<p class="mt-1.5 font-medium">„' + window.escapeHtml(job.zrusenoDuvod) + '"</p>'
+                    : '<p class="mt-1.5 font-medium opacity-70">Důvod neuvedl.</p>')
+                + '</div>';
+        }
         // Kontakty na zákazníka se odemknou, až je zakázka opravdu jeho
         const jeMoje = job.status==="accepted"||job.status==="active"||job.status==="done";
         let kontaktyHtml = "";
@@ -1007,7 +1021,7 @@ window.refreshCraftsmanJobs = function() {
             }
             dokonceniHtml += '<button onclick="window.odstoupitZeZakazky(\'' + job.requestId + '\')" class="w-full mb-4 py-2.5 rounded-2xl text-slate-400 hover:text-red-500 font-bold text-xs transition"><i class="fa-solid fa-arrow-right-from-bracket mr-2"></i>Odstoupit ze zakázky</button>';
         }
-        d.innerHTML='<div class="flex items-start justify-between mb-4"><div><h4 class="font-extrabold text-lg dark:text-white leading-tight">' + job.title + '</h4><p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1.5">' + job.time + '</p></div>' + badge + '</div>' + kontaktyHtml + dokonceniHtml + '<button onclick="window.activeChatId=\'' + job.requestId + '\'; window.goTab(\'c-messages\',\'Zprávy\'); setTimeout(()=>window.openConversation(\'' + job.requestId + '\',\'Zákazník\',\'customer' + job.requestId + '\'),300);" class="text-sm font-bold text-remexo-500 hover:text-remexo-600 transition flex items-center gap-2"><i class="fa-regular fa-comment-dots"></i> Napsat zákazníkovi</button>';
+        d.innerHTML='<div class="flex items-start justify-between mb-4"><div><h4 class="font-extrabold text-lg dark:text-white leading-tight">' + job.title + '</h4><p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1.5">' + job.time + '</p></div>' + badge + '</div>' + zruseniHtml + kontaktyHtml + dokonceniHtml + '<button onclick="window.activeChatId=\'' + job.requestId + '\'; window.goTab(\'c-messages\',\'Zprávy\'); setTimeout(()=>window.openConversation(\'' + job.requestId + '\',\'Zákazník\',\'customer' + job.requestId + '\'),300);" class="text-sm font-bold text-remexo-500 hover:text-remexo-600 transition flex items-center gap-2"><i class="fa-regular fa-comment-dots"></i> Napsat zákazníkovi</button>';
         list.appendChild(d);
     });
 };
@@ -1028,22 +1042,24 @@ window.loadCraftsmanJobsFromDB = async function() {
 
     // Zrušené nabídky sem nepatří vůbec
     const { data: nabidky } = await window.sb.from("offers")
-        .select("*, requests(title, category, status, description, customer_name, dokonceni_navrzeno, craftsman_id)")
+        .select("*, requests(title, category, status, description, customer_name, dokonceni_navrzeno, craftsman_id, zruseno_kym, zruseno_duvod)")
         .eq("craftsman_id", window.APP_USER.id)
         .neq("status", "rejected");
 
     // O tom, co je moje práce, rozhoduje stav POPTÁVKY, ne nabídky.
     // Nabídka zůstává "accepted", i když zákazník zakázku zrušil nebo
     // jsem z ní odstoupil – podle ní by karta zůstala viset navždy.
+    // POZOR na pořadí: u zrušené zakázky zůstává craftsman_id vyplněné,
+    // takže se na stav musíme ptát dřív než na to, komu je přidělená.
     const data = (nabidky || []).filter(o => {
         const p = o.requests;
         if (!p) return false;
-        // Zakázka je přidělená mně – patří sem, ať je rozdělaná nebo hotová
-        if (p.craftsman_id && p.craftsman_id === window.APP_USER.id) return true;
-        // Poptávka je pořád volná a čekám na rozhodnutí zákazníka
-        if (p.status === "waiting" && o.status === "pending") return true;
-        // Zbytek: zrušeno zákazníkem, odstoupil jsem, nebo vybral někoho jiného
-        return false;
+        // Zákazník zakázku zrušil – ukážeme ji, ale jen jako uzavřenou
+        if (p.status === "cancelled") return true;
+        // Poptávka je volná: buď čekám na rozhodnutí, nebo jsem odstoupil
+        if (p.status === "waiting") return o.status === "pending";
+        // Rozdělaná nebo hotová: patří tomu, komu je přidělená
+        return p.craftsman_id === window.APP_USER.id;
     });
 
     if(data&&data.length>0){
@@ -1058,7 +1074,7 @@ window.loadCraftsmanJobsFromDB = async function() {
             }
         } catch(e) {}
 
-        window.STATE.craftJobs=data.map(o=>{ let s=o.status;if(o.requests?.status==="done")s="done"; return {title:o.requests?.title||"Zakázka",requestId:o.request_id,status:s,popis:o.requests?.description||"",zakaznik:o.requests?.customer_name||"Zákazník",kontakt:kontakty[String(o.request_id)]||null,dokonceniNavrzeno:o.requests?.dokonceni_navrzeno||null,vytvoreno:o.created_at,time:window.formatDatumCas(o.created_at)}; });
+        window.STATE.craftJobs=data.map(o=>{ let s=o.status;if(o.requests?.status==="done")s="done";if(o.requests?.status==="cancelled")s="cancelled"; return {title:o.requests?.title||"Zakázka",requestId:o.request_id,status:s,popis:o.requests?.description||"",zakaznik:o.requests?.customer_name||"Zákazník",kontakt:kontakty[String(o.request_id)]||null,dokonceniNavrzeno:o.requests?.dokonceni_navrzeno||null,zrusenoKym:o.requests?.zruseno_kym||null,zrusenoDuvod:o.requests?.zruseno_duvod||null,vytvoreno:o.created_at,time:window.formatDatumCas(o.created_at)}; });
     } else {
         // Bez tohohle by po odstoupení z jediné zakázky zůstal na
         // obrazovce starý seznam, dokud uživatel nenačte stránku znovu
