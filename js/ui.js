@@ -98,8 +98,8 @@ window.toggleNotifDropdown = function() {
 
 window.createBeautifulCard = function(req, isMarket, i) {
     try {
-        const statusMap = { waiting:"Hledáme profíka", active:"Probíhá oprava", done:"Dokončeno" };
-        const badgeMap = { waiting:"status-waiting", active:"status-active", done:"status-done" };
+        const statusMap = { waiting:"Hledáme profíka", active:"Probíhá oprava", done:"Dokončeno", cancelled:"Zrušeno" };
+        const badgeMap = { waiting:"status-waiting", active:"status-active", done:"status-done", cancelled:"status-cancelled" };
         let rawDesc = req.description || req.popis || "";
         let extracted = window.extractPhotoFromDesc(rawDesc);
         let mainDesc = extracted.desc;
@@ -137,13 +137,15 @@ window.createBeautifulCard = function(req, isMarket, i) {
             }
             return '<div class="req-card relative bg-white dark:bg-[#0f172a] p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all duration-300 group fade-up overflow-hidden">' +
                 '<div class="absolute top-0 left-0 w-1.5 h-full ' + (req.status==='done'?'bg-slate-300 dark:bg-slate-700':'bg-remexo-500') + '"></div>' +
-                (req.status === 'waiting' ? '<div class="absolute top-5 right-5 opacity-0 group-hover:opacity-100 transition-opacity z-10"><button onclick="window.deleteRequest(' + i + ',' + (req.sbId||'null') + ')" class="w-9 h-9 flex items-center justify-center rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all shadow-sm"><i class="fa-solid fa-trash-can text-sm"></i></button></div>' : '') +
+                ((req.status === 'waiting' || req.status === 'cancelled') ? '<div class="absolute top-5 right-5 opacity-0 group-hover:opacity-100 transition-opacity z-10"><button onclick="window.deleteRequest(' + i + ',' + (req.sbId||'null') + ')" class="w-9 h-9 flex items-center justify-center rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all shadow-sm"><i class="fa-solid fa-trash-can text-sm"></i></button></div>' : '') +
                 '<div class="pl-2"><div class="flex items-center gap-3 mb-3 pr-10"><span class="px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/50 text-[11px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wide"><i class="fa-solid fa-tag mr-1.5 opacity-70"></i>' + req.kat + '</span><span class="text-[11px] text-slate-400 font-bold uppercase tracking-wide"><i class="fa-regular fa-clock mr-1.5 opacity-70"></i>' + req.time + '</span></div>' +
                 '<div class="flex items-start justify-between gap-4 mb-4"><h4 class="text-xl md:text-2xl font-extrabold dark:text-white leading-tight">' + req.title + '</h4><span class="status-badge ' + (badgeMap[req.status]||'status-waiting') + ' shrink-0">' + (statusMap[req.status]||'Čeká') + '</span></div>' +
                 '<div class="flex flex-col md:flex-row gap-5 mb-2">' + photoHtml + '<div class="flex-1 min-w-0"><p class="text-sm md:text-base text-slate-600 dark:text-slate-300 leading-relaxed">' + mainDesc + '</p></div></div>' +
                 detailsHtml +
                 '<div class="flex flex-wrap gap-3 mt-6 pt-5 border-t border-slate-100 dark:border-slate-800">' +
                 '<button onclick="window.loadOffersForRequest(' + (req.sbId||0) + ',\'' + (req.title||'').replace(/'/g,"\\'") + '\')" class="flex-1 ' + barvaNabidek + ' py-3.5 rounded-xl font-bold text-sm hover:scale-[1.02] transition-transform shadow-md flex items-center justify-center gap-2">' + textNabidek + '</button>' +
+                (req.status==='active' ? '<button onclick="window.zrusitZakazku(' + i + ',' + (req.sbId||'null') + ')" class="px-5 py-3.5 rounded-xl border-2 border-slate-200 dark:border-slate-700 text-slate-400 hover:text-red-500 hover:border-red-200 font-bold text-sm transition"><i class="fa-solid fa-xmark mr-2"></i>Zrušit</button>' : '') +
+                (req.status==='cancelled' && req.zrusenoKym === 'remeslnik' ? '<div class="w-full p-4 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 text-sm font-bold text-amber-700 dark:text-amber-400"><i class="fa-solid fa-circle-info mr-2"></i>Řemeslník ze zakázky odstoupil' + (req.zrusenoDuvod ? ': ' + req.zrusenoDuvod : '') + '</div>' : '') +
                 (req.status==='active'
                     ? (req.dokonceniNavrzeno
                         ? '<button onclick="window.openRatingModal(' + i + ',' + (req.sbId||'null') + ')" class="flex-1 px-6 py-3.5 rounded-xl bg-green-500 hover:bg-green-600 text-white font-bold text-sm transition shadow-md hover:scale-[1.02]"><i class="fa-solid fa-check mr-2"></i>Řemeslník hlásí hotovo – potvrdit a ohodnotit</button>'
