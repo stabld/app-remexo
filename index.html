@@ -351,6 +351,20 @@
         </div>
     </div>
     
+    <div id="zruseni-modal" class="hidden fixed inset-0 z-[300] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm opacity-0 transition-opacity duration-300">
+        <div class="bg-white dark:bg-[#0f172a] rounded-[2rem] shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-md p-8">
+            <div class="w-14 h-14 bg-red-100 dark:bg-red-500/20 text-red-500 rounded-full flex items-center justify-center text-2xl mb-5"><i class="fa-solid fa-circle-exclamation"></i></div>
+            <h3 id="zruseni-nadpis" class="text-xl font-black dark:text-white mb-2">Zrušit zakázku?</h3>
+            <p id="zruseni-popis" class="text-sm text-slate-500 dark:text-slate-400 mb-5"></p>
+            <label class="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2">Důvod <span class="font-normal normal-case">(uvidí druhá strana)</span></label>
+            <textarea id="zruseni-duvod" rows="3" class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-remexo-500 outline-none dark:text-white resize-none mb-6" placeholder="Např. termín už nevyhovuje, závadu jsem vyřešil jinak…"></textarea>
+            <div class="flex gap-3">
+                <button onclick="window.zavritZruseni()" class="flex-1 py-3.5 rounded-xl font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition">Zpět</button>
+                <button id="zruseni-potvrdit" class="flex-1 bg-red-500 hover:bg-red-600 text-white py-3.5 rounded-xl font-bold transition">Potvrdit</button>
+            </div>
+        </div>
+    </div>
+
     <div id="lightbox" class="hidden fixed inset-0 z-[500] flex items-center justify-center bg-black/90 backdrop-blur-sm" onclick="window.closeLightbox()">
         <button class="absolute top-4 right-4 w-12 h-12 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white text-xl transition z-10" onclick="event.stopPropagation();window.closeLightbox()"><i class="fa-solid fa-times"></i></button>
         <img id="lightbox-img" src="" class="max-w-[95vw] max-h-[90vh] object-contain rounded-2xl shadow-2xl" onclick="event.stopPropagation()">
