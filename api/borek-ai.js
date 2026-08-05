@@ -1,6 +1,59 @@
 // Aktuální model. Seznam dostupných modelů: https://generativelanguage.googleapis.com/v1beta/models?key=TVUJ_KLIC
 const MODEL = 'gemini-3.5-flash';
 
+// --- OCHRANA ENDPOINTU ---
+// Bez těchto limitů může kdokoliv volat /api/borek-ai přímo (curl, skript)
+// a utrácet za Gemini na účet Remexa. Endpoint je veřejná adresa,
+// takže musí sám ověřit, kdo se ptá.
+
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://iyvvwsnhezjrjrkscbyc.supabase.co';
+const SUPABASE_ANON = process.env.SUPABASE_ANON_KEY || 'sb_publishable_OehKo_l9qTAp-xfmlHpzOA_OYBp4ouc';
+
+const MAX_TELO_ZNAKU = 8 * 1024 * 1024;   // ~8 MB, pět fotek v base64 se vejde
+const MAX_PROMPT_ZNAKU = 4000;            // systémový prompt od klienta
+const MAX_TEXT_ZNAKU = 20000;             // popis závady
+const MAX_FOTEK = 5;
+const LIMIT_ZA_HODINU = 30;               // na jednoho uživatele
+
+// Paměť instance. Serverless jich může běžet víc, takže tohle není
+// dokonalá hráz – zastaví ale běžné spamování z jednoho účtu.
+const pocitadlo = new Map();
+
+function prekrocilLimit(uid) {
+    const ted = Date.now();
+    const hodina = 60 * 60 * 1000;
+    const zaznam = pocitadlo.get(uid);
+
+    if (!zaznam || ted - zaznam.od > hodina) {
+        pocitadlo.set(uid, { od: ted, pocet: 1 });
+        return false;
+    }
+    zaznam.pocet += 1;
+    // Ať mapa neroste donekonečna
+    if (pocitadlo.size > 5000) {
+        for (const [k, v] of pocitadlo) { if (ted - v.od > hodina) pocitadlo.delete(k); }
+    }
+    return zaznam.pocet > LIMIT_ZA_HODINU;
+}
+
+// Ověření přihlášení proti Supabase – token posílá frontend v hlavičce
+async function zjistiUzivatele(req) {
+    const hlavicka = req.headers.authorization || '';
+    const token = hlavicka.startsWith('Bearer ') ? hlavicka.slice(7) : null;
+    if (!token) return null;
+
+    try {
+        const odpoved = await fetch(SUPABASE_URL + '/auth/v1/user', {
+            headers: { apikey: SUPABASE_ANON, Authorization: 'Bearer ' + token }
+        });
+        if (!odpoved.ok) return null;
+        const uzivatel = await odpoved.json();
+        return uzivatel && uzivatel.id ? uzivatel : null;
+    } catch (e) {
+        return null;
+    }
+}
+
 // AI občas vrátí JSON, ve kterém jsou uvnitř textu skutečná zalomení řádků
 // (např. popis závady s odrážkami). Takový JSON se nedá přečíst, tak ho tady srovnáme.
 function opravJson(raw) {
@@ -43,8 +96,39 @@ export default async function handler(req, res) {
         return res.status(500).json({ error: 'API klíč není nastaven na serveru.' });
     }
 
+    // 1) Jen přihlášený uživatel
+    const uzivatel = await zjistiUzivatele(req);
+    if (!uzivatel) {
+        return res.status(401).json({ error: 'Pro použití Bořka se musíte přihlásit.' });
+    }
+
+    // 2) Rozumný počet dotazů za hodinu
+    if (prekrocilLimit(uzivatel.id)) {
+        return res.status(429).json({ error: 'Bořek dnes odpověděl už hodně lidem. Zkuste to prosím za chvíli.' });
+    }
+
     try {
         const { parts, systemPrompt, useJson } = req.body;
+
+        // 3) Velikost požadavku
+        const velikost = JSON.stringify(req.body || {}).length;
+        if (velikost > MAX_TELO_ZNAKU) {
+            return res.status(413).json({ error: 'Požadavek je příliš velký. Zkuste nahrát méně fotek.' });
+        }
+        if (!Array.isArray(parts) || parts.length === 0) {
+            return res.status(400).json({ error: 'Chybí popis závady.' });
+        }
+        if (typeof systemPrompt === 'string' && systemPrompt.length > MAX_PROMPT_ZNAKU) {
+            return res.status(400).json({ error: 'Neplatný požadavek.' });
+        }
+        const pocetFotek = parts.filter(p => p && p.inlineData).length;
+        if (pocetFotek > MAX_FOTEK) {
+            return res.status(400).json({ error: 'Najednou lze poslat nejvýše ' + MAX_FOTEK + ' fotek.' });
+        }
+        const delkaTextu = parts.reduce((sou, p) => sou + (typeof p === 'string' ? p.length : (p && p.text ? String(p.text).length : 0)), 0);
+        if (delkaTextu > MAX_TEXT_ZNAKU) {
+            return res.status(400).json({ error: 'Popis je příliš dlouhý. Zkuste ho zkrátit.' });
+        }
 
         // Frontend posílá text i fotky rovnou ve formátu, kterému Gemini rozumí
         const contentParts = (parts || []).map(p => {
@@ -128,6 +212,8 @@ export default async function handler(req, res) {
         return res.status(200).json({ text });
 
     } catch (err) {
-        return res.status(500).json({ error: err.message });
+        // Text chyby ze serveru ven neposíláme – může prozradit vnitřní detaily
+        console.error('borek-ai:', err);
+        return res.status(500).json({ error: 'Bořkovi se něco nepovedlo. Zkuste to prosím znovu.' });
     }
 }
