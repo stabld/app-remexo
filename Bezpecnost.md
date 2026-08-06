@@ -9,6 +9,16 @@ U těchto bodů níže píšu, co je potřeba ověřit ručně.
 
 ---
 
+## Ověřeno testy (6. 8. 2026)
+
+Přístupová pravidla byla otestována útokem přímo na produkční databázi:
+**15 z 15 testů prošlo.** Cizí kontakty, cizí chat, sebeschválení nabídky,
+falešná hodnocení ani přístup nepřihlášeného neprojdou. Podrobnosti a postup,
+jak testy zopakovat, jsou v [SECURITY_TESTS.md](SECURITY_TESTS.md).
+
+Neznamená to, že je aplikace bezpečná — znamená to, že tyhle konkrétní útoky
+neprojdou. Co otestované není, je vypsané na konci SECURITY_TESTS.md.
+
 ## Opraveno v rámci auditu
 
 ### 1. XSS v seznamu konverzací — VÁŽNÉ
