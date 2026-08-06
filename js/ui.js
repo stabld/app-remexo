@@ -116,8 +116,11 @@ window.createBeautifulCard = function(req, isMarket, i) {
         let rawDesc = req.description || req.popis || "";
         let extracted = window.extractPhotoFromDesc(rawDesc);
         let mainDesc = extracted.desc;
-        let reqPhoto = extracted.photo || req.photo;
-        let reqMime = extracted.mime || req.mime;
+        // Stará podoba: base64 v popisu. Nová: cesta do Storage.
+        let prvniStara = (extracted.photos && extracted.photos[0]) || null;
+        let reqPhoto = (prvniStara && prvniStara.photo) || extracted.photo || req.photo;
+        let reqMime  = (prvniStara && prvniStara.mime)  || extracted.mime  || req.mime;
+        let prvniSoubor = (extracted.soubory && extracted.soubory[0]) || null;
         let detailsHtml = "";
         let detailItems = [];
 
@@ -146,7 +149,11 @@ window.createBeautifulCard = function(req, isMarket, i) {
                 }
             }
         }
-        const photoHtml = reqPhoto ? '<div class="w-full md:w-48 h-32 md:h-full shrink-0 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700/50 shadow-sm relative group cursor-pointer" onclick="window.openLightbox(this.querySelector(\'img\').src)">' + '<img src="data:' + (reqMime||'image/jpeg') + ';base64,' + reqPhoto + '" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">' + '<div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center"><i class="fa-solid fa-expand text-white opacity-0 group-hover:opacity-100 text-2xl transition-all"></i></div></div>' : '';
+        const obalFotky = '<div class="w-full md:w-48 h-32 md:h-full shrink-0 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700/50 shadow-sm relative group cursor-pointer" onclick="window.openLightbox(this.querySelector(\'img\').src)">';
+        const vnitrekFotky = prvniSoubor
+            ? '<img data-foto="' + window.escapeHtml(prvniSoubor) + '" alt="Fotka zavady" class="w-full h-full object-cover bg-slate-100 dark:bg-slate-800 transition-transform duration-500 group-hover:scale-110">'
+            : (reqPhoto ? '<img src="data:' + (reqMime||'image/jpeg') + ';base64,' + reqPhoto + '" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">' : '');
+        const photoHtml = (prvniSoubor || reqPhoto) ? obalFotky + vnitrekFotky + '<div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center"><i class="fa-solid fa-expand text-white opacity-0 group-hover:opacity-100 text-2xl transition-all"></i></div></div>' : '';
         if (!isMarket) {
             // Text tlačítka se řídí stavem zakázky, ne jen počtem čekajících nabídek
             let barvaNabidek, textNabidek;
@@ -254,6 +261,7 @@ window.refreshRequestsList = function() {
     kPodleStavu.forEach(({ req, i }) => {
         const div = document.createElement("div");
         div.innerHTML = window.createBeautifulCard(req,false,i);
+        window.doplnFotky(div);
         list.insertBefore(div.firstElementChild, list.querySelector("#empty-req"));
     });
 };
