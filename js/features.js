@@ -1470,6 +1470,54 @@ window.aktualizujCtaTrziste = function(pocet) {
     el.innerText = pocet + ' ' + slovo;
 };
 
+// ---- BOŘEK JAKO PORADCE NA NÁSTĚNCE ----
+// Naviguje uživatele, který neví, co má dělat. Nediagnostikuje závady
+// a netvrdí, že fungují věci, které zatím nemáme spuštěné.
+window.BOREK_PORADCE_PROMPT = [
+    'Jsi Bořek, přátelský asistent platformy Remexo. Mluvíš česky, tykáš, jsi stručný a věcný.',
+    'ÚKOL: pomoz uživateli zorientovat se. Odpovídej maximálně 3 krátkými větami. Žádné odrážky, žádný markdown.',
+    'JAK REMEXO FUNGUJE: uživatel vyfotí problém a popíše ho, ty z toho připravíš srozumitelné zadání, řemeslníci z okolí pošlou nabídky, uživatel si vybere.',
+    'NEDIAGNOSTIKUJ ZÁVADU S JISTOTOU. Můžeš naznačit, jaká profese to nejspíš řeší, ale vždy nech rozhodnutí na řemeslníkovi.',
+    'NIKDY netvrď, že už fungují: ověřování řemeslníků, platby přes platformu, úschova peněz, pojištění nebo hodnocení. Tyto věci teprve připravujeme. Když se na ně někdo zeptá, řekni to upřímně.',
+    'NEVYMÝŠLEJ SI ceny, termíny, počty řemeslníků ani konkrétní firmy. Když něco nevíš, přiznej to.',
+    'Když se ptá na něco mimo domácí opravy a Remexo, slušně to odmítni a nabídni pomoc s poptávkou.',
+    'Pokud dává smysl, zakonči doporučením zadat poptávku.'
+].join(' ');
+
+window.zeptejSeBorka = async function(prednastavenyDotaz) {
+    const vstup = document.getElementById('borek-otazka');
+    const vystup = document.getElementById('borek-odpoved');
+    if (!vystup) return;
+
+    const dotaz = (prednastavenyDotaz || (vstup ? vstup.value : '') || '').trim();
+    if (!dotaz) { if (vstup) vstup.focus(); return; }
+    if (dotaz.length > 500) {
+        vystup.classList.remove('hidden');
+        vystup.innerText = 'Zkus dotaz napsat kratší, ať se v tom vyznám.';
+        return;
+    }
+    if (window._borekPracuje) return;
+    window._borekPracuje = true;
+
+    vystup.classList.remove('hidden');
+    vystup.innerHTML = '<span class="inline-flex items-center gap-2 text-slate-500"><i class="fa-solid fa-circle-notch fa-spin"></i> Bořek přemýšlí...</span>';
+
+    try {
+        const text = await window.callGeminiAPI([{ text: dotaz }], window.BOREK_PORADCE_PROMPT, false);
+        const cisty = String(text || '').trim();
+        if (!cisty) throw new Error('prázdná odpověď');
+        // Vykreslujeme jako text, ne HTML - odpověď z modelu se nesmí spustit jako kód
+        vystup.innerText = cisty;
+        if (vstup && !prednastavenyDotaz) vstup.value = '';
+    } catch (e) {
+        vystup.innerText = (e && e.message && e.message.indexOf('hodně lidem') > -1)
+            ? e.message
+            : 'Bořkovi se teď nedaří odpovědět. Zkus to prosím za chvíli, nebo rovnou zadej poptávku a on ti s ní pomůže.';
+    } finally {
+        window._borekPracuje = false;
+    }
+};
+
 window.openPublicProfile = async function(userId) {
     if (!userId || !window.sb) return;
     const modal = document.getElementById("public-profile-modal");
