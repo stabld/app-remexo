@@ -23,7 +23,7 @@ window.customerHTML = function(name) {
         </div>
     </div>
     <div id="view-requests" class="hidden fade-up">
-        <div class="flex items-center justify-between mb-8"><h2 class="text-3xl font-extrabold dark:text-white">Moje poptávky</h2><button onclick="window.goTab('new','Nová poptávka')" class="bg-remexo-500 hover:bg-remexo-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg transition hover:scale-105"><i class="fa-solid fa-plus"></i> Nová</button></div>
+        <div class="stranka-hlavicka flex items-center justify-between mb-8"><h2 class="stranka-nadpis text-3xl font-extrabold dark:text-white">Moje poptávky</h2><button onclick="window.goTab('new','Nová poptávka')" class="bg-remexo-500 hover:bg-remexo-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg transition hover:scale-105"><i class="fa-solid fa-plus"></i> Nová</button></div>
         <div id="requests-list" class="space-y-5"><div id="empty-req" class="text-center p-16 bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-3xl"><i class="fa-solid fa-folder-open text-5xl text-slate-300 dark:text-slate-600 mb-5 block"></i><p class="font-bold text-slate-500 text-lg">Zatím zde nic není.</p><button onclick="window.goTab('new','Nová poptávka')" class="mt-4 text-remexo-500 font-bold hover:underline text-sm">Vytvořit první poptávku →</button></div></div>
     </div>
     <div id="view-messages" class="hidden fade-up">
@@ -182,7 +182,7 @@ window.craftsmanHTML = function(name) {
         <div id="market-map" class="hidden"></div>
     </div>
     <div id="view-jobs" class="hidden fade-up">
-        <h2 class="text-3xl font-extrabold mb-8 dark:text-white">Moje práce</h2>
+        <h2 class="stranka-nadpis text-3xl font-extrabold mb-8 dark:text-white">Moje práce</h2>
         <div class="grid grid-cols-3 gap-5 mb-8"><div class="bg-white dark:bg-slate-800/80 rounded-3xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm text-center"><p class="text-4xl font-black text-remexo-500" id="jobs-active-count">0</p><p class="text-[11px] font-extrabold text-slate-400 uppercase tracking-widest mt-2">Aktivní</p></div><div class="bg-white dark:bg-slate-800/80 rounded-3xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm text-center"><p class="text-4xl font-black dark:text-white" id="jobs-done-count">0</p><p class="text-[11px] font-extrabold text-slate-400 uppercase tracking-widest mt-2">Dokončené</p></div><div class="bg-white dark:bg-slate-800/80 rounded-3xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm text-center"><p class="text-4xl font-black text-yellow-500" id="jobs-rating">–</p><p class="text-[11px] font-extrabold text-slate-400 uppercase tracking-widest mt-2" id="jobs-rating-label">Zatím bez hodnocení</p></div></div>
         <div id="my-jobs-list" class="space-y-4"><div class="text-center p-12 bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-3xl"><i class="fa-solid fa-hammer text-5xl text-slate-300 dark:text-slate-600 mb-4 block"></i><p class="font-bold text-slate-500 text-lg">Zatím nemáte žádné aktivní zakázky.</p></div></div>
     </div>
