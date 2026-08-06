@@ -2,16 +2,16 @@ window.customerHTML = function(name) {
     const first = name.split(" ")[0];
     return `
     <div id="view-dash" class="hidden fade-up">
-        <div class="mb-10"><h2 class="text-3xl font-extrabold mb-2 dark:text-white">Vítejte, ${first} 👋</h2><p class="text-slate-500 text-lg">Přehled vašich aktivit na platformě Remexo.</p></div>
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-10">
-            <div class="bg-white dark:bg-slate-800/80 rounded-3xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm"><p class="text-[11px] font-extrabold text-slate-400 uppercase tracking-widest mb-3">Aktivní</p><p class="text-4xl font-black text-remexo-500" id="stat-active">0</p></div>
-            <div class="bg-white dark:bg-slate-800/80 rounded-3xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm"><p class="text-[11px] font-extrabold text-slate-400 uppercase tracking-widest mb-3">Celkem</p><p class="text-4xl font-black dark:text-white" id="stat-total">0</p></div>
-            <div class="bg-white dark:bg-slate-800/80 rounded-3xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm"><p class="text-[11px] font-extrabold text-slate-400 uppercase tracking-widest mb-3">Zprávy</p><p class="text-4xl font-black dark:text-white" id="stat-msgs">0</p></div>
-            <div class="bg-white dark:bg-slate-800/80 rounded-3xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm"><p class="text-[11px] font-extrabold text-slate-400 uppercase tracking-widest mb-3">V Escrow</p><p class="text-4xl font-black dark:text-white" id="stat-escrow">0 Kč</p></div>
+        <div class="dash-head mb-4 lg:mb-10"><h2 class="text-xl lg:text-3xl font-extrabold lg:mb-2 dark:text-white">Vítejte, ${first} 👋</h2><p class="dash-sub text-slate-500 text-lg">Přehled vašich aktivit na platformě Remexo.</p></div>
+        <div class="dash-stats grid grid-cols-4 gap-2 lg:gap-5 mb-4 lg:mb-10">
+            <div class="stat-card bg-white dark:bg-slate-800/80 rounded-2xl lg:rounded-3xl p-2.5 lg:p-6 border border-slate-200 dark:border-slate-700 shadow-sm"><p class="stat-lbl text-[9px] lg:text-[11px] font-extrabold text-slate-400 uppercase tracking-wide lg:tracking-widest mb-0.5 lg:mb-3">Aktivní</p><p class="stat-val text-xl lg:text-4xl font-black text-remexo-500" id="stat-active">0</p></div>
+            <div class="stat-card bg-white dark:bg-slate-800/80 rounded-2xl lg:rounded-3xl p-2.5 lg:p-6 border border-slate-200 dark:border-slate-700 shadow-sm"><p class="stat-lbl text-[9px] lg:text-[11px] font-extrabold text-slate-400 uppercase tracking-wide lg:tracking-widest mb-0.5 lg:mb-3">Celkem</p><p class="stat-val text-xl lg:text-4xl font-black dark:text-white" id="stat-total">0</p></div>
+            <div class="stat-card bg-white dark:bg-slate-800/80 rounded-2xl lg:rounded-3xl p-2.5 lg:p-6 border border-slate-200 dark:border-slate-700 shadow-sm"><p class="stat-lbl text-[9px] lg:text-[11px] font-extrabold text-slate-400 uppercase tracking-wide lg:tracking-widest mb-0.5 lg:mb-3">Zprávy</p><p class="stat-val text-xl lg:text-4xl font-black dark:text-white" id="stat-msgs">0</p></div>
+            <div class="stat-card bg-white dark:bg-slate-800/80 rounded-2xl lg:rounded-3xl p-2.5 lg:p-6 border border-slate-200 dark:border-slate-700 shadow-sm"><p class="stat-lbl text-[9px] lg:text-[11px] font-extrabold text-slate-400 uppercase tracking-wide lg:tracking-widest mb-0.5 lg:mb-3">V Escrow</p><p class="stat-val stat-val-money text-xl lg:text-4xl font-black dark:text-white" id="stat-escrow">0 Kč</p></div>
         </div>
-        <div class="bg-white dark:bg-slate-800/80 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm p-8">
-            <h3 class="text-xl font-extrabold mb-6 dark:text-white">Poslední poptávky</h3>
-            <div id="dash-requests-list"><p class="text-slate-400 text-center py-8">Zatím žádné poptávky. <button onclick="window.goTab('new','Nová poptávka')" class="text-remexo-500 font-bold hover:underline">Vytvořit první →</button></p></div>
+        <div class="dash-panel bg-white dark:bg-slate-800/80 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm p-4 lg:p-8">
+            <h3 class="text-base lg:text-xl font-extrabold mb-3 lg:mb-6 dark:text-white">Poslední poptávky</h3>
+            <div id="dash-requests-list"><p class="text-slate-400 text-center py-5 lg:py-8 text-sm lg:text-base">Zatím žádné poptávky. <button onclick="window.goTab('new','Nová poptávka')" class="text-remexo-500 font-bold hover:underline">Vytvořit první →</button></p></div>
         </div>
     </div>
     <div id="view-requests" class="hidden fade-up">
