@@ -1,0 +1,74 @@
+# Bezpečnostní testy
+
+Testy se spouští jako `bezpecnostni-testy.sql` v Supabase → SQL Editor.
+Skript se vydává za čtyři různé uživatele a zkouší obejít přístupová pravidla.
+Testuje **skutečná pravidla v databázi**, ne jejich popis v dokumentaci.
+
+Vytvoří si dočasné účty a data, otestuje a všechno zase smaže. Nic v databázi
+nezůstane — dá se spustit i na ostré.
+
+Po přečtení výsledků smaž pomocnou tabulku:
+
+```sql
+drop table public.vysledky_testu;
+```
+
+## Kdy testy pustit
+
+* po každé změně přístupových pravidel
+* po přidání nové tabulky s osobními údaji
+* před spuštěním ostrého provozu
+* když si nejsi jistý, jestli něco není otevřené
+
+## Proč jim věřit
+
+Test, který vždycky projde, je horší než žádný. Sada byla ověřena obráceně:
+do pravidel byly schválně zaneseny dvě díry (kontakty přístupné komukoliv,
+nabídky měnitelné kýmkoliv) a testy nahlásily **FAIL** přesně na těch místech.
+
+## Poslední výsledky
+
+Datum: 6. 8. 2026 · Prostředí: produkční databáze · **15 z 15 PASS**
+
+| # | Oblast | Test | Očekáváno | Skutečnost | Výsledek |
+|---|---|---|---|---|---|
+| 1 | Kontakty | Zákazník B čte telefon k poptávce zákazníka A | DENY | 0 řádků | PASS |
+| 2 | Kontakty | Řemeslník s čekající nabídkou čte telefon | DENY | 0 řádků | PASS |
+| 3 | Kontakty | Řemeslník s přijatou nabídkou čte telefon | ALLOW | 1 řádek | PASS |
+| 4 | Chat | Řemeslník B čte konverzaci cizí zakázky | DENY | 0 zpráv | PASS |
+| 5 | Chat | Řemeslník B píše do cizího chatu | DENY | odmítnuto | PASS |
+| 6 | Chat | Řemeslník píše jménem zákazníka | DENY | odmítnuto | PASS |
+| 7 | Nabídky | Řemeslník si sám přepne nabídku na přijatou | DENY | odmítnuto pravidlem | PASS |
+| 8 | Nabídky | Řemeslník B si přepíše cizí nabídku na sebe | DENY | 0 změněných | PASS |
+| 9 | Nabídky | Řemeslník B podá nabídku jménem řemeslníka A | DENY | odmítnuto | PASS |
+| 10 | Poptávky | Zákazník B mění poptávku zákazníka A | DENY | 0 změněných | PASS |
+| 11 | Poptávky | Zákazník B zakládá poptávku jménem zákazníka A | DENY | odmítnuto | PASS |
+| 12 | Hodnocení | Řemeslník si napíše hodnocení sám sobě | DENY | odmítnuto | PASS |
+| 13 | Hodnocení | Zákazník B hodnotí zakázku zákazníka A | DENY | odmítnuto | PASS |
+| 14 | Anonym | Nepřihlášený čte tabulku kontaktů | DENY | 0 řádků | PASS |
+| 15 | Anonym | Nepřihlášený čte zprávy | DENY | 0 řádků | PASS |
+
+## Co tyto testy NEPOKRÝVAJÍ
+
+Tohle je stejně důležité jako tabulka výše. Zelené výsledky platí jen pro to,
+co bylo skutečně vyzkoušeno.
+
+**Storage.** Přístup k fotkám poptávek a k avatarům se testoval ručně přes
+rozhraní aplikace, ne tímto skriptem. Pravidla existují a fungují, ale nejsou
+pokryta automatickým testem.
+
+**Rate limiting.** Není otestované, kolik poptávek, zpráv nebo nahrání zvládne
+jeden účet za minutu. Limit má zatím jen AI endpoint, a i ten se počítá
+v paměti serverless funkce, takže se restartem vynuluje.
+
+**XSS.** Opravená místa byla ověřena v prohlížeči, ale systematický průchod
+celého rozhraní neproběhl.
+
+**Session security.** Chování při vypršení nebo zneplatnění přihlášení,
+po změně hesla a při odhlášení nikdo netestoval.
+
+**Serverless endpoint `/api/borek-ai`.** Ověřuje přihlášení a hlídá velikost
+vstupu, ale systémový prompt posílá klient — přihlášený uživatel si tak může
+nechat generovat cokoliv na naši kvótu.
+
+**Aplikace neprošla žádným externím posouzením.**
