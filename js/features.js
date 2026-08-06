@@ -478,7 +478,7 @@ window.appendChat = function(role, text, photos) {
             d.appendChild(grid);
         }
     }
-    else { d.className="poptavka-bubble-ai text-sm flex items-start gap-3"; d.innerHTML='<div class="w-8 h-8 bg-remexo-500 rounded-full flex items-center justify-center text-white shrink-0 overflow-hidden"><img src="/borek-hlava.PNG" alt="Bořek" class="w-full h-full object-contain p-0.5"></div><div>' + text + '</div>'; }
+    else { d.className="poptavka-bubble-ai text-sm flex items-start gap-3"; d.innerHTML='<div class="w-8 h-8 bg-remexo-500 rounded-full flex items-center justify-center text-white shrink-0 overflow-hidden"><img src="/borek-hlava.PNG" alt="Bořek" class="w-full h-full object-contain p-0.5"></div><div>' + window.escapeHtml(text).replace(/\n/g, "<br>") + '</div>'; }
     box.appendChild(d); box.scrollTop=box.scrollHeight;
 };
 
