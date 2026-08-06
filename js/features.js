@@ -1454,9 +1454,20 @@ window.filterMarket = function(kat, triggerEl) {
             ? 'Zatím nemáte uložené žádné poptávky. Ukládejte je záložkou na kartě.'
             : 'Žádné poptávky v této kategorii.';
         list.innerHTML = '<div class="text-center text-slate-400 py-10">' + hlaska + '</div>';
+        window.aktualizujCtaTrziste(0);
         return;
     }
     list.innerHTML = (window.vyzvaKProfilu?window.vyzvaKProfilu():"") + filtered.map((req, i) => window.createBeautifulCard(req, true, i)).join('');
+    window.aktualizujCtaTrziste(filtered.length);
+};
+
+// Text v hlavní akci na tržišti - skutečný počet, žádný placeholder
+window.aktualizujCtaTrziste = function(pocet) {
+    const el = document.getElementById('market-cta-count');
+    if (!el) return;
+    if (!Number.isFinite(pocet) || pocet <= 0) { el.innerText = 'Zobrazit poptávky'; return; }
+    const slovo = pocet === 1 ? 'nová poptávka' : (pocet < 5 ? 'nové poptávky' : 'nových poptávek');
+    el.innerText = pocet + ' ' + slovo;
 };
 
 window.openPublicProfile = async function(userId) {
