@@ -9,8 +9,13 @@
             setTimeout(() => { if (loader.parentNode) loader.remove(); }, 600);
         }
     }
-    setTimeout(hideLoader, 4000);
-    window.addEventListener('load', function() { setTimeout(hideLoader, 1800); });
+    // Dřív se loader schovával 1800 ms PO načtení stránky (+600 ms prolnutí)
+    // a pojistka byla až na 4 s. I bleskově načtená aplikace tak vypadala pomalá.
+    // Teď mizí, jakmile je aplikace opravdu připravená.
+    window.skryjLoader = hideLoader;
+    if (document.readyState === 'complete') setTimeout(hideLoader, 100);
+    else window.addEventListener('load', function() { setTimeout(hideLoader, 100); });
+    setTimeout(hideLoader, 2500); // pojistka, kdyby se něco zaseklo
 })();
 
 // Text psaný uživatelem (důvod odstoupení, zpráva) nikdy nevkládáme
