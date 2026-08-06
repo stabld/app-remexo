@@ -3,6 +3,14 @@ window.customerHTML = function(name) {
     return `
     <div id="view-dash" class="hidden fade-up">
         <div class="dash-head mb-4 lg:mb-10"><h2 class="text-xl lg:text-3xl font-extrabold lg:mb-2 dark:text-white">Vítejte, ${first} 👋</h2><p class="dash-sub text-slate-500 text-lg">Přehled vašich aktivit na platformě Remexo.</p></div>
+        <button onclick="window.goTab('new','Nová poptávka')" class="dash-cta w-full text-left bg-remexo-500 hover:bg-remexo-600 active:scale-[0.99] text-white rounded-3xl p-5 lg:p-7 mb-4 lg:mb-8 shadow-lg shadow-remexo-500/25 transition flex items-center gap-4">
+            <div class="w-12 h-12 lg:w-14 lg:h-14 rounded-2xl bg-white/20 flex items-center justify-center text-2xl shrink-0"><i class="fa-solid fa-camera"></i></div>
+            <div class="flex-1 min-w-0">
+                <p class="text-lg lg:text-2xl font-extrabold leading-tight">Vytvořit poptávku</p>
+                <p class="text-sm lg:text-base text-white/85 leading-snug mt-0.5">Vyfoť problém a Bořek z něj připraví zadání pro řemeslníky.</p>
+            </div>
+            <i class="fa-solid fa-arrow-right text-xl opacity-80 shrink-0"></i>
+        </button>
         <div class="dash-stats grid grid-cols-4 gap-2 lg:gap-5 mb-4 lg:mb-10">
             <div class="stat-card bg-white dark:bg-slate-800/80 rounded-2xl lg:rounded-3xl p-2.5 lg:p-6 border border-slate-200 dark:border-slate-700 shadow-sm"><p class="stat-lbl text-[9px] lg:text-[11px] font-extrabold text-slate-400 uppercase tracking-wide lg:tracking-widest mb-0.5 lg:mb-3">Aktivní</p><p class="stat-val text-xl lg:text-4xl font-black text-remexo-500" id="stat-active">0</p></div>
             <div class="stat-card bg-white dark:bg-slate-800/80 rounded-2xl lg:rounded-3xl p-2.5 lg:p-6 border border-slate-200 dark:border-slate-700 shadow-sm"><p class="stat-lbl text-[9px] lg:text-[11px] font-extrabold text-slate-400 uppercase tracking-wide lg:tracking-widest mb-0.5 lg:mb-3">Celkem</p><p class="stat-val text-xl lg:text-4xl font-black dark:text-white" id="stat-total">0</p></div>
@@ -143,8 +151,16 @@ window.customerHTML = function(name) {
 window.craftsmanHTML = function(name) {
     return `
     <div id="view-market" class="hidden fade-up">
-        <div class="flex items-center justify-between mb-8">
-            <h2 class="text-3xl font-extrabold dark:text-white">Tržiště zakázek</h2>
+        <button onclick="window.filterMarket('all', document.getElementById('filter-all')); document.getElementById('market-list').scrollIntoView({behavior:'smooth',block:'start'});" class="dash-cta w-full text-left bg-remexo-500 hover:bg-remexo-600 active:scale-[0.99] text-white rounded-3xl p-5 lg:p-7 mb-5 lg:mb-8 shadow-lg shadow-remexo-500/25 transition flex items-center gap-4">
+            <div class="w-12 h-12 lg:w-14 lg:h-14 rounded-2xl bg-white/20 flex items-center justify-center text-2xl shrink-0"><i class="fa-solid fa-bolt"></i></div>
+            <div class="flex-1 min-w-0">
+                <p class="text-lg lg:text-2xl font-extrabold leading-tight">Získat nové zakázky</p>
+                <p class="text-sm lg:text-base text-white/85 leading-snug mt-0.5"><span id="market-cta-count">Zobrazit poptávky</span> ve tvém okolí</p>
+            </div>
+            <i class="fa-solid fa-arrow-right text-xl opacity-80 shrink-0"></i>
+        </button>
+        <div class="flex items-center justify-between mb-5 lg:mb-8">
+            <h2 class="market-title text-xl lg:text-3xl font-extrabold dark:text-white">Tržiště zakázek</h2>
             <div class="flex items-center gap-2">
                 <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-1 flex gap-1 shadow-sm">
                     <button id="toggle-list" onclick="window.toggleMarketView('list')" class="px-4 py-2 rounded-lg text-sm font-bold bg-remexo-500 text-white transition"><i class="fa-solid fa-list mr-1.5"></i>Seznam</button>
