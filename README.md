@@ -92,6 +92,8 @@ Na čisté databázi je spusť v Supabase → SQL Editor v tomto pořadí:
 | [6 – RLS](#6--zpřísnění-přístupu-k-datům-rls) | **Přístupová pravidla — nejdůležitější krok** |
 | [7 – Doplnit řemeslníky](#7--doplnění-řemeslníka-u-starších-zakázek) | Dopočítání řemeslníka u starších zakázek |
 | [8 – Dokončení](#8--řemeslník-navrhne-dokončení-zákazník-potvrdí) | Řemeslník hlásí hotovo, zákazník potvrzuje |
+| [9 – Kontakty](#9--chráněná-tabulka-s-kontakty-na-zákazníka) | **Chráněná tabulka s telefonem a ulicí zákazníka** |
+| [10 – Vyčištění](#10--vyčištění-kontaktů-ze-starých-popisů) | Přesun kontaktů ze starých popisů (jednorázově) |
 
 [Kontrolní skript](#kontrola--co-je-v-tabulce-profiles) nic nemění, jen vypíše,
 co je v tabulce `profiles` a jestli tam nejsou citlivé údaje.
@@ -117,15 +119,32 @@ stojí a padá s pravidly RLS, ne s utajením klíče.
 Po každé změně pravidel je dobré ověřit, že RLS je pořád zapnuté na všech
 tabulkách.
 
+### Kontakty na zákazníka
+
+Telefon a ulice **nikdy nepatří do popisu poptávky**. Popis se do aplikace
+posílá celý, takže cokoliv v něm je, si přečte kdokoliv, kdo poptávku vidí —
+stačí otevřít vývojářskou konzoli. Schovávání v rozhraní zdrží běžného
+uživatele, ne motivovaného.
+
+Kontakty proto žijí v samostatné tabulce `poptavka_kontakt` a databáze je vydá
+jen tomu, kdo na ně má nárok:
+
+| Kdo | Vidí kontakt |
+|---|---|
+| Zákazník, který poptávku zadal | ano, u svých poptávek |
+| Řemeslník s **přijatou** nabídkou | ano, jen u té zakázky |
+| Řemeslník s čekající nabídkou | ne |
+| Kdokoliv jiný přihlášený | ne |
+
+Rozhoduje o tom databáze, ne frontend. Řemeslník se k telefonu nedostane ani
+přímým dotazem přes API, dokud mu zákazník nabídku nepřijme.
+
+V popisu zůstává jen město, aby šla poptávka umístit na mapu.
+
+> Pokud databázi zakládáš znovu nebo migruješ starší data, nezapomeň na krok 9
+> (tabulka a pravidla) a krok 10 (přesun kontaktů ze starých popisů).
+
 ## Známé nedodělky
-
-**Kontaktní údaje jsou v popisu poptávky.** Telefon a adresa jsou součástí
-textu, který se do aplikace posílá celý. Zobrazení je sice omezené — řemeslník
-před přijetím vidí jen město — ale kdo si otevře vývojářskou konzoli, dostane
-se k celému textu. Skrývání tedy zdrží běžného uživatele, ne motivovaného.
-
-Správné řešení je uložit kontakty do samostatných sloupců a uvolnit je až
-vybranému řemeslníkovi.
 
 **Escrow je v rozhraní, ale nefunguje.** Záložka Platby i dlaždice „V escrow"
 na nástěnce ukazují nuly a nejsou na nic napojené. Než se spustí ostrý provoz,
@@ -479,6 +498,200 @@ select column_name, data_type
  where table_schema = 'public'
    and table_name   = 'requests'
    and column_name  = 'dokonceni_navrzeno';
+```
+
+### 9 – Chráněná tabulka s kontakty na zákazníka
+
+```sql
+-- =====================================================
+-- REMEXO: chráněná tabulka s kontakty na zákazníka
+--
+-- Telefon a ulice nesmí být v popisu poptávky - popis se posílá
+-- do aplikace celý a kdo si otevře vývojářskou konzoli, přečte ho.
+-- Kontakty proto žijí zvlášť a databáze je vydá jen tomu,
+-- kdo na ně má nárok.
+--
+-- Spusť celé najednou v Supabase -> SQL Editor -> Run
+-- =====================================================
+
+-- 1) Tabulka. Typ request_id se přizpůsobí typu id v requests.
+do $$
+declare
+  typ_id text;
+begin
+  select data_type into typ_id
+    from information_schema.columns
+   where table_schema = 'public'
+     and table_name   = 'requests'
+     and column_name  = 'id';
+
+  if typ_id is null then
+    raise exception 'Tabulka public.requests nebyla nalezena.';
+  end if;
+
+  execute format('
+    create table if not exists public.poptavka_kontakt (
+      id          uuid primary key default gen_random_uuid(),
+      request_id  %s   not null unique references public.requests(id) on delete cascade,
+      telefon     text not null,
+      ulice       text not null,
+      mesto       text not null,
+      created_at  timestamptz not null default now()
+    )', typ_id);
+end $$;
+
+create index if not exists poptavka_kontakt_request_idx
+  on public.poptavka_kontakt (request_id);
+
+-- 2) Zabezpečení
+alter table public.poptavka_kontakt enable row level security;
+
+drop policy if exists "Kontakt vlozi zakaznik"        on public.poptavka_kontakt;
+drop policy if exists "Kontakt vidi zakaznik"         on public.poptavka_kontakt;
+drop policy if exists "Kontakt vidi vybrany remeslnik" on public.poptavka_kontakt;
+drop policy if exists "Kontakt upravi zakaznik"       on public.poptavka_kontakt;
+
+-- Vložit smí jen zákazník, a jen ke své vlastní poptávce
+create policy "Kontakt vlozi zakaznik"
+  on public.poptavka_kontakt for insert
+  with check (
+    exists (
+      select 1 from public.requests r
+       where r.id = request_id
+         and r.customer_id = auth.uid()
+    )
+  );
+
+-- Zákazník vidí kontakty u svých poptávek
+create policy "Kontakt vidi zakaznik"
+  on public.poptavka_kontakt for select
+  using (
+    exists (
+      select 1 from public.requests r
+       where r.id = request_id
+         and r.customer_id = auth.uid()
+    )
+  );
+
+-- Řemeslník vidí kontakt AŽ VE CHVÍLI, kdy mu zákazník nabídku přijal.
+-- Tohle je jádro celé ochrany: dokud není nabídka accepted,
+-- databáze telefon nevydá, ať se ptá kdokoliv a jakkoliv.
+create policy "Kontakt vidi vybrany remeslnik"
+  on public.poptavka_kontakt for select
+  using (
+    exists (
+      select 1 from public.offers o
+       where o.request_id   = poptavka_kontakt.request_id
+         and o.craftsman_id = auth.uid()
+         and o.status       = 'accepted'
+    )
+  );
+
+-- Opravit překlep v telefonu smí zákazník
+create policy "Kontakt upravi zakaznik"
+  on public.poptavka_kontakt for update
+  using (
+    exists (
+      select 1 from public.requests r
+       where r.id = request_id
+         and r.customer_id = auth.uid()
+    )
+  );
+
+-- 3) Kontrola
+select
+  (select count(*) from public.poptavka_kontakt) as ulozenych_kontaktu,
+  (select relrowsecurity from pg_class where oid = 'public.poptavka_kontakt'::regclass) as rls_zapnute,
+  (select count(*) from pg_policies
+    where schemaname = 'public' and tablename = 'poptavka_kontakt') as pocet_pravidel;
+```
+
+### 10 – Vyčištění kontaktů ze starých popisů
+
+```sql
+-- =====================================================
+-- REMEXO: vyčištění kontaktů ze starých popisů poptávek
+--
+-- Poptávky založené dřív mají v textu popisu řádky:
+--   📍 Adresa: <ulice>, <město>
+--   📞 Telefon: <číslo>
+-- Ten popis se posílá do aplikace celý, takže telefon a ulici
+-- si z něj přečte kdokoliv, kdo poptávku vidí.
+--
+-- Tenhle skript kontakty přesune do chráněné tabulky
+-- a z popisu je odstraní. Nechá jen město, aby šla poptávka
+-- dál umístit na mapu - stejně jako u nových poptávek.
+--
+-- POŘADÍ: nejdřív spusť 09_poptavka_kontakt.sql!
+-- Skript je bezpečné spustit opakovaně.
+-- =====================================================
+
+-- 1) Nejdřív se podívej, čeho se to týká (nic to nemění)
+select
+  id,
+  substring((regexp_match(description, '📞 Telefon: *([^\n\r]+)'))[1] from 1 for 4) || '...' as telefon_nahled,
+  (regexp_match(description, '📍 Adresa: *([^\n\r]+)'))[1] as adresa
+from public.requests
+where description like '%📞 Telefon:%'
+order by created_at desc;
+
+-- =====================================================
+-- Až si výpis prohlédneš, spusť zbytek.
+-- =====================================================
+
+-- 2) Zálohu popisů si necháme, kdyby něco
+create table if not exists public.zaloha_popisu_pred_ocistou as
+  select id, description, now() as zalohovano
+    from public.requests
+   where description like '%📞 Telefon:%';
+
+-- 3) Kontakty přesuneme do chráněné tabulky.
+--    on conflict: pokud tam kontakt už je, necháme ten stávající.
+insert into public.poptavka_kontakt (request_id, telefon, ulice, mesto)
+select
+  r.id,
+  trim((regexp_match(r.description, '📞 Telefon: *([^\n\r]+)'))[1]),
+  -- z "Adresa: Kounicova 12, Brno" vezmeme část před poslední čárkou
+  trim(regexp_replace((regexp_match(r.description, '📍 Adresa: *([^\n\r]+)'))[1], ',[^,]*$', '')),
+  coalesce(
+    nullif(trim(r.mesto), ''),
+    trim((regexp_match(r.description, ',\s*([^,\n\r]+)\s*$'))[1]),
+    'Brno'
+  )
+from public.requests r
+where r.description like '%📞 Telefon:%'
+  and (regexp_match(r.description, '📞 Telefon: *([^\n\r]+)'))[1] is not null
+  and (regexp_match(r.description, '📍 Adresa: *([^\n\r]+)'))[1] is not null
+on conflict (request_id) do nothing;
+
+-- 4) Z popisu odstraníme řádek s telefonem
+update public.requests
+   set description = regexp_replace(description, '\n?📞 Telefon: *[^\n\r]*', '', 'g')
+ where description like '%📞 Telefon:%';
+
+-- 5) Řádek s adresou nahradíme samotným městem.
+--    Formát pak sedí s novými poptávkami, kde je "📍 Brno".
+update public.requests
+   set description = regexp_replace(
+         description,
+         '📍 Adresa: *[^\n\r]*',
+         '📍 ' || coalesce(nullif(trim(mesto), ''), 'Brno'),
+         'g')
+ where description like '%📍 Adresa:%';
+
+-- 6) Kontrola - obojí musí být 0
+select
+  (select count(*) from public.requests where description like '%📞 Telefon:%') as zbyva_telefonu,
+  (select count(*) from public.requests where description like '%📍 Adresa:%')  as zbyva_adres,
+  (select count(*) from public.poptavka_kontakt)                                as ulozenych_kontaktu;
+
+-- =====================================================
+-- Až ověříš, že aplikace funguje a řemeslníci vidí kontakty
+-- u přidělených zakázek, můžeš zálohu smazat:
+--   drop table public.zaloha_popisu_pred_ocistou;
+-- Dokud tabulka existuje, jsou v ní staré popisy včetně telefonů,
+-- takže ji nenechávej ležet déle, než je potřeba.
+-- =====================================================
 ```
 
 ### Kontrola – co je v tabulce profiles
