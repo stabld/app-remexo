@@ -366,6 +366,10 @@ window.goTab = function(id, title) {
     if(botBtn){botBtn.classList.remove("text-slate-400");botBtn.classList.add("text-remexo-500");}
     if(title) document.getElementById("page-title").innerText = title;
     
+    // Ve zprávách by Bořkovo tlačítko leželo přesně na tlačítku Odeslat
+    const fab = document.getElementById("borek-fab");
+    if (fab) fab.classList.toggle("borek-fab-skryty", id==="messages" || id==="c-messages");
+
     // ZMIZÍ BUBLINA: Jakmile uživatel otevře zprávy, počitadlo notifikací zpráv se vynuluje.
     if(id==="messages" || id==="c-messages") window.clearMsgNotif();
     
