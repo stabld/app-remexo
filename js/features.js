@@ -1,16 +1,103 @@
 // === POPTÁVKY, AI BOŘEK, TRŽIŠTĚ, MAPA A PROFIL ===
+// Fotky v popisu poptávky existují ve dvou podobách:
+//   ||FOTO||<cesta>          - nová, jen odkaz do Storage (bucket "poptavky")
+//   ||PHOTO||<base64>||MIME||<typ>  - stará, celá fotka zakódovaná v textu
+// Starou podobu čteme kvůli poptávkám, které vznikly dřív. Nové se už neukládají.
+// Nahraje fotky poptávky do neveřejného bucketu "poptavky".
+// Vrací seznam cest, které se uloží do popisu jako ||FOTO||<cesta>.
+window.nahrajFotkyPoptavky = async function(idPoptavky, fotky) {
+    if (!window.sb || !idPoptavky || !fotky || !fotky.length) return [];
+    const cesty = [];
+
+    for (let i = 0; i < fotky.length; i++) {
+        const f = fotky[i];
+        try {
+            // base64 -> binární data, Storage neumí datový řetězec
+            const bin = atob(f.base64);
+            const pole = new Uint8Array(bin.length);
+            for (let j = 0; j < bin.length; j++) pole[j] = bin.charCodeAt(j);
+            const blob = new Blob([pole], { type: f.mime || "image/jpeg" });
+
+            const pripona = (f.mime === "image/png") ? "png" : "jpg";
+            const cesta = idPoptavky + "/" + (i + 1) + "." + pripona;
+
+            const { error } = await window.sb.storage
+                .from("poptavky")
+                .upload(cesta, blob, { upsert: true, contentType: f.mime || "image/jpeg" });
+            if (error) throw error;
+            cesty.push(cesta);
+        } catch (e) {
+            // Jedna fotka navíc nestojí za shození celé poptávky
+            console.warn("Fotku se nepodařilo nahrát:", e && e.message);
+        }
+    }
+
+    if (fotky.length && !cesty.length) {
+        window.showToast("Fotky se nepodařilo nahrát", "Poptávku jsme uložili bez nich. Můžete je doplnit v detailu.", "error");
+    }
+    return cesty;
+};
+
 window.extractPhotoFromDesc = function(rawDesc) {
-    if (!rawDesc) return { desc: "", photos: [] };
-    const parts = rawDesc.split("||PHOTO||");
+    if (!rawDesc) return { desc: "", photos: [], soubory: [] };
+
+    // Nejdřív oddělíme odkazy do Storage
+    const soubory = [];
+    let zbytek = String(rawDesc).replace(/\n?\|\|FOTO\|\|([^\n|]+)/g, function(_, cesta) {
+        const c = cesta.trim();
+        if (c) soubory.push(c);
+        return "";
+    });
+
+    // A pak staré base64
+    const parts = zbytek.split("||PHOTO||");
     const desc = parts[0].trim();
     const photos = [];
     for (let i = 1; i < parts.length; i++) {
         const photoParts = parts[i].split("||MIME||");
-        if(photoParts.length >= 2) {
+        if (photoParts.length >= 2) {
             photos.push({ photo: photoParts[0], mime: photoParts[1].trim() });
         }
     }
-    return { desc, photos };
+    return { desc, photos, soubory };
+};
+
+// Fotky ve Storage nejsou veřejné, takže se na ně musí vystavit dočasný odkaz.
+// To je asynchronní, ale karty se skládají jako text - proto se nejdřív vloží
+// prázdné místo a odkaz se doplní až potom.
+window.FOTKA_TRIDY = "w-full h-24 object-cover rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm cursor-pointer hover:opacity-80 transition bg-slate-100 dark:bg-slate-800";
+
+window.fotkaMisto = function(cesta) {
+    return '<img data-foto="' + window.escapeHtml(cesta) + '" alt="Fotka závady" class="' + window.FOTKA_TRIDY + '">';
+};
+
+window.doplnFotky = async function(korenovyPrvek) {
+    if (!window.sb) return;
+    const koren = korenovyPrvek || document;
+    const prvky = Array.from(koren.querySelectorAll('img[data-foto]'));
+    if (!prvky.length) return;
+
+    const cesty = Array.from(new Set(prvky.map(el => el.dataset.foto)));
+    try {
+        const { data, error } = await window.sb.storage
+            .from("poptavky")
+            .createSignedUrls(cesty, 3600);   // odkaz platí hodinu
+        if (error || !data) throw error || new Error("bez odpovedi");
+
+        const mapa = {};
+        data.forEach(z => { if (z && z.path && z.signedUrl) mapa[z.path] = z.signedUrl; });
+
+        prvky.forEach(el => {
+            const url = mapa[el.dataset.foto];
+            if (!url) { el.remove(); return; }   // nemá k ní přístup
+            el.src = url;
+            el.removeAttribute("data-foto");
+            el.onclick = () => window.openLightbox(url);
+        });
+    } catch (e) {
+        // Když se odkazy nepodaří získat, radši nic než rozbité obrázky
+        prvky.forEach(el => el.remove());
+    }
 };
 
 window.openRatingModal = function(index, sbId) {
@@ -606,11 +693,8 @@ window.publishRequest = async function(btnNode) {
         const detailInfo = ["📍 "+city,"📅 Termín: "+timeframe,"🏠 Typ objektu: "+property,"🚗 Parkování: "+parking,...(budget?["💰 Rozpočet: "+budget]:[])].join('\n');
         let finalPopis=popis+"\n\n---\n📋 DOPLŇUJÍCÍ INFORMACE:\n"+detailInfo;
         
-        if (window.poptPhotos && window.poptPhotos.length > 0) {
-            window.poptPhotos.forEach(p => {
-                finalPopis += "\n||PHOTO||" + p.base64 + "||MIME||" + p.mime;
-            });
-        }
+        // Fotky se do popisu NEVKLÁDAJÍ. Nahrají se do Storage až po založení
+        // poptávky (potřebujeme její id do cesty) a do popisu se doplní odkaz.
 
         let sbId=null;
         if(window.sb&&window.APP_USER){
@@ -618,6 +702,17 @@ window.publishRequest = async function(btnNode) {
             const {data,error}=await window.sb.from("requests").insert({customer_id:window.APP_USER.id,customer_name:cName,title,category:kat,description:finalPopis,urgency:nal,price_estimate:cena,status:"waiting",mesto:city,lat:(window._poslednioSouradnice||{}).lat||null,lon:(window._poslednioSouradnice||{}).lon||null}).select();
             if(!error&&data&&data.length>0){
                 sbId=data[0].id;
+                // Fotky do Storage: cesta je <id poptavky>/<poradi>.jpg,
+                // podle ní pak přístupová pravidla poznají, komu je ukázat.
+                if (window.poptPhotos && window.poptPhotos.length > 0) {
+                    const odkazy = await window.nahrajFotkyPoptavky(sbId, window.poptPhotos);
+                    if (odkazy.length) {
+                        const popisSFotkami = finalPopis + odkazy.map(c => "\n||FOTO||" + c).join("");
+                        await window.sb.from("requests").update({ description: popisSFotkami }).eq("id", sbId);
+                        finalPopis = popisSFotkami;
+                    }
+                }
+
                 const {error:chybaKontaktu}=await window.sb.from("poptavka_kontakt").insert({
                     request_id: sbId, telefon: phone, ulice: street, mesto: city
                 });
@@ -721,7 +816,21 @@ window.openOfferModal = function(id) {
     document.getElementById("co-msg").value='Dobrý den, mám zájem o vaši zakázku "' + req.title + '". Mám čas a vybavení, mohu pomoci.';
     
     const photoWrap = document.getElementById("co-photo-wrap");
-    if(extracted.photos && extracted.photos.length > 0) {
+    const vsechnyFotky = (extracted.soubory || []).length + (extracted.photos || []).length;
+    if (vsechnyFotky > 0) {
+        photoWrap.innerHTML = '<div class="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-4">'
+            + (extracted.soubory || []).map(c => window.fotkaMisto(c)).join("")
+            + '</div>';
+        const grid2 = photoWrap.querySelector('div');
+        (extracted.photos || []).forEach(p => {
+            const img = document.createElement("img");
+            img.src = "data:" + p.mime + ";base64," + p.photo;
+            img.className = window.FOTKA_TRIDY;
+            img.onclick = () => window.openLightbox(img.src);
+            grid2.appendChild(img);
+        });
+        window.doplnFotky(photoWrap);
+    } else if (false) {
         photoWrap.innerHTML = '<div class="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-4"></div>';
         const grid = photoWrap.querySelector('div');
         extracted.photos.forEach(p => {
@@ -1029,10 +1138,14 @@ window.refreshCraftsmanJobs = function() {
                 : [];
 
             // Fotky závady patří řemeslníkovi, který zakázku dostal
-            const fotkyHtml = (rozdeleno.photos || []).length
-                ? '<div class="flex flex-wrap gap-2 mt-3">' + rozdeleno.photos.map(f =>
-                    '<img src="data:' + f.mime + ';base64,' + f.photo + '" class="w-16 h-16 rounded-xl object-cover border border-slate-200 dark:border-slate-700">'
-                  ).join("") + '</div>'
+            const fotkyZeStorage = (rozdeleno.soubory || []).map(c => window.fotkaMisto(c)).join("");
+            const fotkyHtml = ((rozdeleno.photos || []).length || fotkyZeStorage)
+                ? '<div class="flex flex-wrap gap-2 mt-3">'
+                    + fotkyZeStorage
+                    + (rozdeleno.photos || []).map(f =>
+                        '<img src="data:' + f.mime + ';base64,' + f.photo + '" class="w-16 h-16 rounded-xl object-cover border border-slate-200 dark:border-slate-700">'
+                      ).join("")
+                  + '</div>'
                 : '';
             if (detaily.length || fotkyHtml) {
                 kontaktyHtml = '<div class="mt-4 mb-4 p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700">'
@@ -1174,6 +1287,7 @@ window.loadMarketFromDB = async function() {
     if(window.nactiOblibene) await window.nactiOblibene();
     if(window.nactiMojeNabidky) await window.nactiMojeNabidky();
     list.innerHTML=(window.vyzvaKProfilu?window.vyzvaKProfilu():"")+data.map((r,i)=>window.createBeautifulCard({id:r.id,sbId:r.id,title:r.title,kat:r.category||"Ostatní",popis:r.description||"",mesto:r.mesto||null,time:new Date(r.created_at).toLocaleDateString("cs"),status:r.status,urgency:r.urgency||"Střední",category:r.category,customer_name:r.customer_name||"Zákazník",price_estimate:r.price_estimate||"Dohodou"},true,i)).join("");
+    window.doplnFotky(list);
 };
 
 window.toggleMarketView = async function(mode) {
@@ -1485,6 +1599,7 @@ window.filterMarket = function(kat, triggerEl) {
         return;
     }
     list.innerHTML = (window.vyzvaKProfilu?window.vyzvaKProfilu():"") + filtered.map((req, i) => window.createBeautifulCard(req, true, i)).join('');
+    window.doplnFotky(list);
     window.aktualizujCtaTrziste(filtered.length);
 };
 
