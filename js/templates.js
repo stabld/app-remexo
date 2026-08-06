@@ -17,25 +17,6 @@ window.customerHTML = function(name) {
             <div class="stat-card bg-white dark:bg-slate-800/80 rounded-2xl lg:rounded-3xl p-2.5 lg:p-6 border border-slate-200 dark:border-slate-700 shadow-sm"><p class="stat-lbl text-[9px] lg:text-[11px] font-extrabold text-slate-400 uppercase tracking-wide lg:tracking-widest mb-0.5 lg:mb-3">Zprávy</p><p class="stat-val text-xl lg:text-4xl font-black dark:text-white" id="stat-msgs">0</p></div>
             <div class="stat-card bg-white dark:bg-slate-800/80 rounded-2xl lg:rounded-3xl p-2.5 lg:p-6 border border-slate-200 dark:border-slate-700 shadow-sm"><p class="stat-lbl text-[9px] lg:text-[11px] font-extrabold text-slate-400 uppercase tracking-wide lg:tracking-widest mb-0.5 lg:mb-3">V Escrow</p><p class="stat-val stat-val-money text-xl lg:text-4xl font-black dark:text-white" id="stat-escrow">0 Kč</p></div>
         </div>
-        <div class="borek-help bg-white dark:bg-slate-800/80 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm p-4 lg:p-6 mb-4 lg:mb-8">
-            <div class="flex items-start gap-3">
-                <img src="/borek-hlava.PNG" alt="Bořek" class="borek-avatar w-11 h-11 lg:w-14 lg:h-14 object-contain shrink-0">
-                <div class="flex-1 min-w-0">
-                    <p class="font-extrabold text-base lg:text-lg dark:text-white leading-tight">Nevíš si rady? Zeptej se Bořka.</p>
-                    <p class="borek-sub text-sm text-slate-500 dark:text-slate-400 leading-snug mt-0.5">Poradí ti, jakého řemeslníka potřebuješ a co do poptávky napsat.</p>
-                </div>
-            </div>
-            <div id="borek-chips" class="flex gap-2 mt-3 overflow-x-auto hide-scroll pb-1">
-                <button onclick="window.zeptejSeBorka('Nevím, jakého řemeslníka na svůj problém potřebuji. Jak to zjistím?')" class="borek-chip shrink-0 px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-200 hover:bg-remexo-50 dark:hover:bg-slate-600 transition">Koho vlastně potřebuju?</button>
-                <button onclick="window.zeptejSeBorka('Co všechno mám napsat do poptávky, aby jí řemeslník rozuměl?')" class="borek-chip shrink-0 px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-200 hover:bg-remexo-50 dark:hover:bg-slate-600 transition">Co napsat do poptávky?</button>
-                <button onclick="window.zeptejSeBorka('Jak Remexo funguje a co se stane potom, co zadám poptávku?')" class="borek-chip shrink-0 px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-200 hover:bg-remexo-50 dark:hover:bg-slate-600 transition">Jak to celé funguje?</button>
-            </div>
-            <div class="flex gap-2 mt-2">
-                <input type="text" id="borek-otazka" placeholder="Napiš vlastní dotaz..." onkeypress="if(event.key==='Enter')window.zeptejSeBorka()" class="flex-1 min-w-0 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-remexo-500 dark:text-white">
-                <button onclick="window.zeptejSeBorka()" aria-label="Odeslat dotaz Bořkovi" class="bg-remexo-500 hover:bg-remexo-600 text-white w-11 rounded-xl flex items-center justify-center shrink-0 transition"><i class="fa-solid fa-paper-plane text-sm"></i></button>
-            </div>
-            <div id="borek-odpoved" class="hidden mt-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-3.5 text-sm leading-relaxed text-slate-700 dark:text-slate-300"></div>
-        </div>
         <div class="dash-panel bg-white dark:bg-slate-800/80 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm p-4 lg:p-8">
             <h3 class="text-base lg:text-xl font-extrabold mb-3 lg:mb-6 dark:text-white">Poslední poptávky</h3>
             <div id="dash-requests-list"><p class="text-slate-400 text-center py-5 lg:py-8 text-sm lg:text-base">Zatím žádné poptávky. <button onclick="window.goTab('new','Nová poptávka')" class="text-remexo-500 font-bold hover:underline">Vytvořit první →</button></p></div>
