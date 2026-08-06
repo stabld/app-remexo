@@ -34,6 +34,8 @@ window.addEventListener('load', async () => {
                 appEl.style.opacity = "1";
             }
             window.initApp(window.APP_ROLE, name);
+            // Aplikace je vykreslená - není důvod dál držet úvodní obrazovku
+            if (window.skryjLoader) window.skryjLoader();
         } else {
             if (window.PENDING_POPTAVKA && window.goToAuth) {
                 // Přišel z landing page s poptávkou – rovnou na přihlášení jako zákazník
