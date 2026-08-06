@@ -1193,8 +1193,35 @@ window.toggleMarketView = async function(mode) {
     }
 };
 
+// Leaflet (mapa) se stahuje až ve chvíli, kdy uživatel mapu opravdu otevře.
+// Dřív se načítal v hlavičce každému, včetně zákazníků, kteří mapu nikdy neuvidí.
+window.nactiLeaflet = function() {
+    if (window.L) return Promise.resolve();
+    if (window._leafletPromise) return window._leafletPromise;
+
+    window._leafletPromise = new Promise((hotovo, chyba) => {
+        const css = document.createElement("link");
+        css.rel = "stylesheet";
+        css.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+        document.head.appendChild(css);
+
+        const js = document.createElement("script");
+        js.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+        js.onload = () => hotovo();
+        js.onerror = () => { window._leafletPromise = null; chyba(new Error("Mapu se nepodařilo načíst")); };
+        document.head.appendChild(js);
+    });
+    return window._leafletPromise;
+};
+
 window.initMarketMap = async function() {
     const mapEl=document.getElementById("market-map");if(!mapEl)return;
+    try {
+        await window.nactiLeaflet();
+    } catch (e) {
+        mapEl.innerHTML = '<div class="text-center text-slate-400 py-10 text-sm">Mapu se nepodařilo načíst. Zkus přepnout na seznam.</div>';
+        return;
+    }
     window._marketMarkers={};
     if(window._marketMap){window._marketMap.eachLayer(l=>{if(l instanceof L.Marker)window._marketMap.removeLayer(l);});}
     else{window._marketMap=L.map("market-map").setView([49.8,15.5],8);L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:"© OpenStreetMap",maxZoom:18}).addTo(window._marketMap);}
