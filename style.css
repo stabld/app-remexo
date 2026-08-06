@@ -223,3 +223,25 @@ body { font-family: "Plus Jakarta Sans", sans-serif; }
     #borek-sheet { max-height: 80vh; padding-bottom: env(safe-area-inset-bottom, 0px); }
 }
 #borek-telo { min-height: 8rem; }
+
+/* ---- VYTVOŘENÍ POPTÁVKY: kompaktně, ať se vejde bez scrollování ---- */
+@media (max-width: 767px) {
+    .popt-karta { padding: 1rem !important; border-radius: 1.5rem !important; }
+    .popt-hlavicka { margin-bottom: 0.875rem !important; padding-bottom: 0.75rem !important; gap: 0.75rem !important; }
+    .popt-avatar { width: 2.75rem !important; height: 2.75rem !important; border-radius: 0.875rem !important; }
+    .popt-nadpis { font-size: 1.0625rem !important; }
+    .popt-podnadpis { font-size: 10px !important; margin-top: 1px !important; }
+    .popt-form { gap: 0.75rem !important; }
+    .popt-form > * + * { margin-top: 0.75rem !important; }
+    .popt-label { margin-bottom: 0.375rem !important; font-size: 0.8125rem !important; }
+    /* Popis i fotozóna byly 180 px vysoké - dohromady zabraly půl displeje */
+    .popt-textarea { min-height: 104px !important; padding: 0.875rem !important; font-size: 0.9375rem !important; }
+    .popt-fotozona { min-height: 104px !important; }
+    .popt-ikona { font-size: 1.5rem !important; margin-bottom: 0.375rem !important; }
+    .popt-hint { display: none !important; }
+}
+/* Nízké displeje ještě o kousek těsněji */
+@media (max-width: 767px) and (max-height: 720px) {
+    .popt-textarea, .popt-fotozona { min-height: 88px !important; }
+    .popt-hlavicka { margin-bottom: 0.625rem !important; padding-bottom: 0.5rem !important; }
+}
