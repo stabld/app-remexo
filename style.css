@@ -71,7 +71,15 @@ body { font-family: "Plus Jakarta Sans", sans-serif; }
 /* RESPONSIVE CHAT */
 #chat-container-customer, #chat-container-craftsman { display:flex; height:min(620px,calc(100vh - 180px)); min-height:450px; }
 @media (max-width:767px) {
-    #chat-container-customer, #chat-container-craftsman { flex-direction:column; height:calc(100vh - 200px); min-height:400px; }
+    /* Chat musí přesně vyplnit volnou plochu, aby pole pro psaní zůstalo vidět.
+       100dvh (ne 100vh) - na iOS Safari se lišta prohlížeče schovává a 100vh lže.
+       Odečítáme: hlavička 64px + odsazení obsahu 24px + spodní lišta 64px + rezerva. */
+    #chat-container-customer, #chat-container-craftsman {
+        flex-direction:column;
+        height:calc(100vh - 168px - env(safe-area-inset-bottom, 0px));
+        height:calc(100dvh - 168px - env(safe-area-inset-bottom, 0px));
+        min-height:260px;
+    }
     .chat-conv-panel { display:block !important; width:100% !important; border-right:none !important; height:100% !important; }
     .chat-conv-panel.hidden-mobile { display:none !important; }
     .chat-msg-panel { display:none; flex-direction:column; height:100%; }
@@ -244,4 +252,14 @@ body { font-family: "Plus Jakarta Sans", sans-serif; }
 @media (max-width: 767px) and (max-height: 720px) {
     .popt-textarea, .popt-fotozona { min-height: 88px !important; }
     .popt-hlavicka { margin-bottom: 0.625rem !important; padding-bottom: 0.5rem !important; }
+}
+
+/* ---- ZPRÁVY NA MOBILU ---- */
+@media (max-width: 767px) {
+    /* Nadpis "Zprávy" je už v hlavičce stránky - nezdvojovat */
+    .chat-nadpis { display: none !important; }
+    /* Ve zprávách nesmí být odsazení pro spodní lištu započítané dvakrát */
+    #view-messages, #view-c-messages { margin-bottom: calc(-84px - env(safe-area-inset-bottom, 0px)); }
+    /* Bořek by na tomto místě překrýval tlačítko Odeslat */
+    .borek-fab-skryty { display: none !important; }
 }
