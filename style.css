@@ -263,3 +263,26 @@ body { font-family: "Plus Jakarta Sans", sans-serif; }
     /* Bořek by na tomto místě překrýval tlačítko Odeslat */
     .borek-fab-skryty { display: none !important; }
 }
+
+/* ---- KARTY POPTÁVEK NA MOBILU ---- */
+@media (max-width: 767px) {
+    /* Nadpis stránky je už v horní liště - nezdvojovat */
+    .stranka-nadpis { display: none !important; }
+    .stranka-hlavicka { margin-bottom: 0.75rem !important; justify-content: flex-end !important; }
+
+    .req-card { padding: 0.875rem !important; }
+    .req-meta { margin-bottom: 0.5rem !important; gap: 0.5rem !important; }
+    .req-hlavicka { margin-bottom: 0.625rem !important; gap: 0.625rem !important; }
+    .req-nadpis { font-size: 1rem !important; }
+    /* Popis se zkrátí na 4 řádky. Celý text je vidět v detailu poptávky. */
+    .req-popis {
+        font-size: 0.875rem !important;
+        display: -webkit-box;
+        -webkit-line-clamp: 4;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    .req-detaily { margin-top: 0.75rem !important; padding-top: 0.75rem !important; }
+    .req-akce { margin-top: 0.875rem !important; padding-top: 0.75rem !important; gap: 0.5rem !important; }
+    .req-akce button { padding-top: 0.75rem !important; padding-bottom: 0.75rem !important; }
+}
