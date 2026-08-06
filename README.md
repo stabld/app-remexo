@@ -1,67 +1,110 @@
-# Fixit.cz – Profesionální řemesla 🛠️
+# Remexo – aplikace
 
-Fixit.cz je moderní webová aplikace, která pomocí umělé inteligence propojuje zákazníky s ověřenými řemeslníky. Poptávající stačí vyfotit závadu a náš AI asistent Bořek automaticky připraví profesionální zadání.
+Webová aplikace, přes kterou lidé v Brně a okolí zadávají poptávky na řemeslné
+práce a řemeslníci na ně posílají nabídky. Zákazník vyfotí problém a popíše ho,
+asistent Bořek z toho vytvoří srozumitelné zadání a řemeslníci z okolí se ozvou
+sami s cenou a termínem.
 
-## 🚀 Hlavní funkce
+Marketingový web je v samostatném repozitáři `web-remexo`.
 
-* **AI Asistent Bořek:** Automatická analýza fotografie závady (přes Gemini 4o API) a návrh řešení.
-* **Tržiště a Interaktivní Mapa:** Zobrazení zakázek v okolí (Leaflet & OpenStreetMap) s filtrací dle oboru.
-* **Real-time Chat:** Okamžitá komunikace mezi zákazníkem a řemeslníkem (Supabase Realtime).
-* **Správa Nabídek:** Řemeslník pošle nabídku s cenou a zákazník si vybere ideálního kandidáta.
-* **Hodnocení:** Po dokončení opravy může zákazník řemeslníka ohodnotit (1-5 hvězdiček).
-* **Uživatelské Profily:** Správa osobních údajů, telefonu, referencí a profilových fotek.
+## Stav projektu
 
-## 💻 Použité technologie
+**Před spuštěním.** Ostrý provoz plánujeme na podzim 2026, začínáme v Brně.
 
-* **Frontend:** HTML5, CSS3, JavaScript (Vanilla ES6), Tailwind CSS
-* **Backend & Databáze:** Supabase (PostgreSQL, Auth, Storage, Realtime)
-* **Umělá inteligence:** Node.js (Serverless Function), GPT-4o / Gemini API
-* **Mapy:** Leaflet.js
-* **Ikony:** FontAwesome 6
+Aby README nesvádělo k představě hotového produktu, tady je rozdělené, co
+opravdu běží a co je teprve rozdělané:
 
-## ⚙️ Struktura repozitáře
-
-Projekt je rozdělen do modulů pro snadnou údržbu:
-- `/api/` - Serverless funkce pro komunikaci s AI
-- `/js/` - Klientská logika (`auth.js`, `ui.js`, `chat.js`, `features.js`, `config.js`)
-- `index.html` - Struktura webu
-- `style.css` - Custom design nad rámec Tailwindu
-- `app.js` - Hlavní inicializace aplikace po načtení
-
-# Databáze Remexo
-
-Tady jsou všechny zásahy do Supabase databáze, aby byly dohledatelné
-v repozitáři a nežily jen v hlavě nebo v historii SQL editoru.
-
-## Proč to tu je
-
-Bez těchto souborů nešlo z repozitáře nijak ověřit, jestli je databáze
-zabezpečená — a nešlo by ji ani obnovit, kdyby se s projektem něco stalo.
-
-## Jak to spustit na čisté databázi
-
-V Supabase → SQL Editor, v tomhle pořadí:
-
-| Soubor | Co dělá |
+| Funguje | Zatím ne |
 |---|---|
-| `01_oblibene.sql` | Tabulka uložených poptávek (řemeslníkovy záložky) |
-| `02_requests_craftsman.sql` | Sloupce `craftsman_id` a `craftsman_name` u poptávky |
-| `03_jedna_nabidka.sql` | Jeden řemeslník = jedna nabídka na poptávku |
-| `04_pokusy.sql` | Počítadlo pokusů o nabídku po odmítnutí |
-| `05_hodnoceni.sql` | Tabulka hodnocení (hvězdičky + komentář) |
-| `06_rls_zabezpeceni.sql` | **Přístupová pravidla — nejdůležitější soubor** |
-| `07_doplnit_remeslniky.sql` | Dopočítání řemeslníka u starších zakázek |
-| `08_dokonceni_navrzeno.sql` | Řemeslník hlásí hotovo, zákazník potvrzuje |
+| Registrace a přihlášení (Supabase Auth) | Ověřování řemeslníků (zatím jen kontrola IČO ručně) |
+| Zadání poptávky s fotkami | Platby přes platformu |
+| Příprava zadání přes Bořka (Gemini) | Úschova peněz (escrow) – v rozhraní je, ale bez napojení |
+| Tržiště zakázek se seznamem a mapou | Pojištění zakázek |
+| Nabídky řemeslníků a jejich výběr | Katalog řemesel |
+| Chat mezi zákazníkem a řemeslníkem | |
+| Hodnocení po dokončení | |
+| Profily uživatelů | |
 
-Kontrolní skript `00_kontrola_zabezpeceni.sql` nic nemění — jen vypíše,
-jak je na tom zabezpečení. Spusť ho po každé změně pravidel.
+Do textů v aplikaci nepiš, že fungují věci z pravého sloupce. Systémový prompt
+Bořka to má výslovně zakázané a stejné pravidlo platí i pro rozhraní.
 
-## Zabezpečení v kostce
+## Použité technologie
 
-Klíč `anon` ve frontendu je u Supabase běžný a sám o sobě není problém.
-Ochrana stojí a padá s pravidly (RLS), ne s utajením klíče.
+* **Frontend:** HTML, CSS, JavaScript (vanilla ES6), Tailwind CSS
+* **Backend a databáze:** Supabase (PostgreSQL, Auth, Storage, Realtime)
+* **AI:** Gemini `gemini-3.5-flash` přes vlastní serverless funkci na Vercelu
+* **Mapy:** Leaflet.js + OpenStreetMap
+* **Ikony:** Font Awesome 6
+* **Hosting:** Vercel
 
-Co je nastavené:
+### Pozor na Tailwind
+
+Tailwind **není** načítaný z `cdn.tailwindcss.com`. To je JIT kompilátor, který
+stáhne zhruba 400 kB JavaScriptu a CSS staví až v prohlížeči — na mobilu to
+stálo vteřiny navíc. Místo toho je v repozitáři předpřipravený `tailwind.css`.
+
+**Když přidáš novou Tailwind třídu, musíš CSS přegenerovat**, jinak se
+neprojeví:
+
+```bash
+npx tailwindcss -c tailwind.config.js -i input.css -o tailwind.css --minify
+```
+
+Konfigurace (barvy `remexo`, `darkMode: "class"`) musí odpovídat tomu, co bylo
+dřív inline v `index.html`.
+
+Druhá věc: **`tailwind.css` musí být v `<head>` až za Font Awesome.** Font
+Awesome nastavuje ikonám `display: inline-block` a při opačném pořadí přebije
+Tailwindí `.hidden` — v přepínači motivu se pak zobrazí měsíc i slunce naráz.
+
+## Struktura repozitáře
+
+```
+/api/          serverless funkce (borek-ai.js – volání Gemini včetně limitů)
+/js/           klientská logika
+  config.js      připojení k Supabase
+  auth.js        registrace, přihlášení, obnova hesla
+  ui.js          vykreslování, notifikace, přepínání záložek, karty poptávek
+  chat.js        konverzace a zprávy
+  features.js    poptávky, nabídky, tržiště, mapa, hodnocení, Bořek jako poradce
+  templates.js   HTML šablony obrazovek pro zákazníka a řemeslníka
+/sql/          zásahy do databáze (viz níže)
+index.html     kostra aplikace, modální okna, hlavička
+app.js         inicializace po přihlášení
+style.css      vlastní styly nad rámec Tailwindu, včetně mobilního rozvržení
+tailwind.css   vygenerované Tailwind CSS (needituj ručně)
+```
+
+## Databáze
+
+Všechny zásahy do Supabase jsou na konci tohoto souboru v sekci
+[SQL skripty](#sql-skripty), aby se daly dohledat a aby šla databáze obnovit,
+kdyby se s projektem něco stalo.
+
+Na čisté databázi je spusť v Supabase → SQL Editor v tomto pořadí:
+
+| Krok | Co dělá |
+|---|---|
+| [1 – Oblíbené](#1--oblíbené-uložené-poptávky) | Tabulka uložených poptávek (řemeslníkovy záložky) |
+| [3 – Jedna nabídka](#3--jeden-řemeslník--jedna-nabídka-na-poptávku) | Jeden řemeslník = jedna nabídka na poptávku |
+| [4 – Pokusy](#4--počítadlo-pokusů-o-nabídku) | Počítadlo pokusů o nabídku po odmítnutí |
+| [5 – Hodnocení](#5--hodnocení-řemeslníků) | Tabulka hodnocení (hvězdičky + komentář) |
+| [6 – RLS](#6--zpřísnění-přístupu-k-datům-rls) | **Přístupová pravidla — nejdůležitější krok** |
+| [7 – Doplnit řemeslníky](#7--doplnění-řemeslníka-u-starších-zakázek) | Dopočítání řemeslníka u starších zakázek |
+| [8 – Dokončení](#8--řemeslník-navrhne-dokončení-zákazník-potvrdí) | Řemeslník hlásí hotovo, zákazník potvrzuje |
+
+[Kontrolní skript](#kontrola--co-je-v-tabulce-profiles) nic nemění, jen vypíše,
+co je v tabulce `profiles` a jestli tam nejsou citlivé údaje.
+
+> **Krok 2 chybí.** Sloupce `craftsman_id` a `craftsman_name` v tabulce
+> `requests` aplikace používá, ale skript, který je zakládá, se v repozitáři
+> nedochoval. Na čisté databázi je tedy potřeba je doplnit ručně, než se pustí
+> krok 7.
+
+### Zabezpečení
+
+Klíč `anon` ve frontendu je u Supabase běžný a sám o sobě není problém. Ochrana
+stojí a padá s pravidly RLS, ne s utajením klíče.
 
 | Tabulka | Kdo smí číst | Kdo smí zapisovat |
 |---|---|---|
@@ -71,17 +114,34 @@ Co je nastavené:
 | `hodnoceni` | veřejné (jsou to reference) | jen zákazník, jen svoji zakázku, jen jednou |
 | `oblibene` | jen vlastní | jen vlastní |
 
-## Co ještě není dořešené
+Po každé změně pravidel je dobré ověřit, že RLS je pořád zapnuté na všech
+tabulkách.
+
+## Známé nedodělky
 
 **Kontaktní údaje jsou v popisu poptávky.** Telefon a adresa jsou součástí
-textu, který se posílá do appky celý. Zobrazení je sice omezené (řemeslník
-před přijetím vidí jen město), ale kdo si otevře vývojářskou konzoli,
-dostane se k celému textu.
+textu, který se do aplikace posílá celý. Zobrazení je sice omezené — řemeslník
+před přijetím vidí jen město — ale kdo si otevře vývojářskou konzoli, dostane
+se k celému textu. Skrývání tedy zdrží běžného uživatele, ne motivovaného.
 
-Správné řešení je uložit kontakty do samostatných sloupců a uvolnit je
-až vybranému řemeslníkovi. Do té doby platí, že skrývání zdrží běžného
-uživatele, ne motivovaného.
+Správné řešení je uložit kontakty do samostatných sloupců a uvolnit je až
+vybranému řemeslníkovi.
 
+**Escrow je v rozhraní, ale nefunguje.** Záložka Platby i dlaždice „V escrow"
+na nástěnce ukazují nuly a nejsou na nic napojené. Než se spustí ostrý provoz,
+je potřeba je buď dodělat, nebo z rozhraní odstranit — teď působí jako hotová
+funkce, kterou nemáme.
+
+---
+
+## SQL skripty
+
+Spouštěj je v Supabase → SQL Editor v pořadí, v jakém tu jsou.
+Každý blok je samostatný a dá se pustit celý najednou.
+
+### 1 – Oblíbené (uložené) poptávky
+
+```sql
 -- =====================================================
 -- REMEXO: tabulka pro oblíbené (uložené) poptávky
 -- Spusť celé najednou v Supabase → SQL Editor → Run
@@ -138,29 +198,11 @@ create policy "Uzivatel smaze sve oblibene"
 
 -- Hotovo. Kontrola:
 select 'Tabulka oblibene je pripravena' as vysledek;
+```
 
--- =====================================================
--- REMEXO: co je vlastně v tabulce profiles?
---
--- Kontrola ukázala, že profiles smí číst kdokoliv (podmínka "true").
--- Jestli tam jsou telefony nebo e-maily, je to únik. Jestli je tabulka
--- prázdná a nepoužívaná, stačí ji smazat.
---
--- Spusť v Supabase → SQL Editor → Run. Nic to nemění.
--- =====================================================
+### 3 – Jeden řemeslník = jedna nabídka na poptávku
 
--- 1) Jaké sloupce tabulka má
-select column_name as sloupec, data_type as typ
-  from information_schema.columns
- where table_schema = 'public' and table_name = 'profiles'
- order by ordinal_position;
-
--- 2) Kolik je v ní záznamů
-select count(*) as pocet_zaznamu from public.profiles;
-
--- 3) Ukázka dat (ať víme, jestli tam jsou citlivé údaje)
-select * from public.profiles limit 5;
-
+```sql
 -- =====================================================
 -- REMEXO: jeden řemeslník = jedna nabídka na poptávku
 -- Spusť celé najednou v Supabase → SQL Editor → Run
@@ -180,7 +222,11 @@ create unique index if not exists offers_jedna_nabidka_na_poptavku
 
 -- Kontrola: kolik nabídek zůstalo
 select count(*) as pocet_nabidek from public.offers;
+```
 
+### 4 – Počítadlo pokusů o nabídku
+
+```sql
 -- =====================================================
 -- REMEXO: počítadlo pokusů o nabídku
 -- Spusť v Supabase → SQL Editor → Run
@@ -196,8 +242,12 @@ select request_id, craftsman_name, status, pokusy
   from public.offers
  order by created_at desc
  limit 20;
+```
 
- -- =====================================================
+### 5 – Hodnocení řemeslníků
+
+```sql
+-- =====================================================
 -- REMEXO: hodnocení řemeslníků
 -- Doteď se hodnocení nikam neukládalo – zákazník ho vyplnil,
 -- appka poděkovala a hvězdičky zahodila.
@@ -248,7 +298,11 @@ create policy "Zakaznik prida hodnoceni"
   with check (auth.uid() = customer_id);
 
 select 'Tabulka hodnoceni je pripravena' as vysledek;
+```
 
+### 6 – Zpřísnění přístupu k datům (RLS)
+
+```sql
 -- =====================================================
 -- REMEXO: zpřísnění přístupu k datům (RLS)
 --
@@ -373,7 +427,11 @@ select 'Pravidla nastavena – otestuj prosím celý průchod appkou' as vyslede
 --
 -- (totéž pro offers a requests)
 -- =====================================================
+```
 
+### 7 – Doplnění řemeslníka u starších zakázek
+
+```sql
 -- =====================================================
 -- REMEXO: doplnění řemeslníka u starších zakázek
 --
@@ -398,8 +456,12 @@ select count(*) as zakazky_bez_remeslnika
   from public.requests
  where status in ('active', 'done')
    and craftsman_id is null;
+```
 
-   -- =====================================================
+### 8 – Řemeslník navrhne dokončení, zákazník potvrdí
+
+```sql
+-- =====================================================
 -- REMEXO: řemeslník navrhne dokončení, zákazník potvrdí
 --
 -- Doteď mohl dokončení potvrdit jen zákazník. Když přestal
@@ -417,3 +479,30 @@ select column_name, data_type
  where table_schema = 'public'
    and table_name   = 'requests'
    and column_name  = 'dokonceni_navrzeno';
+```
+
+### Kontrola – co je v tabulce profiles
+
+```sql
+-- =====================================================
+-- REMEXO: co je vlastně v tabulce profiles?
+--
+-- Kontrola ukázala, že profiles smí číst kdokoliv (podmínka "true").
+-- Jestli tam jsou telefony nebo e-maily, je to únik. Jestli je tabulka
+-- prázdná a nepoužívaná, stačí ji smazat.
+--
+-- Spusť v Supabase → SQL Editor → Run. Nic to nemění.
+-- =====================================================
+
+-- 1) Jaké sloupce tabulka má
+select column_name as sloupec, data_type as typ
+  from information_schema.columns
+ where table_schema = 'public' and table_name = 'profiles'
+ order by ordinal_position;
+
+-- 2) Kolik je v ní záznamů
+select count(*) as pocet_zaznamu from public.profiles;
+
+-- 3) Ukázka dat (ať víme, jestli tam jsou citlivé údaje)
+select * from public.profiles limit 5;
+```
