@@ -155,14 +155,11 @@ V popisu zůstává jen město, aby šla poptávka umístit na mapu.
 * Endpoint `/api/borek-ai` vyžaduje přihlášení a má limity na počet i velikost
   požadavků.
 
-**Neprověřené – tady se ještě nespoléhej na nic:**
+**Otevřené body:** fotky závad jsou uložené v popisu poptávky a vidí je každý
+přihlášený; systémové prompty posílá klient; chybí limity na zakládání
+poptávek. Podrobně i s prioritami je to v [BEZPECNOST.md](BEZPECNOST.md).
 
-* Zbytek vykreslování mimo seznam konverzací. Prošel jsem jen ta místa, která
-  vkládají data přímo do HTML; systematický audit celého frontendu proběhlý není.
-* Storage (nahrané fotky) – jestli jdou stáhnout i cizí soubory přes přímý odkaz.
-* Rychlostní limity na zakládání poptávek a nabídek, tedy ochrana proti zahlcení.
-* Únik e-mailů přes chybové hlášky při přihlašování.
-* Aplikace neprošla žádným externím posouzením.
+Aplikace neprošla žádným externím posouzením.
 
 ## Známé nedodělky
 
