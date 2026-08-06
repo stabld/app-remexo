@@ -284,7 +284,9 @@ window.loadCustomerConversations = async function() {
         window._mojeKonverzace.add(String(r.id));
         const plneJmeno = r.craftsman_name || "Řemeslník";
         const zobrazeneJmeno = odhaleno ? plneJmeno : window.zkratitJmeno(plneJmeno);
-        const safeName = zobrazeneJmeno.replace(/'/g, "\\'");
+        // Do onclick musí jméno projít jak HTML escapem (kvůli uvozovkám v atributu),
+        // tak escapem apostrofu (kvůli řetězci uvnitř onclick)
+        const safeName = window.escapeHtml(zobrazeneJmeno).replace(/'/g, "\\'");
         const craftIdParam = r.craftsman_id ? `'${r.craftsman_id}'` : 'null';
         const seed = encodeURIComponent(r.craftsman_name || 'c');
         const unreadCount = (window.STATE.unreadChats && window.STATE.unreadChats[r.id]) || 0;
@@ -293,7 +295,7 @@ window.loadCustomerConversations = async function() {
 
         return '<div id="conv-' + r.id + '" onclick="window.openConversation(' + r.id + ',\'' + safeName + '\',\'craftsman' + r.id + '\',' + craftIdParam + ')" class="conv-item px-4 py-3.5 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/60 border-b border-slate-100 dark:border-slate-800/80 transition-all duration-150 flex items-center gap-3 ' + isActiveClass + '">' +
         '<div class="relative shrink-0"><img id="cav-' + r.id + '" src="https://api.dicebear.com/7.x/avataaars/svg?seed=' + seed + '&backgroundColor=0f172a" class="w-10 h-10 rounded-full border-2 border-slate-200 dark:border-slate-700 bg-slate-100 object-cover"><span style="position:absolute;bottom:0;right:0;width:10px;height:10px;border-radius:50%;background:' + statusDot + ';border:2px solid white;"></span></div>' +
-        '<div class="flex-1 min-w-0"><p class="font-bold text-sm dark:text-white truncate leading-tight" id="clist-name-' + r.id + '">' + zobrazeneJmeno + '</p><p class="text-xs text-slate-400 mt-0.5 truncate">' + r.title + '</p></div>' +
+        '<div class="flex-1 min-w-0"><p class="font-bold text-sm dark:text-white truncate leading-tight" id="clist-name-' + r.id + '">' + window.escapeHtml(zobrazeneJmeno) + '</p><p class="text-xs text-slate-400 mt-0.5 truncate">' + window.escapeHtml(r.title || "Poptávka") + '</p></div>' +
         unreadBadge +
         '</div>';
     }).join("");
@@ -341,7 +343,7 @@ window.loadCraftsmanConversations = async function() {
         window._mojeKonverzace.add(String(o.request_id));
         const fullCustomerName = o.requests?.customer_name || "Zákazník";
         const displayName = isRevealed ? fullCustomerName : fullCustomerName.split(' ')[0];
-        const safeName = displayName.replace(/'/g, "\\'");
+        const safeName = window.escapeHtml(displayName).replace(/'/g, "\\'");
         const customerIdParam = o.requests?.customer_id ? `'${o.requests.customer_id}'` : 'null';
         const seed = encodeURIComponent(o.requests?.customer_name || 'u');
         const unreadCount = (window.STATE.unreadChats && window.STATE.unreadChats[o.request_id]) || 0;
@@ -351,7 +353,7 @@ window.loadCraftsmanConversations = async function() {
         // Tady se předává i ID zákazníka, aby fungovalo chytré načítání fotky!
         return '<div id="conv-' + o.request_id + '" onclick="window.openConversation(' + o.request_id + ',\'' + safeName + '\',\'customer' + o.request_id + '\',' + customerIdParam + ')" class="conv-item px-4 py-3.5 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/60 border-b border-slate-100 dark:border-slate-800/80 transition-all duration-150 flex items-center gap-3 ' + isActiveClass + '">' +
         '<div class="relative shrink-0"><img id="cav-c-' + o.request_id + '" src="https://api.dicebear.com/7.x/avataaars/svg?seed=' + seed + '&backgroundColor=f59e0b" class="w-10 h-10 rounded-full border-2 border-slate-200 dark:border-slate-700 bg-slate-100 object-cover"><span style="position:absolute;bottom:0;right:0;width:10px;height:10px;border-radius:50%;background:' + statusDot + ';border:2px solid white;"></span></div>' +
-        '<div class="flex-1 min-w-0"><p class="font-bold text-sm dark:text-white truncate leading-tight" id="clist-name-c-' + o.request_id + '">' + displayName + '</p><p class="text-xs text-slate-400 mt-0.5 truncate">' + (o.requests?.title || "Poptávka") + '</p></div>' +
+        '<div class="flex-1 min-w-0"><p class="font-bold text-sm dark:text-white truncate leading-tight" id="clist-name-c-' + o.request_id + '">' + window.escapeHtml(displayName) + '</p><p class="text-xs text-slate-400 mt-0.5 truncate">' + window.escapeHtml(o.requests?.title || "Poptávka") + '</p></div>' +
         unreadBadge +
         '</div>';
     }).join("");
