@@ -27,7 +27,7 @@ window.customerHTML = function(name) {
         <div id="requests-list" class="space-y-5"><div id="empty-req" class="text-center p-16 bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-3xl"><i class="fa-solid fa-folder-open text-5xl text-slate-300 dark:text-slate-600 mb-5 block"></i><p class="font-bold text-slate-500 text-lg">Zatím zde nic není.</p><button onclick="window.goTab('new','Nová poptávka')" class="mt-4 text-remexo-500 font-bold hover:underline text-sm">Vytvořit první poptávku →</button></div></div>
     </div>
     <div id="view-messages" class="hidden fade-up">
-        <h2 class="text-3xl font-extrabold mb-8 dark:text-white">Zprávy</h2>
+        <h2 class="chat-nadpis text-3xl font-extrabold mb-8 dark:text-white">Zprávy</h2>
         <div id="chat-container-customer" class="bg-white dark:bg-[#0f172a] rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
             <div id="conv-panel-customer" class="chat-conv-panel w-80 border-r border-slate-200 dark:border-slate-800 flex-shrink-0 flex flex-col bg-slate-50/50 dark:bg-transparent">
                 <div class="p-4 border-b border-slate-200 dark:border-slate-800"><p class="font-bold text-sm dark:text-white">Konverzace</p></div>
@@ -187,7 +187,7 @@ window.craftsmanHTML = function(name) {
         <div id="my-jobs-list" class="space-y-4"><div class="text-center p-12 bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-3xl"><i class="fa-solid fa-hammer text-5xl text-slate-300 dark:text-slate-600 mb-4 block"></i><p class="font-bold text-slate-500 text-lg">Zatím nemáte žádné aktivní zakázky.</p></div></div>
     </div>
     <div id="view-c-messages" class="hidden fade-up max-w-4xl">
-        <h2 class="text-3xl font-extrabold mb-8 dark:text-white">Zprávy</h2>
+        <h2 class="chat-nadpis text-3xl font-extrabold mb-8 dark:text-white">Zprávy</h2>
         <div id="chat-container-craftsman" class="bg-white dark:bg-[#0f172a] rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
             <div id="conv-panel-craftsman" class="chat-conv-panel w-80 border-r border-slate-200 dark:border-slate-800 flex-shrink-0 flex flex-col bg-slate-50/50 dark:bg-transparent">
                 <div class="p-4 border-b border-slate-200 dark:border-slate-800"><p class="font-bold text-sm dark:text-white">Konverzace</p></div>
