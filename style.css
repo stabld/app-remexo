@@ -115,6 +115,10 @@ body { font-family: "Plus Jakarta Sans", sans-serif; }
     .dash-head h2 { font-size: 1.5rem !important; margin-bottom: 0 !important; }
     /* Hlavní akce - největší prvek na obrazovce */
     .dash-cta { padding: 1.125rem 1.25rem !important; border-radius: 1.5rem !important; margin-bottom: 1rem !important; }
+    /* Bořkova poradna */
+    .borek-help { padding: 0.875rem !important; border-radius: 1.5rem !important; margin-bottom: 0.875rem !important; }
+    .borek-chip { font-size: 11px !important; padding: 0.45rem 0.7rem !important; }
+    #borek-odpoved { font-size: 0.8125rem !important; max-height: 40vh; overflow-y: auto; }
     /* Nadpis tržiště je už v hlavičce stránky - nezdvojovat */
     .market-title { display: none !important; }
     .dash-panel { padding: 1.125rem !important; border-radius: 1.5rem !important; }
@@ -194,4 +198,21 @@ body { font-family: "Plus Jakarta Sans", sans-serif; }
     /* Delší popisky tlačítek by jinak přetekly */
     .market-item .flex.gap-3.mt-6 > button { font-size: 0.8rem !important; }
     .req-card .flex.flex-wrap.gap-3.mt-6 > button { font-size: 0.8rem !important; }
+}
+
+/* Nízké displeje (iPhone SE apod.) - o něco těsnější rozestupy,
+   ať se nástěnka i s Bořkovou poradnou vejde bez scrollování */
+@media (max-width: 767px) and (max-height: 720px) {
+    .dash-head { margin-bottom: 0.5rem !important; }
+    .dash-head h2 { font-size: 1.25rem !important; }
+    .dash-cta { padding: 0.875rem 1rem !important; margin-bottom: 0.75rem !important; }
+    .dash-cta p:first-child { font-size: 1rem !important; }
+    .dash-stats { margin-bottom: 0.75rem !important; }
+    .stat-card { padding: 0.5rem 0.375rem !important; }
+    .stat-val { font-size: 1.25rem !important; }
+    .stat-val-money { font-size: 0.875rem !important; }
+    .borek-help { padding: 0.75rem !important; margin-bottom: 0.75rem !important; }
+    .borek-avatar { width: 2.25rem !important; height: 2.25rem !important; }
+    .borek-sub { display: none !important; }
+    .dash-panel { padding: 0.875rem !important; }
 }
