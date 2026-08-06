@@ -1484,38 +1484,93 @@ window.BOREK_PORADCE_PROMPT = [
     'Pokud dává smysl, zakonči doporučením zadat poptávku.'
 ].join(' ');
 
+window.otevriBorka = function() {
+    window.openModal('borek-modal');
+    // Na mobilu klávesnice zabírá půl obrazovky, tak nefokusujeme automaticky
+    if (window.innerWidth >= 1024) {
+        setTimeout(() => { const i = document.getElementById('borek-otazka'); if (i) i.focus(); }, 320);
+    }
+};
+
+window.zavriBorka = function() {
+    window.closeModal('borek-modal');
+};
+
 window.zeptejSeBorka = async function(prednastavenyDotaz) {
     const vstup = document.getElementById('borek-otazka');
     const vystup = document.getElementById('borek-odpoved');
+    const uvod = document.getElementById('borek-uvod');
     if (!vystup) return;
 
     const dotaz = (prednastavenyDotaz || (vstup ? vstup.value : '') || '').trim();
     if (!dotaz) { if (vstup) vstup.focus(); return; }
     if (dotaz.length > 500) {
-        vystup.classList.remove('hidden');
-        vystup.innerText = 'Zkus dotaz napsat kratší, ať se v tom vyznám.';
+        window.borekVypis('Zkus dotaz napsat kratší, ať se v tom vyznám.');
         return;
     }
     if (window._borekPracuje) return;
     window._borekPracuje = true;
 
+    if (uvod) uvod.classList.add('hidden');
     vystup.classList.remove('hidden');
-    vystup.innerHTML = '<span class="inline-flex items-center gap-2 text-slate-500"><i class="fa-solid fa-circle-notch fa-spin"></i> Bořek přemýšlí...</span>';
+
+    // Otázka uživatele
+    const blokOtazky = document.createElement('div');
+    blokOtazky.className = 'flex justify-end mb-3';
+    const bublina = document.createElement('div');
+    bublina.className = 'bg-remexo-500 text-white rounded-2xl rounded-tr-md px-4 py-2.5 text-sm max-w-[85%]';
+    bublina.innerText = dotaz;
+    blokOtazky.appendChild(bublina);
+    vystup.appendChild(blokOtazky);
+
+    // Načítání
+    const cekani = document.createElement('div');
+    cekani.className = 'flex items-center gap-2 text-slate-400 text-sm mb-3';
+    cekani.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Bořek přemýšlí...';
+    vystup.appendChild(cekani);
+    window.borekScroll();
+
+    if (vstup && !prednastavenyDotaz) vstup.value = '';
 
     try {
         const text = await window.callGeminiAPI([{ text: dotaz }], window.BOREK_PORADCE_PROMPT, false);
         const cisty = String(text || '').trim();
         if (!cisty) throw new Error('prázdná odpověď');
-        // Vykreslujeme jako text, ne HTML - odpověď z modelu se nesmí spustit jako kód
-        vystup.innerText = cisty;
-        if (vstup && !prednastavenyDotaz) vstup.value = '';
+        cekani.remove();
+        window.borekVypis(cisty);
     } catch (e) {
-        vystup.innerText = (e && e.message && e.message.indexOf('hodně lidem') > -1)
-            ? e.message
-            : 'Bořkovi se teď nedaří odpovědět. Zkus to prosím za chvíli, nebo rovnou zadej poptávku a on ti s ní pomůže.';
+        cekani.remove();
+        window.borekVypis(
+            (e && e.message && e.message.indexOf('hodně lidem') > -1)
+                ? e.message
+                : 'Bořkovi se teď nedaří odpovědět. Zkus to prosím za chvíli, nebo rovnou zadej poptávku a on ti s ní pomůže.'
+        );
     } finally {
         window._borekPracuje = false;
     }
+};
+
+// Vypíše Bořkovu odpověď. Vždy jako text, nikdy jako HTML.
+window.borekVypis = function(text) {
+    const vystup = document.getElementById('borek-odpoved');
+    if (!vystup) return;
+    vystup.classList.remove('hidden');
+    const radek = document.createElement('div');
+    radek.className = 'flex gap-2 mb-4';
+    const ikona = document.createElement('img');
+    ikona.src = '/borek-hlava.PNG'; ikona.alt = '';
+    ikona.className = 'w-7 h-7 object-contain shrink-0 mt-0.5';
+    const bublina = document.createElement('div');
+    bublina.className = 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-2xl rounded-tl-md px-4 py-2.5 text-sm leading-relaxed max-w-[85%]';
+    bublina.innerText = text;
+    radek.appendChild(ikona); radek.appendChild(bublina);
+    vystup.appendChild(radek);
+    window.borekScroll();
+};
+
+window.borekScroll = function() {
+    const telo = document.getElementById('borek-telo');
+    if (telo) telo.scrollTop = telo.scrollHeight;
 };
 
 window.openPublicProfile = async function(userId) {
