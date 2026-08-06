@@ -85,21 +85,21 @@ window.customerHTML = function(name) {
         </div>
     </div>
     <div id="view-new" class="hidden fade-up max-w-5xl mx-auto w-full">
-        <div class="bg-white dark:bg-[#0f172a] p-8 md:p-10 rounded-[2rem] shadow-xl border border-slate-200 dark:border-slate-800 relative overflow-hidden">
+        <div class="popt-karta bg-white dark:bg-[#0f172a] p-8 md:p-10 rounded-[2rem] shadow-xl border border-slate-200 dark:border-slate-800 relative overflow-hidden">
             <div class="absolute top-[-20%] right-[-10%] w-96 h-96 bg-remexo-500/10 rounded-full blur-[100px] pointer-events-none"></div>
-            <div class="mb-10 flex items-center gap-5 relative z-10 border-b border-slate-100 dark:border-slate-800 pb-6"><div class="w-16 h-16 rounded-2xl bg-remexo-500 flex items-center justify-center text-white shrink-0 shadow-lg shadow-remexo-500/30 overflow-hidden"><img src="/borek-hlava.PNG" alt="Bořek" class="w-full h-full object-contain p-1"></div><div><h3 class="text-2xl font-extrabold dark:text-white leading-tight">Asistent Bořek</h3><p class="text-remexo-600 dark:text-remexo-500 text-[11px] font-black uppercase tracking-widest mt-1">Příprava zakázky s umělou inteligencí</p></div></div>
-            <div id="popt-form" class="space-y-6 relative z-10">
+            <div class="popt-hlavicka mb-10 flex items-center gap-5 relative z-10 border-b border-slate-100 dark:border-slate-800 pb-6"><div class="popt-avatar w-16 h-16 rounded-2xl bg-remexo-500 flex items-center justify-center text-white shrink-0 shadow-lg shadow-remexo-500/30 overflow-hidden"><img src="/borek-hlava.PNG" alt="Bořek" class="w-full h-full object-contain p-1"></div><div><h3 class="popt-nadpis text-2xl font-extrabold dark:text-white leading-tight">Asistent Bořek</h3><p class="popt-podnadpis text-remexo-600 dark:text-remexo-500 text-[11px] font-black uppercase tracking-widest mt-1">Připraví zadání pro řemeslníky</p></div></div>
+            <div id="popt-form" class="popt-form space-y-6 relative z-10">
                 <div class="grid md:grid-cols-2 gap-6">
-                    <div class="flex flex-col"><label class="font-extrabold text-sm text-slate-700 dark:text-slate-300 mb-3 block">Co se pokazilo?</label><textarea id="popt-input" class="flex-1 w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 dark:text-white focus:ring-2 focus:ring-remexo-500 outline-none resize-none min-h-[180px] shadow-inner" placeholder="Opište svůj problém co nejpodrobněji..."></textarea></div>
+                    <div class="flex flex-col"><label class="popt-label font-extrabold text-sm text-slate-700 dark:text-slate-300 mb-3 block">Co se pokazilo?</label><textarea id="popt-input" class="popt-textarea flex-1 w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 dark:text-white focus:ring-2 focus:ring-remexo-500 outline-none resize-none min-h-[180px] shadow-inner" placeholder="Opište svůj problém co nejpodrobněji..."></textarea></div>
                     
                     <div class="flex flex-col">
-                        <label class="font-extrabold text-sm text-slate-700 dark:text-slate-300 mb-3 block">Fotky závady (až 5 fotek)</label>
-                        <div class="relative flex-1 min-h-[180px] group">
+                        <label class="popt-label font-extrabold text-sm text-slate-700 dark:text-slate-300 mb-3 block">Fotky závady (až 5 fotek)</label>
+                        <div class="popt-fotozona relative flex-1 min-h-[180px] group">
                             <input type="file" accept="image/*" multiple onchange="window.handlePhoto(this)" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-40">
                             <div id="photo-zone" class="w-full h-full border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-2xl flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-900 group-hover:border-remexo-500 group-hover:bg-remexo-50 dark:group-hover:bg-remexo-500/10 transition-all overflow-hidden relative z-10 shadow-inner">
-                                <i class="fa-solid fa-camera text-4xl mb-3 text-slate-300 dark:text-slate-500 group-hover:text-remexo-500 transition-colors"></i>
+                                <i class="popt-ikona fa-solid fa-camera text-4xl mb-3 text-slate-300 dark:text-slate-500 group-hover:text-remexo-500 transition-colors"></i>
                                 <p class="text-sm font-bold text-slate-500 group-hover:text-remexo-600 transition-colors">Klikněte pro nahrání</p>
-                                <p class="text-xs text-slate-400 mt-1">Max. 5 fotek</p>
+                                <p class="popt-hint text-xs text-slate-400 mt-1">Max. 5 fotek</p>
                             </div>
                             <div id="photo-gallery" class="hidden absolute inset-0 z-30 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-3 overflow-y-auto grid grid-cols-2 gap-2 content-start pointer-events-none"></div>
                         </div>
