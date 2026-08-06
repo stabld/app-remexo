@@ -144,6 +144,26 @@ V popisu zůstává jen město, aby šla poptávka umístit na mapu.
 > Pokud databázi zakládáš znovu nebo migruješ starší data, nezapomeň na krok 9
 > (tabulka a pravidla) a krok 10 (přesun kontaktů ze starých popisů).
 
+## Bezpečnost – co je a není prověřené
+
+**Prověřené a opravené:**
+
+* Kontakty na zákazníka jsou v chráněné tabulce, přístup hlídá databáze (krok 9).
+* RLS pravidla pro `requests`, `offers`, `messages`, `hodnoceni`, `oblibene` (krok 6).
+* Vkládání jmen a názvů poptávek do seznamu konverzací – dřív se daly propašovat
+  HTML značky a spustit cizí kód v prohlížeči druhého uživatele.
+* Endpoint `/api/borek-ai` vyžaduje přihlášení a má limity na počet i velikost
+  požadavků.
+
+**Neprověřené – tady se ještě nespoléhej na nic:**
+
+* Zbytek vykreslování mimo seznam konverzací. Prošel jsem jen ta místa, která
+  vkládají data přímo do HTML; systematický audit celého frontendu proběhlý není.
+* Storage (nahrané fotky) – jestli jdou stáhnout i cizí soubory přes přímý odkaz.
+* Rychlostní limity na zakládání poptávek a nabídek, tedy ochrana proti zahlcení.
+* Únik e-mailů přes chybové hlášky při přihlašování.
+* Aplikace neprošla žádným externím posouzením.
+
 ## Známé nedodělky
 
 **Escrow je v rozhraní, ale nefunguje.** Záložka Platby i dlaždice „V escrow"
