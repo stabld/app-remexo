@@ -84,8 +84,16 @@ window.doplnFotky = async function(korenovyPrvek) {
             .createSignedUrls(cesty, 3600);   // odkaz platí hodinu
         if (error || !data) throw error || new Error("bez odpovedi");
 
+        // Supabase podle verze vrací signedUrl nebo signedURL a path
+        // nemusí být vyplněná - proto oba názvy i záloha podle pořadí.
         const mapa = {};
-        data.forEach(z => { if (z && z.path && z.signedUrl) mapa[z.path] = z.signedUrl; });
+        data.forEach((z, i) => {
+            if (!z) return;
+            const url = z.signedUrl || z.signedURL || z.signedurl;
+            if (!url) return;
+            const klic = z.path || cesty[i];
+            if (klic) mapa[klic] = url;
+        });
 
         prvky.forEach(el => {
             const url = mapa[el.dataset.foto];
