@@ -269,6 +269,7 @@ window.initCustomer = function(name) {
     document.getElementById("header-cta").innerHTML = '<button onclick="window.goTab(\'new\',\'Nová poptávka\')" class="bg-remexo-500 hover:bg-remexo-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg transition hover:scale-105"><i class="fa-solid fa-hard-hat"></i> <span>Nová poptávka</span></button>';
     if (window.customerHTML) { document.getElementById("main-content").innerHTML = window.customerHTML(name); }
     window.goTab("dash","Nástěnka");
+    window.zobrazBorkaFab();
 };
 
 window.initCraftsman = function(name) {
@@ -277,6 +278,7 @@ window.initCraftsman = function(name) {
     document.getElementById("header-cta").innerHTML = "";
     if (window.craftsmanHTML) { document.getElementById("main-content").innerHTML = window.craftsmanHTML(name); }
     window.goTab("market","Tržiště zakázek");
+    window.zobrazBorkaFab();
 };
 
 // Bublina s počtem čekajících nabídek u záložky Moje poptávky
@@ -437,4 +439,10 @@ window.closeModal = function(id) {
         el.classList.add("hidden");
         document.body.style.overflow = "";
     }, 300);
+};
+
+// Plovoucí tlačítko Bořka se ukazuje až po přihlášení
+window.zobrazBorkaFab = function() {
+    const fab = document.getElementById("borek-fab");
+    if (fab) fab.classList.remove("hidden");
 };
