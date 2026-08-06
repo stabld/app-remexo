@@ -26,8 +26,10 @@
     <!-- Tailwind je předpřipravený do statického CSS.
          Dřív se sem tahal cdn.tailwindcss.com, což je JIT kompilátor:
          stáhne ~400 kB JS a CSS staví až v prohlížeči. Na mobilu to stálo vteřiny. -->
-    <link rel="stylesheet" href="tailwind.css">
+    <!-- Font Awesome MUSÍ být před tailwind.css. Nastavuje ikonám display:inline-block
+         a přebilo by to Tailwind .hidden - ikony měsíce a slunce se pak zobrazí obě naráz. -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="tailwind.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- Leaflet se načítá až při otevření mapy, viz window.nactiLeaflet() -->
