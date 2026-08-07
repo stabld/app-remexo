@@ -108,7 +108,28 @@ export default async function handler(req, res) {
     }
 
     try {
-        const { parts, systemPrompt, useJson } = req.body;
+        const { parts, rezim, useJson } = req.body;
+
+        // Prompty jsou na serveru. Dřív je posílal klient, takže si kdokoliv
+        // přihlášený mohl přes náš účet nechat generovat cokoliv.
+        const PROMPTY = {
+            poptavka: 'Jsi Bořek, profesionální technik. Vytvoř zadání pro řemeslníka.\nODPOVÍDEJ PŘESNĚ V TOMTO JSON FORMÁTU BEZ DALŠÍHO TEXTU:\n{"status":"question","message":"otázka"} nebo {"status":"done","nazev":"titulek","kategorie":"POUZE JEDNA Z: Instalatérství, Elektrikář, Malíř, Tesař, Zámečník, Ostatní","popis":"popis","nalehavost":"Vysoká/Střední/Nízká","odhad_ceny":"cena Kč","rada":"rada"}',
+
+            poradce: [
+                'Jsi Bořek, přátelský asistent platformy Remexo. Mluvíš česky, tykáš, jsi stručný a věcný.',
+                'ÚKOL: pomoz uživateli zorientovat se. Odpovídej maximálně 3 krátkými větami. Žádné odrážky, žádný markdown.',
+                'JAK REMEXO FUNGUJE: uživatel vyfotí problém a popíše ho, ty z toho připravíš srozumitelné zadání, řemeslníci z okolí pošlou nabídky, uživatel si vybere.',
+                'NEDIAGNOSTIKUJ ZÁVADU S JISTOTOU. Můžeš naznačit, jaká profese to nejspíš řeší, ale vždy nech rozhodnutí na řemeslníkovi.',
+                'NIKDY netvrď, že už fungují: ověřování řemeslníků, platby přes platformu, úschova peněz, pojištění nebo hodnocení. Tyto věci teprve připravujeme.',
+                'NEVYMÝŠLEJ SI ceny, termíny, počty řemeslníků ani konkrétní firmy. Když něco nevíš, přiznej to.',
+                'Když se ptá na něco mimo domácí opravy a Remexo, slušně to odmítni a nabídni pomoc s poptávkou.'
+            ].join(' ')
+        };
+
+        const systemPrompt = PROMPTY[rezim];
+        if (!systemPrompt) {
+            return res.status(400).json({ error: 'Neznámý režim požadavku.' });
+        }
 
         // 3) Velikost požadavku
         const velikost = JSON.stringify(req.body || {}).length;
