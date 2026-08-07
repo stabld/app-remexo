@@ -503,7 +503,12 @@ window.callGeminiAPI = async function(parts, rezim, useJson) {
 
     const res = await fetch('/api/borek-ai', { method:'POST', headers: hlavicky, body: JSON.stringify({parts, rezim, useJson}) });
     const data = await res.json();
-    if(!res.ok) throw new Error(data.error || 'API chyba');
+    if (!res.ok) {
+        const e = new Error(data.error || 'API chyba');
+        // Přetížení modelu není chyba aplikace - uživateli to řekneme jinak
+        e.pretizeno = !!data.pretizeno;
+        throw e;
+    }
     return data.text;
 };
 
@@ -608,7 +613,17 @@ window.processPopt = async function(text) {
             if(d.rada&&d.rada.trim()){document.getElementById("popt-tip-text").innerText=d.rada.replace(/[*]/g,"");document.getElementById("popt-tip").classList.remove("hidden");}
             document.getElementById("popt-result").classList.remove("hidden");
         }
-    } catch(err) { loading.classList.add("hidden"); replyArea.classList.remove("hidden"); window.showToast("Chyba AI", err.message, "error"); }
+    } catch(err) {
+        loading.classList.add("hidden"); replyArea.classList.remove("hidden");
+        // Tady se ztrácí zákazník uprostřed zakládání poptávky, tak mu řekneme,
+        // co se stalo, a hlavně že o rozepsaný text nepřijde.
+        if (err && err.pretizeno) {
+            window.showToast("Bořek je zavalený",
+                "Moc lidí se ptá naráz. Zkus to prosím za minutu, tvůj popis zůstal vyplněný.", "info");
+        } else {
+            window.showToast("Chyba AI", err.message, "error");
+        }
+    }
 };
 
 window.startAI = function() {
@@ -1686,9 +1701,11 @@ window.zeptejSeBorka = async function(prednastavenyDotaz) {
     } catch (e) {
         cekani.remove();
         window.borekVypis(
-            (e && e.message && e.message.indexOf('hodně lidem') > -1)
-                ? e.message
-                : 'Bořkovi se teď nedaří odpovědět. Zkus to prosím za chvíli, nebo rovnou zadej poptávku a on ti s ní pomůže.'
+            e && e.pretizeno
+                ? 'Bořek je zrovna zavalený, moc lidí se ptá naráz. Zkus to prosím za minutu.'
+                : (e && e.message && e.message.indexOf('hodně lidem') > -1)
+                    ? e.message
+                    : 'Bořkovi se teď nedaří odpovědět. Zkus to prosím za chvíli, nebo rovnou zadej poptávku a on ti s ní pomůže.'
         );
     } finally {
         window._borekPracuje = false;
