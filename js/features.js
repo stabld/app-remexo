@@ -565,7 +565,10 @@ window.appendChat = function(role, text, photos) {
             grid.className = "flex flex-wrap gap-2 mt-3";
             photos.forEach(p => {
                 const img = document.createElement("img");
-                img.src = "data:" + p.mime + ";base64," + p.base64;
+                // MIME přichází od uživatele (file.type). Do data: URL smí jen obrázek.
+                const bezpecnyMime = ["image/jpeg","image/png","image/webp","image/gif"].includes(p.mime)
+                    ? p.mime : "image/jpeg";
+                img.src = "data:" + bezpecnyMime + ";base64," + p.base64;
                 img.className = "w-16 h-16 object-cover rounded-lg border border-white/30 shadow-sm cursor-pointer hover:opacity-80 transition";
                 img.onclick = (e) => { e.stopPropagation(); window.openLightbox(img.src); };
                 grid.appendChild(img);
@@ -1742,7 +1745,11 @@ window.openPublicProfile = async function(userId) {
                 }
             }
             document.getElementById("pp-bio").innerText = data.bio || "Tento uživatel zatím nevyplnil žádný popis.";
-            document.getElementById("pp-avatar").src = data.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(data.full_name)}&backgroundColor=0f172a`;
+            // avatar_url si uživatel ukládá sám, proto pustíme jen https odkaz
+            const nahradniAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(data.full_name || "uzivatel")}&backgroundColor=0f172a`;
+            const avatar = (typeof data.avatar_url === "string" && /^https:\/\//i.test(data.avatar_url))
+                ? data.avatar_url : nahradniAvatar;
+            document.getElementById("pp-avatar").src = avatar;
         } else {
             document.getElementById("pp-name").innerText = "Profil nenalezen";
             document.getElementById("pp-bio").innerText = "Tento uživatel si ještě neuložil veřejný profil (Musí kliknout na 'Uložit změny v profilu').";
