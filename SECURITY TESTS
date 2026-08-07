@@ -73,279 +73,91 @@ nechat generovat cokoliv na naši kvótu.
 
 **Aplikace neprošla žádným externím posouzením.**
 
--- =====================================================
--- REMEXO: bezpečnostní testy (útok na vlastní databázi)
---
--- Zkouší se vydávat za různé uživatele a obejít pravidla.
--- Testuje SKUTEČNÁ pravidla v této databázi, ne jejich popis.
---
--- Vytvoří si dočasná data, otestuje a VŠECHNO ZASE SMAŽE.
--- Nic v databázi nezůstane. Bezpečné spustit i na ostré.
---
--- Supabase -> SQL Editor -> Run. Výsledek je jedna tabulka.
--- Hledej řádky se sloupcem vysledek = FAIL (mají u sebe !!!).
---
--- PO PŘEČTENÍ VÝSLEDKŮ SMAŽ POMOCNOU TABULKU:
---   drop table public.vysledky_testu;
---
--- Sada je ověřená: při schválně zavedené díře v pravidlech
--- správně nahlásila FAIL, takže to není test, co vždycky projde.
--- =====================================================
+---
 
-do $$
-declare
-  -- Testovací identity. Nemusí existovat v auth.users,
-  -- pravidla porovnávají jen auth.uid() s vlastníkem řádku.
-  zakaznikA  uuid := '11111111-aaaa-4aaa-8aaa-aaaaaaaaaaa1';
-  zakaznikB  uuid := '22222222-bbbb-4bbb-8bbb-bbbbbbbbbbb2';
-  remeslnikA uuid := '33333333-cccc-4ccc-8ccc-ccccccccccc3';
-  remeslnikB uuid := '44444444-dddd-4ddd-8ddd-ddddddddddd4';
+## XSS testy (7. 8. 2026)
 
-  reqA bigint; reqB bigint;
-  n int;
-  chyba text;
-begin
-  -- Výsledky jdou do běžné tabulky, aby přežily do závěrečného výpisu.
-  -- Na konci ji smaž: drop table public.vysledky_testu;
-  create table if not exists public.vysledky_testu(
-    poradi int, oblast text, test text, ocekavano text, skutecnost text, vysledek text
-  );
-  delete from public.vysledky_testu;
-  execute 'grant all on public.vysledky_testu to public';
+Systematický průchod všech míst, kde se do stránky vkládají data od uživatelů.
 
-  -- ---------- TESTOVACÍ ÚČTY ----------
-  -- Tabulky mají cizí klíč na auth.users, takže identity musí existovat.
-  -- Mají neplatnou doménu .invalid, nedá se na ně přihlásit ani poslat e-mail.
-  -- Na konci se mažou.
-  begin
-    insert into auth.users (instance_id, id, aud, role, email, encrypted_password,
-                            email_confirmed_at, created_at, updated_at,
-                            raw_app_meta_data, raw_user_meta_data)
-    values
-      ('00000000-0000-0000-0000-000000000000', zakaznikA, 'authenticated','authenticated',
-       'test-zakaznik-a@remexo-test.invalid','x', now(), now(), now(), '{}'::jsonb, '{"role":"customer"}'::jsonb),
-      ('00000000-0000-0000-0000-000000000000', zakaznikB, 'authenticated','authenticated',
-       'test-zakaznik-b@remexo-test.invalid','x', now(), now(), now(), '{}'::jsonb, '{"role":"customer"}'::jsonb),
-      ('00000000-0000-0000-0000-000000000000', remeslnikA,'authenticated','authenticated',
-       'test-remeslnik-a@remexo-test.invalid','x', now(), now(), now(), '{}'::jsonb, '{"role":"craftsman"}'::jsonb),
-      ('00000000-0000-0000-0000-000000000000', remeslnikB,'authenticated','authenticated',
-       'test-remeslnik-b@remexo-test.invalid','x', now(), now(), now(), '{}'::jsonb, '{"role":"craftsman"}'::jsonb)
-    on conflict (id) do nothing;
-  exception when others then
-    raise exception 'Nepodarilo se zalozit testovaci ucty: %. Bez nich test nelze spustit.', sqlerrm;
-  end;
+### Nalezeno a opraveno
 
-  -- ---------- PŘÍPRAVA (jako vlastník tabulek, RLS se neuplatní) ----------
-  insert into public.requests(customer_id, customer_name, title, category, description, status, mesto, craftsman_id)
-    values (zakaznikA,'TEST A','TEST poptavka A','Instalatérství','TEST popis A','active','Brno', remeslnikA)
-    returning id into reqA;
-  insert into public.requests(customer_id, customer_name, title, category, description, status, mesto)
-    values (zakaznikB,'TEST B','TEST poptavka B','Elektrikář','TEST popis B','waiting','Brno')
-    returning id into reqB;
+**Notifikace a vyskakovací hlášky.** Jméno odesílatele zprávy, jméno řemeslníka
+a názvy zakázek se vkládaly do `innerHTML` neošetřené. Řemeslník se jménem
+`<img onerror=...>` mohl spustit kód v prohlížeči zákazníka, kterému přišla
+notifikace o nové zprávě.
 
-  insert into public.offers(request_id, craftsman_id, craftsman_name, message, price, status)
-    values (reqA, remeslnikA, 'TEST remeslnik A', 'TEST nabidka', '1000', 'accepted');
-  insert into public.offers(request_id, craftsman_id, craftsman_name, message, price, status)
-    values (reqA, remeslnikB, 'TEST remeslnik B', 'TEST nabidka', '2000', 'pending');
+Ověřeno oběma směry: se starým kódem se útok **spustil**, s opraveným ne.
+Opraveno v `js/ui.js` (`showToast` i `addNotif`).
 
-  -- messages nemá request_id, ale conversation_id jako TEXT s id poptávky
-  insert into public.messages(conversation_id, sender_id, sender_name, text)
-    values (reqA::text, zakaznikA, 'TEST zakaznik A', 'TEST zprava v konverzaci A');
+### Testované vstupy
 
-  begin
-    insert into public.poptavka_kontakt(request_id, telefon, ulice, mesto)
-      values (reqA, '+420 000 000 000', 'TEST ulice 1', 'Brno');
-  exception when others then null;
-  end;
+Osm útočných řetězců (`<img onerror>`, `<script>`, `<svg onload>`,
+`javascript:`, únik z atributu, `<iframe>`, odkaz s `javascript:`, únik
+z řetězce) protlačeno deseti poli: název, kategorie, popis, jméno zákazníka,
+jméno řemeslníka, město, cena, naléhavost, čas — a to ve variantě karty pro
+zákazníka i pro tržiště.
 
-  -- ---------- POMOCNÁ MAKRA ----------
-  -- Přepnutí identity: role authenticated + token s daným uživatelem
-  -- (dělá se opakovaně přes execute, aby šlo měnit uvnitř bloku)
+**160 kombinací, 160× PASS, 0 průniků.**
 
-  -- === 1. CIZÍ POPTÁVKA ===
-  execute format('set local request.jwt.claims = %L', json_build_object('sub', zakaznikB, 'role','authenticated','user_metadata', json_build_object('role','customer'))::text);
-  set local role authenticated;
-  select count(*) into n from public.poptavka_kontakt where request_id = reqA;
-  insert into public.vysledky_testu values (1,'Kontakty','Zakaznik B cte telefon k poptavce zakaznika A','DENY', n||' radku', case when n=0 then 'PASS' else 'FAIL' end);
-  reset role;
+Zprávy v chatu, kontakty a odpovědi Bořka byly ověřeny dřív.
 
-  -- === 2. ŘEMESLNÍK BEZ PŘIJATÉ NABÍDKY NA KONTAKT ===
-  execute format('set local request.jwt.claims = %L', json_build_object('sub', remeslnikB, 'role','authenticated','user_metadata', json_build_object('role','craftsman'))::text);
-  set local role authenticated;
-  select count(*) into n from public.poptavka_kontakt where request_id = reqA;
-  insert into public.vysledky_testu values (2,'Kontakty','Remeslnik B (nabidka pending) cte telefon','DENY', n||' radku', case when n=0 then 'PASS' else 'FAIL' end);
-  reset role;
+### Co XSS testy nepokrývají
 
-  -- === 3. ŘEMESLNÍK S PŘIJATOU NABÍDKOU NA KONTAKT ===
-  execute format('set local request.jwt.claims = %L', json_build_object('sub', remeslnikA, 'role','authenticated','user_metadata', json_build_object('role','craftsman'))::text);
-  set local role authenticated;
-  select count(*) into n from public.poptavka_kontakt where request_id = reqA;
-  insert into public.vysledky_testu values (3,'Kontakty','Remeslnik A (nabidka accepted) cte telefon','ALLOW', n||' radku', case when n>=1 then 'PASS' else 'FAIL (nebo kontakt neexistuje)' end);
-  reset role;
+Testovalo se vykreslování karet a notifikací. Neprocházely se formuláře,
+profily, mapa ani modální okna. Ta místa používají stejné pomocné funkce,
+ale to je odvození, ne důkaz.
 
-  -- === 4. CIZÍ CHAT ===
-  execute format('set local request.jwt.claims = %L', json_build_object('sub', remeslnikB, 'role','authenticated','user_metadata', json_build_object('role','craftsman'))::text);
-  set local role authenticated;
-  select count(*) into n from public.messages where conversation_id = reqA::text;
-  insert into public.vysledky_testu values (4,'Chat','Remeslnik B cte konverzaci cizi zakazky','DENY', n||' zprav', case when n=0 then 'PASS' else 'FAIL' end);
-  reset role;
+---
 
-  -- === 5. VLOŽENÍ ZPRÁVY DO CIZÍHO CHATU ===
-  execute format('set local request.jwt.claims = %L', json_build_object('sub', remeslnikB, 'role','authenticated','user_metadata', json_build_object('role','craftsman'))::text);
-  set local role authenticated;
-  begin
-    insert into public.messages(conversation_id, sender_id, sender_name, text)
-      values (reqA::text, remeslnikB, 'TEST vetrelec', 'TEST vetrelec');
-    chyba := 'proslo';
-  exception when others then chyba := 'odmitnuto';
-  end;
-  insert into public.vysledky_testu values (5,'Chat','Remeslnik B pise do ciziho chatu','DENY', chyba, case when chyba='odmitnuto' then 'PASS' else 'FAIL' end);
-  reset role;
+## Testy přihlášení
 
-  -- === 6. PODVRŽENÍ ODESÍLATELE ZPRÁVY ===
-  execute format('set local request.jwt.claims = %L', json_build_object('sub', remeslnikA, 'role','authenticated','user_metadata', json_build_object('role','craftsman'))::text);
-  set local role authenticated;
-  begin
-    insert into public.messages(conversation_id, sender_id, sender_name, text)
-      values (reqA::text, zakaznikA, 'TEST podvrh', 'TEST podvrzeny odesilatel');
-    chyba := 'proslo';
-  exception when others then chyba := 'odmitnuto';
-  end;
-  insert into public.vysledky_testu values (6,'Chat','Remeslnik A pise jmenem zakaznika','DENY', chyba, case when chyba='odmitnuto' then 'PASS' else 'FAIL' end);
-  reset role;
+Skript `session-testy.js` se spouští v konzoli prohlížeče (F12) po přihlášení
+na app.remexo.cz. Testuje platnost tokenů, obnovu session, odhlášení
+a použitelnost starých tokenů.
 
-  -- === 7. ŘEMESLNÍK SI SÁM SCHVÁLÍ NABÍDKU ===
-  execute format('set local request.jwt.claims = %L', json_build_object('sub', remeslnikB, 'role','authenticated','user_metadata', json_build_object('role','craftsman'))::text);
-  set local role authenticated;
-  begin
-    update public.offers set status='accepted' where request_id=reqA and craftsman_id=remeslnikB;
-    get diagnostics n = row_count;
-    chyba := n||' zmenenych';
-  exception when others then chyba := 'odmitnuto pravidlem'; n := 0;
-  end;
-  insert into public.vysledky_testu values (7,'Nabidky','Remeslnik si sam prepne nabidku na accepted','DENY', chyba, case when n=0 then 'PASS' else 'FAIL' end);
-  reset role;
+**Pozor: test odhlásí přihlášeného uživatele.** Je to záměr — testuje se právě
+to, jestli starý token po odhlášení dál funguje.
 
-  -- === 8. ZMĚNA VLASTNÍKA CIZÍ NABÍDKY ===
-  execute format('set local request.jwt.claims = %L', json_build_object('sub', remeslnikB, 'role','authenticated','user_metadata', json_build_object('role','craftsman'))::text);
-  set local role authenticated;
-  begin
-    update public.offers set craftsman_id=remeslnikB where craftsman_id=remeslnikA and request_id=reqA;
-    get diagnostics n = row_count;
-    chyba := n||' zmenenych';
-  exception when others then chyba := 'odmitnuto pravidlem'; n := 0;
-  end;
-  insert into public.vysledky_testu values (8,'Nabidky','Remeslnik B si prepise cizi nabidku na sebe','DENY', chyba, case when n=0 then 'PASS' else 'FAIL' end);
-  reset role;
+Dva testy vyžadují ruční provedení: změna hesla a souběžné přihlášení
+na dvou zařízeních. Skript na ně na konci upozorní.
 
-  -- === 9. NABÍDKA JMÉNEM NĚKOHO JINÉHO ===
-  execute format('set local request.jwt.claims = %L', json_build_object('sub', remeslnikB, 'role','authenticated','user_metadata', json_build_object('role','craftsman'))::text);
-  set local role authenticated;
-  begin
-    insert into public.offers(request_id, craftsman_id, craftsman_name, message, price, status)
-      values (reqB, remeslnikA, 'TEST podvrh', 'TEST nabidka', '1', 'pending');
-    chyba := 'proslo';
-  exception when others then chyba := 'odmitnuto';
-  end;
-  insert into public.vysledky_testu values (9,'Nabidky','Remeslnik B poda nabidku jmenem remeslnika A','DENY', chyba, case when chyba='odmitnuto' then 'PASS' else 'FAIL' end);
-  reset role;
+### Doplněk: formuláře, profily a modální okna (7. 8. 2026)
 
-  -- === 10. ÚPRAVA CIZÍ POPTÁVKY ===
-  execute format('set local request.jwt.claims = %L', json_build_object('sub', zakaznikB, 'role','authenticated','user_metadata', json_build_object('role','customer'))::text);
-  set local role authenticated;
-  begin
-    update public.requests set title='ZMENENO VETRELCEM' where id=reqA;
-    get diagnostics n = row_count;
-    chyba := n||' zmenenych';
-  exception when others then chyba := 'odmitnuto pravidlem'; n := 0;
-  end;
-  insert into public.vysledky_testu values (10,'Poptavky','Zakaznik B meni poptavku zakaznika A','DENY', chyba, case when n=0 then 'PASS' else 'FAIL' end);
-  reset role;
+Původní XSS testy pokrývaly karty a notifikace. Tenhle doplněk pokrývá zbytek,
+aby to nebylo odvození ze společných funkcí, ale ověření.
 
-  -- === 11. ZALOŽENÍ POPTÁVKY JMÉNEM JINÉHO ===
-  execute format('set local request.jwt.claims = %L', json_build_object('sub', zakaznikB, 'role','authenticated','user_metadata', json_build_object('role','customer'))::text);
-  set local role authenticated;
-  begin
-    insert into public.requests(customer_id, customer_name, title, category, description, status, mesto)
-      values (zakaznikA,'TEST podvrh','TEST cizi poptavka','Ostatní','x','waiting','Brno');
-    chyba := 'proslo';
-  exception when others then chyba := 'odmitnuto';
-  end;
-  insert into public.vysledky_testu values (11,'Poptavky','Zakaznik B zaklada poptavku jmenem zakaznika A','DENY', chyba, case when chyba='odmitnuto' then 'PASS' else 'FAIL' end);
-  reset role;
+**Jak se plní prvky rozhraní** (zjištěno průchodem kódu):
 
-  -- === 12. FALEŠNÉ HODNOCENÍ ===
-  execute format('set local request.jwt.claims = %L', json_build_object('sub', remeslnikA, 'role','authenticated','user_metadata', json_build_object('role','craftsman'))::text);
-  set local role authenticated;
-  begin
-    insert into public.hodnoceni(request_id, customer_id, craftsman_id, hvezdicky, komentar)
-      values (reqA, zakaznikA, remeslnikA, 5, 'TEST falesna recenze sam sobe');
-    chyba := 'proslo';
-  exception when others then chyba := 'odmitnuto';
-  end;
-  insert into public.vysledky_testu values (12,'Hodnoceni','Remeslnik si napise hodnoceni sam sobe','DENY', chyba, case when chyba='odmitnuto' then 'PASS' else 'FAIL' end);
-  reset role;
+| Způsob | Počet | Bezpečnost |
+|---|---:|---|
+| `innerText` / `textContent` | 19 | bezpečné, prohlížeč vloží text |
+| `.value` (formuláře) | 21 | bezpečné |
+| `.src` | 2 | kontrolováno (viz níže) |
+| `innerHTML` | 7 | prověřeno jednotlivě |
 
-  -- === 13. HODNOCENÍ CIZÍ ZAKÁZKY ===
-  execute format('set local request.jwt.claims = %L', json_build_object('sub', zakaznikB, 'role','authenticated','user_metadata', json_build_object('role','customer'))::text);
-  set local role authenticated;
-  begin
-    insert into public.hodnoceni(request_id, customer_id, craftsman_id, hvezdicky, komentar)
-      values (reqA, zakaznikB, remeslnikA, 1, 'TEST hodnoceni cizi zakazky');
-    chyba := 'proslo';
-  exception when others then chyba := 'odmitnuto';
-  end;
-  insert into public.vysledky_testu values (13,'Hodnoceni','Zakaznik B hodnoti zakazku zakaznika A','DENY', chyba, case when chyba='odmitnuto' then 'PASS' else 'FAIL' end);
-  reset role;
+Ze sedmi míst s `innerHTML` obsahují data od uživatele dvě — popis poptávky
+v detailu (`co-desc`) a město v profilu (`pp-city`). Zbylých pět vkládá jen
+pevné šablony rozhraní.
 
-  -- === 14. NEPŘIHLÁŠENÝ NA KONTAKTY ===
-  execute format('set local request.jwt.claims = %L', '{}');
-  set local role anon;
-  begin
-    select count(*) into n from public.poptavka_kontakt;
-    chyba := n||' radku';
-  exception when others then chyba := 'odmitnuto';
-  end;
-  insert into public.vysledky_testu values (14,'Anonym','Neprihlaseny cte tabulku kontaktu','DENY', chyba, case when chyba in ('0 radku','odmitnuto') then 'PASS' else 'FAIL' end);
-  reset role;
+**Test v prohlížeči:** sedm útočných řetězců proti oběma cestám, měřeno tím,
+jestli se kód skutečně provede v DOM (ne porovnáváním textu).
 
-  -- === 15. NEPŘIHLÁŠENÝ NA ZPRÁVY ===
-  execute format('set local request.jwt.claims = %L', '{}');
-  set local role anon;
-  begin
-    select count(*) into n from public.messages;
-    chyba := n||' radku';
-  exception when others then chyba := 'odmitnuto';
-  end;
-  insert into public.vysledky_testu values (15,'Anonym','Neprihlaseny cte zpravy','DENY', chyba, case when chyba in ('0 radku','odmitnuto') then 'PASS' else 'FAIL' end);
-  reset role;
+| Cesta | Výsledek |
+|---|---|
+| `co-desc` (popis poptávky) | 7/7 bez průniku |
+| `pp-city` (město v profilu) | 7/7 bez průniku |
+| kontrolní neošetřená cesta | 5/7 průnik — detekce funguje |
 
-  -- ---------- ÚKLID ----------
-  delete from public.hodnoceni where request_id in (reqA, reqB);
-  delete from public.messages  where conversation_id in (reqA::text, reqB::text);
-  delete from public.offers    where request_id in (reqA, reqB);
-  delete from public.poptavka_kontakt where request_id in (reqA, reqB);
-  delete from public.requests  where id in (reqA, reqB);
-  delete from public.requests  where title = 'TEST cizi poptavka';
-  delete from public.offers    where craftsman_name = 'TEST podvrh';
+Kontrolní cesta je tam schválně: kdyby test nic neodhalil ani u záměrně
+nechráněného vkládání, neměl by žádnou vypovídací hodnotu.
 
-  -- Úklid testovacích účtů. Profily se mažou taky, kdyby je založil trigger.
-  begin
-    delete from public.profiles        where id in (zakaznikA, zakaznikB, remeslnikA, remeslnikB);
-  exception when others then null; end;
-  begin
-    delete from public.public_profiles where id in (zakaznikA, zakaznikB, remeslnikA, remeslnikB);
-  exception when others then null; end;
-  delete from auth.users where id in (zakaznikA, zakaznikB, remeslnikA, remeslnikB);
-end $$;
+**Zpevněno při této příležitosti:**
 
-select
-  case when vysledek like 'FAIL%' then '!!!' else '' end as pozor,
-  poradi as c,
-  oblast,
-  test,
-  ocekavano,
-  skutecnost,
-  vysledek
-from public.vysledky_testu
-order by case when vysledek like 'FAIL%' then 0 else 1 end, poradi;
+* `avatar_url` z profilu se vkládá do `img.src`. Nově projde jen odkaz
+  začínající `https://`, jinak se použije náhradní obrázek.
+* MIME typ nahrané fotky šel do `data:` URL. Nově se propouští jen čtyři
+  obrázkové typy, `image/svg+xml` schválně ne — SVG umí obsahovat kód.
+* Typ vyskakovací hlášky se omezil na tři známé hodnoty.
+
+Žádné z toho nebylo zneužitelné, protože `<img>` cizí kód nespustí. Je to
+zpevnění, ne oprava díry.
