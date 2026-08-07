@@ -27,7 +27,8 @@ window.escapeHtml = function(s) {
 };
 
 window.showToast = function(title, message, type, isMessage) {
-    type = type || 'success';
+    // Typ řídí CSS třídu, takže povolujeme jen známé hodnoty
+    type = ['success','info','error'].includes(type) ? type : 'success';
     const container = document.getElementById('toast-container');
     if (!container) return;
     const icons = { success: 'fa-check', info: 'fa-bell', error: 'fa-exclamation-triangle' };
