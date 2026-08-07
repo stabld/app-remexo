@@ -1207,6 +1207,9 @@ window.refreshCraftsmanJobs = function() {
         }
         d.innerHTML='<div class="flex items-start justify-between mb-4"><div><h4 class="font-extrabold text-lg dark:text-white leading-tight">' + window.escapeHtml(job.title || 'Zakázka') + '</h4><p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1.5">' + job.time + '</p></div>' + badge + '</div>' + zruseniHtml + kontaktyHtml + dokonceniHtml + '<button onclick="window.activeChatId=\'' + job.requestId + '\'; window.goTab(\'c-messages\',\'Zprávy\'); setTimeout(()=>window.openConversation(\'' + job.requestId + '\',\'Zákazník\',\'customer' + job.requestId + '\'),300);" class="text-sm font-bold text-remexo-500 hover:text-remexo-600 transition flex items-center gap-2"><i class="fa-regular fa-comment-dots"></i> Napsat zákazníkovi</button>';
         list.appendChild(d);
+        // Bez tohohle zůstane u fotky jen prázdné místo - odkazy do Storage
+        // se doplňují až po vykreslení, protože jsou asynchronní.
+        window.doplnFotky(d);
     });
 };
 
