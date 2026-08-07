@@ -489,7 +489,7 @@ window.saveProfile = async function(btnNode) {
     finally { btnNode.innerHTML = orig; btnNode.disabled = false; }
 };
 
-window.callGeminiAPI = async function(parts, systemPrompt, useJson) {
+window.callGeminiAPI = async function(parts, rezim, useJson) {
     // Endpoint běží na veřejné adrese, takže si ověřuje, kdo se ptá.
     // Bez tokenu vrátí 401 a Gemini se vůbec nezavolá.
     let token = null;
@@ -501,7 +501,7 @@ window.callGeminiAPI = async function(parts, systemPrompt, useJson) {
     const hlavicky = { 'Content-Type': 'application/json' };
     if (token) hlavicky['Authorization'] = 'Bearer ' + token;
 
-    const res = await fetch('/api/borek-ai', { method:'POST', headers: hlavicky, body: JSON.stringify({parts, systemPrompt, useJson}) });
+    const res = await fetch('/api/borek-ai', { method:'POST', headers: hlavicky, body: JSON.stringify({parts, rezim, useJson}) });
     const data = await res.json();
     if(!res.ok) throw new Error(data.error || 'API chyba');
     return data.text;
@@ -589,7 +589,7 @@ window.processPopt = async function(text) {
         });
     }
     try {
-        const raw = await window.callGeminiAPI(parts, sp, true);
+        const raw = await window.callGeminiAPI(parts, 'poptavka', true);
         let clean = raw.replace(/```json/gi,"").replace(/```/g,"").trim();
         const s=clean.indexOf("{"), e=clean.lastIndexOf("}");
         if(s!==-1&&e!==-1) clean=clean.substring(s,e+1);
@@ -1623,16 +1623,8 @@ window.aktualizujCtaTrziste = function(pocet) {
 // ---- BOŘEK JAKO PORADCE NA NÁSTĚNCE ----
 // Naviguje uživatele, který neví, co má dělat. Nediagnostikuje závady
 // a netvrdí, že fungují věci, které zatím nemáme spuštěné.
-window.BOREK_PORADCE_PROMPT = [
-    'Jsi Bořek, přátelský asistent platformy Remexo. Mluvíš česky, tykáš, jsi stručný a věcný.',
-    'ÚKOL: pomoz uživateli zorientovat se. Odpovídej maximálně 3 krátkými větami. Žádné odrážky, žádný markdown.',
-    'JAK REMEXO FUNGUJE: uživatel vyfotí problém a popíše ho, ty z toho připravíš srozumitelné zadání, řemeslníci z okolí pošlou nabídky, uživatel si vybere.',
-    'NEDIAGNOSTIKUJ ZÁVADU S JISTOTOU. Můžeš naznačit, jaká profese to nejspíš řeší, ale vždy nech rozhodnutí na řemeslníkovi.',
-    'NIKDY netvrď, že už fungují: ověřování řemeslníků, platby přes platformu, úschova peněz, pojištění nebo hodnocení. Tyto věci teprve připravujeme. Když se na ně někdo zeptá, řekni to upřímně.',
-    'NEVYMÝŠLEJ SI ceny, termíny, počty řemeslníků ani konkrétní firmy. Když něco nevíš, přiznej to.',
-    'Když se ptá na něco mimo domácí opravy a Remexo, slušně to odmítni a nabídni pomoc s poptávkou.',
-    'Pokud dává smysl, zakonči doporučením zadat poptávku.'
-].join(' ');
+// Systémové prompty jsou nově na serveru v api/borek-ai.js.
+// Klient posílá jen název režimu ('poptavka' / 'poradce').
 
 window.otevriBorka = function() {
     window.openModal('borek-modal');
@@ -1683,7 +1675,7 @@ window.zeptejSeBorka = async function(prednastavenyDotaz) {
     if (vstup && !prednastavenyDotaz) vstup.value = '';
 
     try {
-        const text = await window.callGeminiAPI([{ text: dotaz }], window.BOREK_PORADCE_PROMPT, false);
+        const text = await window.callGeminiAPI([{ text: dotaz }], 'poradce', false);
         const cisty = String(text || '').trim();
         if (!cisty) throw new Error('prázdná odpověď');
         cekani.remove();
