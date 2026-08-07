@@ -34,8 +34,8 @@ window.showToast = function(title, message, type, isMessage) {
     const toast = document.createElement('div');
     toast.className = 'toast';
     toast.innerHTML = '<div class="toast-icon ' + type + '"><i class="fa-solid ' + (icons[type]||'fa-bell') + '"></i></div>' +
-        '<div style="flex:1;min-width:0;"><div class="toast-title">' + title + '</div>' +
-        (message ? '<div class="toast-msg">' + message + '</div>' : '') + '</div>' +
+        '<div style="flex:1;min-width:0;"><div class="toast-title">' + window.escapeHtml(title) + '</div>' +
+        (message ? '<div class="toast-msg">' + window.escapeHtml(message) + '</div>' : '') + '</div>' +
         '<button class="toast-close" onclick="this.closest(\'.toast\').remove()"><i class="fa-solid fa-times"></i></button>' +
         '<div class="toast-progress"></div>';
     container.appendChild(toast);
@@ -79,7 +79,7 @@ window.addNotif = function(title, message, isMessage) {
     if (list) {
         const empty = document.getElementById('notif-empty'); if (empty) empty.remove();
         const item = document.createElement('div'); item.className = 'notif-item';
-        item.innerHTML = `<div class="notif-dot"></div><div><div class="notif-item-title">${title}</div><div class="notif-item-msg">${message}</div></div><div style="margin-left:auto;font-size:11px;color:#94a3b8;flex-shrink:0">${window.notifItems[0].time}</div>`;
+        item.innerHTML = `<div class="notif-dot"></div><div><div class="notif-item-title">${window.escapeHtml(title)}</div><div class="notif-item-msg">${window.escapeHtml(message)}</div></div><div style="margin-left:auto;font-size:11px;color:#94a3b8;white-space:nowrap;">${window.escapeHtml(window.notifItems[0].time)}</div>`;
         list.insertBefore(item, list.firstChild);
     }
 };
