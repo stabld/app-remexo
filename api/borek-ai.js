@@ -184,22 +184,43 @@ export default async function handler(req, res) {
             payload.generationConfig.responseMimeType = 'application/json';
         }
 
-        const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,
-            {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-goog-api-key': apiKey
-                },
-                body: JSON.stringify(payload)
-            }
-        );
+        // Gemini občas vrátí 503 (přetížení) nebo 429 (příliš mnoho požadavků).
+        // Bývá to otázka vteřin, tak to zkusíme znovu, než uživatele odmítneme.
+        // Na Bořkovi visí zakládání poptávky - kdo dostane chybu, většinou se nevrátí.
+        const POKUSU = 3;
+        let response, data;
 
-        const data = await response.json();
+        for (let pokus = 1; pokus <= POKUSU; pokus++) {
+            response = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-goog-api-key': apiKey
+                    },
+                    body: JSON.stringify(payload)
+                }
+            );
+
+            data = await response.json();
+            if (response.ok) break;
+
+            const doCasuPrejde = response.status === 503 || response.status === 429 || response.status >= 500;
+            if (!doCasuPrejde || pokus === POKUSU) break;
+
+            // 1s, 2s, 4s - ať do přetíženého modelu nebušíme
+            await new Promise(r => setTimeout(r, 1000 * Math.pow(2, pokus - 1)));
+        }
 
         if (!response.ok) {
-            return res.status(response.status).json({ error: data.error?.message || 'Chyba od API' });
+            const pretizeno = response.status === 503 || response.status === 429;
+            return res.status(pretizeno ? 503 : response.status).json({
+                error: pretizeno
+                    ? 'Bořek je zrovna zavalený, model má nával. Zkus to prosím za minutu.'
+                    : (data.error?.message || 'Chyba od API'),
+                pretizeno: pretizeno
+            });
         }
 
         const candidate = data.candidates?.[0];
