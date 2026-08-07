@@ -67,9 +67,14 @@ window.extractPhotoFromDesc = function(rawDesc) {
 // prázdné místo a odkaz se doplní až potom.
 window.FOTKA_TRIDY = "w-full h-24 object-cover rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm cursor-pointer hover:opacity-80 transition bg-slate-100 dark:bg-slate-800";
 
-window.fotkaMisto = function(cesta) {
-    return '<img data-foto="' + window.escapeHtml(cesta) + '" alt="Fotka závady" class="' + window.FOTKA_TRIDY + '">';
+window.fotkaMisto = function(cesta, tridy) {
+    return '<img data-foto="' + window.escapeHtml(cesta) + '" alt="Fotka závady" class="' + (tridy || window.FOTKA_TRIDY) + '">';
 };
+
+// Menší čtvercový náhled do řádku. Velká varianta se hodí do mřížky,
+// kde jsou fotky vedle sebe; samostatná fotka roztažená přes celou
+// šířku se ošklivě ořízne.
+window.FOTKA_TRIDY_NAHLED = "w-24 h-24 object-cover rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 cursor-pointer hover:opacity-80 transition";
 
 window.doplnFotky = async function(korenovyPrvek) {
     if (!window.sb) return;
@@ -1164,7 +1169,7 @@ window.refreshCraftsmanJobs = function() {
                 : [];
 
             // Fotky závady patří řemeslníkovi, který zakázku dostal
-            const fotkyZeStorage = (rozdeleno.soubory || []).map(c => window.fotkaMisto(c)).join("");
+            const fotkyZeStorage = (rozdeleno.soubory || []).map(c => window.fotkaMisto(c, window.FOTKA_TRIDY_NAHLED)).join("");
             const fotkyHtml = ((rozdeleno.photos || []).length || fotkyZeStorage)
                 ? '<div class="flex flex-wrap gap-2 mt-3">'
                     + fotkyZeStorage
