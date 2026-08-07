@@ -5,6 +5,57 @@
 // Starou podobu čteme kvůli poptávkám, které vznikly dřív. Nové se už neukládají.
 // Nahraje fotky poptávky do neveřejného bucketu "poptavky".
 // Vrací seznam cest, které se uloží do popisu jako ||FOTO||<cesta>.
+// ---- RUČNÍ ZADÁNÍ POPTÁVKY ----
+// Bez tohoto by při výpadku Gemini nešlo poptávku zadat vůbec.
+// Vyplní stejná pole, která jinak plní Bořek, takže dál pokračuje
+// úplně stejný postup včetně fotek a kontaktů.
+window.prepniNaRucni = function() {
+    const rucni = document.getElementById("popt-rucni");
+    const chat  = document.getElementById("popt-form");
+    if (!rucni) return;
+    const skryto = rucni.classList.contains("hidden");
+    rucni.classList.toggle("hidden", !skryto);
+    if (chat) chat.classList.toggle("hidden", skryto);
+    if (skryto) {
+        const vstup = document.getElementById("rucni-nazev");
+        if (vstup) vstup.focus();
+    }
+};
+
+window.potvrditRucni = function() {
+    const nazev = (document.getElementById("rucni-nazev") || {}).value || "";
+    const kat   = (document.getElementById("rucni-kat")   || {}).value || "Ostatní";
+    const popis = (document.getElementById("rucni-popis") || {}).value || "";
+
+    if (nazev.trim().length < 5) {
+        window.showToast("Chybí název", "Napište prosím krátký název, alespoň 5 znaků.", "error");
+        return;
+    }
+    if (popis.trim().length < 20) {
+        window.showToast("Popis je moc krátký",
+            "Popište závadu podrobněji, ať řemeslník ví, do čeho jde. Alespoň 20 znaků.", "error");
+        return;
+    }
+
+    const nastav = (id, hodnota) => {
+        const el = document.getElementById(id);
+        if (el) el.innerText = hodnota;
+    };
+    nastav("r-nazev", nazev.trim());
+    nastav("r-kat",   kat);
+    nastav("r-popis", popis.trim());
+    nastav("r-nal",   "Střední");
+    nastav("r-cena",  "Dohodou");
+
+    const rucni = document.getElementById("popt-rucni");
+    if (rucni) rucni.classList.add("hidden");
+    const vysledek = document.getElementById("popt-result");
+    if (vysledek) {
+        vysledek.classList.remove("hidden");
+        vysledek.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+};
+
 window.nahrajFotkyPoptavky = async function(idPoptavky, fotky) {
     if (!window.sb || !idPoptavky || !fotky || !fotky.length) return [];
     const cesty = [];
@@ -490,8 +541,40 @@ window.saveProfile = async function(btnNode) {
         if (window.PENDING_POPTAVKA && window.applyPendingPoptavka) {
             setTimeout(() => window.applyPendingPoptavka(), 800);
         }
-    } catch(e) { window.showToast("Chyba ukládání", e.message, "error"); }
+    } catch(e) {
+        if (!window.resitZtracenePrihlaseni(e)) {
+            window.showToast("Chyba ukládání", e.message, "error");
+        }
+    }
     finally { btnNode.innerHTML = orig; btnNode.disabled = false; }
+};
+
+// Když vyprší nebo se zneplatní přihlášení (typicky po změně hesla nebo
+// odhlášení na jiném zařízení), Supabase vrátí technickou hlášku typu
+// "Auth session missing". Uživatel z ní nepozná, co se stalo.
+window.jePotrebaZnovuPrihlasit = function(e) {
+    const t = String((e && (e.message || e.error_description)) || "").toLowerCase();
+    return t.includes("session missing")
+        || t.includes("session_not_found")
+        || t.includes("jwt expired")
+        || t.includes("invalid claim")
+        || t.includes("refresh_token_not_found")
+        || t.includes("not authenticated");
+};
+
+window.resitZtracenePrihlaseni = function(e) {
+    if (!window.jePotrebaZnovuPrihlasit(e)) return false;
+    window.showToast(
+        "Přihlášení vypršelo",
+        "Nejspíš jsi změnil heslo nebo se odhlásil na jiném zařízení. Přihlas se prosím znovu.",
+        "info"
+    );
+    // Necháme uživatele hlášku přečíst, teprve pak ho vrátíme na přihlášení
+    setTimeout(async () => {
+        try { await window.sb.auth.signOut(); } catch (chyba) {}
+        window.location.reload();
+    }, 2500);
+    return true;
 };
 
 window.callGeminiAPI = async function(parts, rezim, useJson) {
