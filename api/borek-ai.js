@@ -252,6 +252,15 @@ export default async function handler(req, res) {
                     const cistyText = String(text || '')
                         .replace(/```json/gi, '').replace(/```/g, '').trim();
 
+                    // Když to začíná složenou závorkou, je to rozepsaný JSON,
+                    // který se nedokončil. Ukázat ho uživateli by bylo horší
+                    // než přiznat chybu.
+                    if (cistyText.startsWith('{') || cistyText.startsWith('[')) {
+                        return res.status(500).json({
+                            error: 'Bořkovi se odpověď nedokončila. Zkus popsat závadu stručněji, nebo vyplň poptávku ručně.'
+                        });
+                    }
+
                     if (cistyText) {
                         text = JSON.stringify({ status: 'question', message: cistyText.slice(0, 600) });
                     } else {
