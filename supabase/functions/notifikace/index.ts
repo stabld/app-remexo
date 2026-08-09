@@ -94,6 +94,15 @@ Deno.serve(async (req) => {
       cena ? ` za ${esc(cena)}` : ""
     }.<br><br>Podívej se na ni a rozhodni se, jestli ti sedí.`;
     tlacitko = "Zobrazit nabídku";
+  } else if (udalost === "zakazka_hotova") {
+    // kategorie nese informaci, komu píšeme
+    const zakaznikovi = kategorie === "zakaznik";
+    predmet = `Zakázka dokončena: ${zkratit(nazev, 45)}`;
+    nadpis = zakaznikovi ? "Řemeslník označil práci za hotovou" : "Zákazník potvrdil dokončení";
+    text = zakaznikovi
+      ? `U zakázky <strong>${esc(nazev)}</strong> je hotovo.<br><br>Zkontroluj práci a potvrď dokončení. Pak můžeš řemeslníka ohodnotit — pomůže to dalším lidem při výběru.`
+      : `Zákazník potvrdil dokončení zakázky <strong>${esc(nazev)}</strong>.<br><br>Díky za odvedenou práci.`;
+    tlacitko = "Zobrazit zakázku";
   } else {
     return odpoved(400, { chyba: "Neznámá událost." });
   }
