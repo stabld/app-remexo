@@ -54,6 +54,8 @@ window.potvrditRucni = function() {
         vysledek.classList.remove("hidden");
         vysledek.scrollIntoView({ behavior: "smooth", block: "start" });
     }
+    // I ruční cesta vede do stejného kroku s adresou
+    if (window.vykresliGalerii) window.vykresliGalerii("photo-gallery-finalize", "photo-zone-finalize");
 };
 
 window.nahrajFotkyPoptavky = async function(idPoptavky, fotky) {
@@ -600,6 +602,35 @@ window.callGeminiAPI = async function(parts, rezim, useJson) {
     return data.text;
 };
 
+// Fotky se nahrávají u Bořka, ale druhá zóna v kroku s adresou
+// zůstávala prázdná - lidé je proto nahrávali podruhé a měli je dvakrát.
+// Tohle do ní vykreslí to, co už nahrané je.
+window.vykresliGalerii = function(galleryId, zoneId) {
+    const gallery = document.getElementById(galleryId);
+    const zone = document.getElementById(zoneId);
+    if (!gallery) return;
+
+    const fotky = window.poptPhotos || [];
+    gallery.innerHTML = "";
+
+    if (!fotky.length) {
+        gallery.classList.add("hidden");
+        if (zone) zone.classList.remove("hidden");
+        return;
+    }
+
+    fotky.forEach(f => {
+        const img = document.createElement("img");
+        img.src = "data:" + (f.mime || "image/jpeg") + ";base64," + f.base64;
+        img.className = "w-full h-20 object-cover rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 pointer-events-auto cursor-pointer";
+        img.onclick = (e) => { e.stopPropagation(); window.openLightbox(img.src); };
+        gallery.appendChild(img);
+    });
+
+    gallery.classList.remove("hidden");
+    if (zone) zone.classList.add("hidden");
+};
+
 window.handlePhoto = async function(input, galleryId, zoneId) {
     galleryId = galleryId || "photo-gallery";
     zoneId = zoneId || "photo-zone";
@@ -700,6 +731,8 @@ window.processPopt = async function(text) {
             document.getElementById("r-popis").innerText=d.popis.replace(/[*]/g,"");
             if(d.rada&&d.rada.trim()){document.getElementById("popt-tip-text").innerText=d.rada.replace(/[*]/g,"");document.getElementById("popt-tip").classList.remove("hidden");}
             document.getElementById("popt-result").classList.remove("hidden");
+            // Ať uživatel vidí, že fotky už nahrané má
+            window.vykresliGalerii("photo-gallery-finalize", "photo-zone-finalize");
         }
     } catch(err) {
         loading.classList.add("hidden"); replyArea.classList.remove("hidden");
