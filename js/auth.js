@@ -81,10 +81,23 @@ window.doRegister = async function() {
     const btn = document.getElementById("btn-do-reg");
     btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-2"></i>Vytvářím...'; btn.disabled = true;
     try {
-        const { error } = await window.sb.auth.signUp({ email: document.getElementById("reg-email").value, password: password, options: { data: { full_name: document.getElementById("reg-name").value, role: window.APP_ROLE } } });
+        const emailReg = document.getElementById("reg-email").value;
+        const { data, error } = await window.sb.auth.signUp({ email: emailReg, password: password, options: { data: { full_name: document.getElementById("reg-name").value, role: window.APP_ROLE } } });
         if (error) throw error;
-        window.showOk("Účet vytvořen! Nyní se přihlaste.");
-        setTimeout(() => window.switchTab("login"), 1800);
+
+        // Když je zapnuté potvrzování e-mailu, Supabase nevrátí session.
+        // Bez tohohle rozlišení bychom uživatele posílali na přihlášení,
+        // které mu bez potvrzení stejně neprojde.
+        const cekaNaPotvrzeni = !data || !data.session;
+
+        if (cekaNaPotvrzeni) {
+            window.showOk("Poslali jsme ti e-mail na " + emailReg
+                + ". Otevři ho a klikni na odkaz, tím účet aktivuješ. Kdyby nedorazil, mrkni do spamu.");
+            setTimeout(() => window.switchTab("login"), 6000);
+        } else {
+            window.showOk("Účet vytvořen! Nyní se přihlaste.");
+            setTimeout(() => window.switchTab("login"), 1800);
+        }
     } catch(e) { window.showErr("Chyba: " + e.message); }
     finally { btn.innerHTML = "Vytvořit účet"; btn.disabled = false; }
 };
@@ -111,7 +124,15 @@ window.doLogin = async function() {
 
         const name = data.user.user_metadata?.full_name || "Uživatel";
         setTimeout(() => window.launchApp(window.APP_ROLE, name), 900);
-    } catch(e) { window.showErr("Špatný e-mail nebo heslo."); }
+    } catch(e) {
+        // Nepotvrzený účet vypadá jako špatné heslo, ale řeší se úplně jinak
+        const t = String((e && e.message) || "").toLowerCase();
+        if (t.includes("not confirmed")) {
+            window.showErr("Účet ještě není aktivovaný. Otevři e-mail, který jsme ti poslali, a klikni na odkaz. Kdyby nedorazil, mrkni do spamu.");
+        } else {
+            window.showErr("Špatný e-mail nebo heslo.");
+        }
+    }
     finally { btn.innerHTML = "Přihlásit se"; btn.disabled = false; }
 };
 
