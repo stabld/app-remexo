@@ -246,7 +246,19 @@ export default async function handler(req, res) {
                     JSON.parse(opraveno);
                     text = opraveno;
                 } catch (e2) {
-                    return res.status(500).json({ error: 'AI vrátila odpověď v nečitelném formátu. Zkuste to prosím znovu.' });
+                    // Model občas odpoví běžnou větou místo JSON. Není důvod
+                    // kvůli tomu shodit celý průchod - vezmeme to jako otázku
+                    // a uživatel může odpovědět dál.
+                    const cistyText = String(text || '')
+                        .replace(/```json/gi, '').replace(/```/g, '').trim();
+
+                    if (cistyText) {
+                        text = JSON.stringify({ status: 'question', message: cistyText.slice(0, 600) });
+                    } else {
+                        return res.status(500).json({
+                            error: 'Bořek neodpověděl srozumitelně. Zkus to prosím znovu, nebo vyplň poptávku ručně.'
+                        });
+                    }
                 }
             }
         }
