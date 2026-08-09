@@ -113,7 +113,35 @@ window.customerHTML = function(name) {
                 <div id="popt-reply-area" class="hidden flex gap-3"><input type="text" id="popt-reply" onkeypress="if(event.key==='Enter')window.replyAI()" class="flex-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-6 py-4 focus:ring-2 focus:ring-remexo-500 outline-none dark:text-white shadow-sm" placeholder="Odpovězte Bořkovi..."><button onclick="window.replyAI()" class="bg-remexo-500 hover:bg-remexo-600 text-white px-8 py-4 rounded-2xl font-bold transition hover:scale-105 shadow-lg"><i class="fa-solid fa-paper-plane"></i></button></div>
             </div>
             <div id="popt-loading" class="hidden mt-12 text-center relative z-10 py-10"><div class="relative w-20 h-20 mx-auto mb-6"><div class="absolute inset-0 border-4 border-slate-100 dark:border-slate-800 rounded-full"></div><div class="absolute inset-0 border-4 border-remexo-500 rounded-full border-t-transparent animate-spin"></div><i class="fa-solid fa-microchip absolute inset-0 m-auto flex items-center justify-center text-2xl text-remexo-500" style="line-height:5rem"></i></div><p class="font-extrabold text-slate-600 dark:text-slate-300 text-lg">Bořek analyzuje data...</p><p class="text-slate-400 text-sm mt-2">Vytváříme profi zadání pro řemeslníky.</p></div>
-            <div id="popt-result" class="hidden mt-10 relative z-10">
+            <button type="button" onclick="window.prepniNaRucni()" class="w-full text-center text-sm font-bold text-slate-500 dark:text-slate-400 hover:text-remexo-500 py-3 transition">
+            Nechce se ti psát s Bořkem? Vyplň poptávku ručně &rarr;
+        </button>
+
+        <div id="popt-rucni" class="hidden bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-3xl p-4 lg:p-6 mb-4 space-y-3">
+            <p class="text-sm text-slate-500 dark:text-slate-400">Vyplň to sám. Řemeslníci uvidí přesně to, co napíšeš.</p>
+            <div>
+                <label class="popt-label font-extrabold text-sm text-slate-700 dark:text-slate-300 mb-1.5 block">Krátký název</label>
+                <input id="rucni-nazev" type="text" maxlength="120" placeholder="Např. Kape kohoutek v koupelně"
+                    class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-remexo-500 dark:text-white">
+            </div>
+            <div>
+                <label class="popt-label font-extrabold text-sm text-slate-700 dark:text-slate-300 mb-1.5 block">Koho potřebuješ</label>
+                <select id="rucni-kat" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-remexo-500 dark:text-white">
+                    <option>Instalatérství</option><option>Elektrikář</option><option>Malíř</option>
+                    <option>Tesař</option><option>Zámečník</option><option selected>Ostatní</option>
+                </select>
+            </div>
+            <div>
+                <label class="popt-label font-extrabold text-sm text-slate-700 dark:text-slate-300 mb-1.5 block">Co se pokazilo</label>
+                <textarea id="rucni-popis" rows="4" maxlength="2000" placeholder="Popiš závadu co nejpodrobněji. Čím víc detailů, tím přesnější nabídku dostaneš."
+                    class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-remexo-500 resize-none dark:text-white"></textarea>
+            </div>
+            <button type="button" onclick="window.potvrditRucni()" class="w-full bg-remexo-dark dark:bg-remexo-500 hover:bg-slate-800 dark:hover:bg-remexo-600 text-white py-4 rounded-2xl font-bold transition">
+                Pokračovat
+            </button>
+        </div>
+
+        <div id="popt-result" class="hidden mt-10 relative z-10">
                 <div id="popt-tip" class="hidden mb-8 bg-remexo-50 dark:bg-remexo-500/10 border border-remexo-200 dark:border-remexo-500/30 rounded-2xl p-6 shadow-sm"><div class="flex gap-4"><div class="w-10 h-10 rounded-full bg-white dark:bg-remexo-500/20 text-remexo-500 flex items-center justify-center shrink-0 shadow-sm"><i class="fa-solid fa-lightbulb text-lg"></i></div><div><p class="font-black text-[11px] uppercase tracking-widest mb-1.5 text-remexo-700 dark:text-remexo-400">Rada od Bořka</p><p id="popt-tip-text" class="text-slate-700 dark:text-slate-300 text-sm leading-relaxed"></p></div></div></div>
                 <div class="flex items-center gap-4 mb-6 pb-6 border-b border-slate-100 dark:border-slate-800"><div class="w-12 h-12 bg-green-500 text-white rounded-full flex items-center justify-center shadow-lg shadow-green-500/30"><i class="fa-solid fa-check text-xl"></i></div><div><h3 class="text-2xl font-black dark:text-white">Poptávka připravena!</h3><p class="text-sm text-slate-500 mt-1">Kliknutím na text níže jej upravte.</p></div></div>
                 <div class="bg-slate-50 dark:bg-slate-900/50 rounded-[2rem] p-8 border border-slate-200 dark:border-slate-800 relative overflow-hidden shadow-inner">
@@ -243,6 +271,36 @@ window.craftsmanHTML = function(name) {
                     </div>
                 </div>
             </div>
+        </div>
+    </div>`;
+};
+
+// ====== ADMIN ======
+// Zobrazuje se jen tomu, kdo je v tabulce public.admini.
+// Data chodí přes RPC funkce, které si samy ověří oprávnění -
+// tenhle kód je jen zobrazení, žádná bezpečnost tu nestojí.
+window.adminHTML = function() {
+    return `
+    <div id="view-admin" class="hidden fade-up max-w-6xl mx-auto w-full">
+        <div class="stranka-hlavicka flex items-center justify-between mb-4 lg:mb-8">
+            <h2 class="stranka-nadpis text-3xl font-extrabold dark:text-white">Správa</h2>
+            <button onclick="window.nactiAdmin()" class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-4 py-2.5 rounded-xl font-bold text-sm hover:bg-slate-200 dark:hover:bg-slate-700 transition">
+                <i class="fa-solid fa-rotate mr-1"></i> Načíst znovu
+            </button>
+        </div>
+
+        <div id="admin-pozornost" class="mb-6"></div>
+
+        <div class="flex gap-2 mb-5 overflow-x-auto hide-scroll pb-1">
+            <button onclick="window.adminZalozka('remeslnici')" data-azal="remeslnici" class="admin-tab px-4 py-2.5 rounded-xl font-bold text-sm whitespace-nowrap transition">Řemeslníci</button>
+            <button onclick="window.adminZalozka('cisla')"     data-azal="cisla"      class="admin-tab px-4 py-2.5 rounded-xl font-bold text-sm whitespace-nowrap transition">Čísla</button>
+            <button onclick="window.adminZalozka('poptavky')"  data-azal="poptavky"   class="admin-tab px-4 py-2.5 rounded-xl font-bold text-sm whitespace-nowrap transition">Poptávky</button>
+            <button onclick="window.adminZalozka('uzivatele')" data-azal="uzivatele"  class="admin-tab px-4 py-2.5 rounded-xl font-bold text-sm whitespace-nowrap transition">Uživatelé</button>
+            <button onclick="window.adminZalozka('audit')"     data-azal="audit"      class="admin-tab px-4 py-2.5 rounded-xl font-bold text-sm whitespace-nowrap transition">Záznamy</button>
+        </div>
+
+        <div id="admin-obsah" class="bg-white dark:bg-[#0f172a] rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm p-4 lg:p-6 min-h-[300px]">
+            <p class="text-slate-400 text-center py-10">Načítám...</p>
         </div>
     </div>`;
 };
