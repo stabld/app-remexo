@@ -293,6 +293,7 @@ window.initCustomer = function(name) {
     window.buildNav([{id:"dash",icon:"fa-house",label:"Nástěnka"},{id:"requests",icon:"fa-list-check",label:"Moje poptávky"},{id:"messages",icon:"fa-comment-dots",label:"Zprávy"},{id:"payments",icon:"fa-shield-halved",label:"Platby & Escrow"},{id:"profile",icon:"fa-user",label:"Můj profil"}]);
     document.getElementById("header-cta").innerHTML = '<button onclick="window.goTab(\'new\',\'Nová poptávka\')" class="bg-remexo-500 hover:bg-remexo-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg transition hover:scale-105"><i class="fa-solid fa-hard-hat"></i> <span>Nová poptávka</span></button>';
     if (window.customerHTML) { document.getElementById("main-content").innerHTML = window.customerHTML(name); }
+    window.pridejSpravu();
     window.goTab("dash","Nástěnka");
     window.zobrazBorkaFab();
 };
@@ -302,6 +303,7 @@ window.initCraftsman = function(name) {
     // Řemeslník poptávky nezadává – zákaznické tlačítko sem nepatří
     document.getElementById("header-cta").innerHTML = "";
     if (window.craftsmanHTML) { document.getElementById("main-content").innerHTML = window.craftsmanHTML(name); }
+    window.pridejSpravu();
     window.goTab("market","Tržiště zakázek");
     window.zobrazBorkaFab();
 };
@@ -474,4 +476,29 @@ window.closeModal = function(id) {
 window.zobrazBorkaFab = function() {
     const fab = document.getElementById("borek-fab");
     if (fab) fab.classList.remove("hidden");
+};
+
+// Záložka Správa se přidá jen tomu, kdo je v tabulce public.admini.
+// Skrytí je pohodlí, ne ochrana - data hlídají RPC funkce v databázi.
+window.pridejSpravu = async function () {
+    try {
+        if (!window.zjistiAdmina) return;
+        if (!(await window.zjistiAdmina())) return;
+
+        const obsah = document.getElementById("main-content");
+        if (obsah && window.adminHTML && !document.getElementById("view-admin")) {
+            obsah.insertAdjacentHTML("beforeend", window.adminHTML());
+        }
+
+        const polozka = '<a href="#" onclick="window.goTab(\'admin\',\'Správa\');window.nactiAdmin();return false;" '
+            + 'class="nav-link flex items-center gap-3 px-4 py-3 rounded-2xl font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition" data-tab="admin">'
+            + '<i class="fa-solid fa-shield-halved w-5"></i> <span>Správa</span></a>';
+
+        const menu = document.getElementById("sidebar-nav");
+        if (menu && !menu.querySelector('[data-tab="admin"]')) {
+            menu.insertAdjacentHTML("beforeend", polozka);
+        }
+    } catch (e) {
+        // Když se nepovede, aplikace běží dál bez záložky
+    }
 };
