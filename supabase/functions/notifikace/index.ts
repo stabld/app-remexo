@@ -15,6 +15,23 @@ import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
 const secret = Deno.env.get("NOTIF_SECRET") ?? "";
 
+// Předmět s diakritikou se musí zakódovat podle RFC 2047, jinak se
+// v poště objeví "=?utf-8?Q?Nov=c3=a1..." místo "Nová".
+// Knihovna to nedělá spolehlivě, tak si to uděláme sami.
+// V seznamu zpráv se stejně zobrazí jen začátek předmětu
+function zkratit(text: unknown, delka: number): string {
+  const t = String(text ?? "").trim();
+  return t.length > delka ? t.slice(0, delka - 1) + "…" : t;
+}
+
+function predmetUtf(text: string): string {
+  // Bez diakritiky není co řešit
+  // deno-lint-ignore no-control-regex
+  if (/^[\x00-\x7F]*$/.test(text)) return text;
+  const base64 = btoa(String.fromCharCode(...new TextEncoder().encode(text)));
+  return `=?UTF-8?B?${base64}?=`;
+}
+
 function odpoved(stav: number, telo: Record<string, unknown>) {
   return new Response(JSON.stringify(telo), {
     status: stav,
@@ -65,13 +82,13 @@ Deno.serve(async (req) => {
   let predmet: string, nadpis: string, text: string, tlacitko: string;
 
   if (udalost === "nova_poptavka") {
-    predmet = `Nová poptávka v okolí: ${esc(nazev)}`;
+    predmet = `Nová poptávka: ${zkratit(nazev, 45)}`;
     nadpis = "Nová poptávka ve tvém okolí";
     text = `<strong>${esc(nazev)}</strong><br>${esc(kategorie)} · ${esc(mesto ?? "Brno")}
             <br><br>Kdo se ozve dřív, má větší šanci zakázku získat.`;
     tlacitko = "Zobrazit poptávku";
   } else if (udalost === "nova_nabidka") {
-    predmet = `Máš novou nabídku na: ${esc(nazev)}`;
+    predmet = `Nová nabídka: ${zkratit(nazev, 45)}`;
     nadpis = "Řemeslník ti poslal nabídku";
     text = `Na tvoji poptávku <strong>${esc(nazev)}</strong> dorazila nabídka${
       cena ? ` za ${esc(cena)}` : ""
@@ -104,7 +121,7 @@ Deno.serve(async (req) => {
       await client.send({
         from: Deno.env.get("SMTP_FROM") ?? Deno.env.get("SMTP_USER") ?? "",
         to: email,
-        subject: predmet,
+        subject: predmetUtf(predmet),
         html,
       });
       odeslano++;
