@@ -169,7 +169,7 @@ export default async function handler(req, res) {
         const payload = {
             contents: [{ role: 'user', parts: contentParts }],
             generationConfig: {
-                maxOutputTokens: 4096,
+                maxOutputTokens: 8192,
                 // Nové Gemini modely jinak spotřebují limit na interní "přemýšlení"
                 // a odpověď se usekne v půlce
                 thinkingConfig: { thinkingBudget: 0 }
@@ -256,8 +256,11 @@ export default async function handler(req, res) {
                     // který se nedokončil. Ukázat ho uživateli by bylo horší
                     // než přiznat chybu.
                     if (cistyText.startsWith('{') || cistyText.startsWith('[')) {
+                        // duvod pomůže při ladění: proč model přestal psát
                         return res.status(500).json({
-                            error: 'Bořkovi se odpověď nedokončila. Zkus popsat závadu stručněji, nebo vyplň poptávku ručně.'
+                            error: 'Bořkovi se odpověď nedokončila. Zkus popsat závadu stručněji, nebo vyplň poptávku ručně.',
+                            duvod: candidate.finishReason || 'neznamy',
+                            delka: cistyText.length
                         });
                     }
 
