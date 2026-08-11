@@ -264,6 +264,20 @@ window.craftsmanHTML = function(name) {
                         <div><label class="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2">Telefonní číslo</label><input type="tel" id="prof-phone" class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-5 py-3.5 text-sm focus:ring-2 focus:ring-remexo-500 outline-none dark:text-white" placeholder="+420 123 456 789"></div>
                         <div><label class="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2">Město / Působnost</label><input type="text" id="prof-city" class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-5 py-3.5 text-sm focus:ring-2 focus:ring-remexo-500 outline-none dark:text-white" placeholder="Např. Brno"></div>
                     </div>
+                    <!-- Ověření: IČO vyplňuje řemeslník, příznak nastavuje jen admin -->
+                    <div class="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-2xl p-5">
+                        <div class="flex items-start justify-between gap-4 mb-4">
+                            <div>
+                                <p class="font-extrabold dark:text-white">Ověření řemeslníka</p>
+                                <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Ověřený profil vidí zákazníci u tvých nabídek. Zkontrolujeme tvoje IČO v živnostenském rejstříku.</p>
+                            </div>
+                            <span id="prof-stav-overeni" class="shrink-0 text-xs font-bold px-3 py-1.5 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 whitespace-nowrap">Načítám...</span>
+                        </div>
+                        <label class="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2">IČO</label>
+                        <input type="text" id="prof-ico" inputmode="numeric" maxlength="8" placeholder="12345678" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-5 py-4 dark:text-white focus:ring-2 focus:ring-remexo-500 outline-none">
+                        <p class="text-xs text-slate-400 mt-2">Osm číslic. Najdeš ho na <a href="https://rzp.gov.cz" target="_blank" rel="noopener" class="text-remexo-500 font-bold">rzp.gov.cz</a>.</p>
+                    </div>
+
                     <div><label class="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2">O mně / Popis služeb</label><textarea id="prof-bio" rows="4" class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-5 py-3.5 text-sm focus:ring-2 focus:ring-remexo-500 outline-none dark:text-white resize-none" placeholder="Popište své zkušenosti, specializaci, reference..."></textarea></div>
                     <div class="pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row gap-3">
                         <button onclick="window.saveProfile(this)" class="flex-1 bg-remexo-500 hover:bg-remexo-600 text-white px-8 py-4 rounded-2xl font-black text-lg transition shadow-xl shadow-remexo-500/20 hover:-translate-y-1">Uložit změny v profilu</button>
