@@ -96,6 +96,8 @@ window.initApp = function(role, name) {
             });
             if(el("prof-avatar-img")) el("prof-avatar-img").src = displayAv;
             if(el("prof-role-badge")) el("prof-role-badge").innerText = role==="customer"?"Zákazník":"Řemeslník";
+            // IČO a stav ověření se čtou z databáze, ne z tokenu
+            if(role !== "customer" && window.nactiOvereni) window.nactiOvereni();
         }
     }, 100);
 
