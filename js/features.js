@@ -1929,6 +1929,20 @@ window.openPublicProfile = async function(userId) {
         if (data) {
             document.getElementById("pp-name").innerText = data.full_name || "Uživatel";
             document.getElementById("pp-role").innerText = data.role === "customer" ? "Zákazník" : "Řemeslník";
+
+            // Odznak ověření. Zákazník se podle profilu rozhoduje,
+            // takže tady dává větší smysl než kdekoliv jinde.
+            const odz = document.getElementById("pp-overeni");
+            if (odz) {
+                if (data.role !== "customer" && data.overeno) {
+                    odz.className = "inline-flex items-center gap-1 px-3 py-1 bg-green-100 dark:bg-green-500/15 text-green-700 dark:text-green-400 text-xs font-black uppercase tracking-wider rounded-lg";
+                    odz.innerHTML = '<i class="fa-solid fa-circle-check"></i> Ověřen';
+                    odz.title = "Živnostenské oprávnění zkontrolováno v rejstříku";
+                } else {
+                    odz.className = "hidden";
+                    odz.innerHTML = "";
+                }
+            }
             document.getElementById("pp-city").innerHTML = data.city ? `<i class="fa-solid fa-location-dot mr-1"></i> ${window.escapeHtml(data.city)}` : "";
             // Skutečný průměr z hodnocení, ne natvrdo napsaná pětka
             const ratingEl = document.getElementById("pp-rating");
