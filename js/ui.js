@@ -110,6 +110,26 @@ window.toggleNotifDropdown = function() {
     }, 10);
 };
 
+// Řemeslník potřebuje vědět, jak je poptávka čerstvá. Absolutní datum
+// mu to neřekne - "před 20 minutami" ano. Kdo se ozve dřív, má větší šanci.
+window.stariPoptavky = function(datum) {
+    if (!datum) return null;
+    const t = new Date(datum).getTime();
+    if (isNaN(t)) return null;
+
+    const minut = Math.floor((Date.now() - t) / 60000);
+    if (minut < 1)  return { text: "právě teď", cerstve: true };
+    if (minut < 60) return { text: "před " + minut + " min", cerstve: true };
+
+    const hodin = Math.floor(minut / 60);
+    if (hodin < 24) return { text: "před " + hodin + " h", cerstve: hodin < 3 };
+
+    const dnu = Math.floor(hodin / 24);
+    if (dnu === 1)  return { text: "včera", cerstve: false };
+    if (dnu < 31)   return { text: "před " + dnu + " dny", cerstve: false };
+    return { text: new Date(t).toLocaleDateString("cs"), cerstve: false };
+};
+
 window.createBeautifulCard = function(req, isMarket, i) {
     try {
         const statusMap = { waiting:"Hledáme profíka", active:"Probíhá oprava", done:"Dokončeno", cancelled:"Zrušeno" };
@@ -162,6 +182,14 @@ window.createBeautifulCard = function(req, isMarket, i) {
             + (extracted.photos || []).map(f =>
                 '<img src="data:' + (f.mime || 'image/jpeg') + ';base64,' + f.photo + '" onclick="window.openLightbox(this.src)" class="w-20 h-20 rounded-xl object-cover border border-slate-200 dark:border-slate-700 cursor-pointer hover:opacity-80 transition">'
             ).join("");
+
+        // Čerstvé poptávky zvýrazníme - o ně se má řemeslník ucházet hned
+        const stari = window.stariPoptavky(req.created_at || req.vytvoreno || req.time);
+        const stariHtml = stari
+            ? '<span class="px-2 py-1 rounded ' + (stari.cerstve
+                ? 'bg-remexo-50 dark:bg-remexo-500/15 text-remexo-600 dark:text-remexo-400'
+                : 'bg-slate-100 dark:bg-slate-800') + '"><i class="fa-regular fa-clock mr-1.5 opacity-70"></i>' + window.escapeHtml(stari.text) + '</span>'
+            : '';
 
         const photoHtml = (prvniSoubor || reqPhoto) ? obalFotky + vnitrekFotky + '<div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center"><i class="fa-solid fa-expand text-white opacity-0 group-hover:opacity-100 text-2xl transition-all"></i></div></div>' : '';
         if (!isMarket) {
@@ -242,7 +270,7 @@ window.createBeautifulCard = function(req, isMarket, i) {
                 '<div class="absolute top-0 left-0 w-1.5 h-full bg-remexo-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>' +
                 '<div class="pl-2"><div class="flex items-start gap-5"><div class="w-14 h-14 bg-remexo-50 dark:bg-remexo-500/10 text-remexo-500 rounded-2xl flex items-center justify-center text-2xl shrink-0 shadow-inner border border-remexo-100 dark:border-remexo-500/20"><i class="fa-solid ' + (iconMap[reqCat]||iconMap.default) + '"></i></div>' +
                 '<div class="flex-1 min-w-0"><div class="flex items-start justify-between gap-3 mb-2"><h4 class="text-xl font-extrabold dark:text-white leading-tight">' + bezpTitle + '</h4><span class="status-badge ' + (reqUrg==="Vysoká"?"bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400":"status-waiting") + ' shrink-0">' + window.escapeHtml(reqUrg) + '</span></div>' +
-                '<div class="flex flex-wrap items-center gap-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-4"><span class="bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded"><i class="fa-solid fa-tag mr-1.5 opacity-70"></i>' + window.escapeHtml(reqCat) + '</span><span class="bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded"><i class="fa-solid fa-user mr-1.5 opacity-70"></i>' + firstName + '</span><span class="bg-remexo-50 dark:bg-remexo-500/10 text-remexo-600 dark:text-remexo-400 px-2 py-1 rounded"><i class="fa-solid fa-coins mr-1.5"></i>' + bezpCena + '</span></div>' +
+                '<div class="flex flex-wrap items-center gap-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-4">' + stariHtml + '<span class="bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded"><i class="fa-solid fa-tag mr-1.5 opacity-70"></i>' + window.escapeHtml(reqCat) + '</span><span class="bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded"><i class="fa-solid fa-user mr-1.5 opacity-70"></i>' + firstName + '</span><span class="bg-remexo-50 dark:bg-remexo-500/10 text-remexo-600 dark:text-remexo-400 px-2 py-1 rounded"><i class="fa-solid fa-coins mr-1.5"></i>' + bezpCena + '</span></div>' +
                 '<p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed mb-2">' + window.escapeHtml(mainDesc) + '</p>' +
                 // Náhledy fotek. Bez nich řemeslník nemá podle čeho nacenit.
                 (fotkyNaTrzisti ? '<div class="flex flex-wrap gap-2 mt-3 mb-1">' + fotkyNaTrzisti + '</div>' : '') +
