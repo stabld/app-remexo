@@ -118,6 +118,9 @@ window.stariPoptavky = function(datum) {
     if (isNaN(t)) return null;
 
     const minut = Math.floor((Date.now() - t) / 60000);
+    // Záporná hodnota = datum v budoucnosti, tedy špatně načtené.
+    // Radši nezobrazíme nic než nesmysl.
+    if (minut < 0) return null;
     if (minut < 1)  return { text: "právě teď", cerstve: true };
     if (minut < 60) return { text: "před " + minut + " min", cerstve: true };
 
@@ -184,7 +187,10 @@ window.createBeautifulCard = function(req, isMarket, i) {
             ).join("");
 
         // Čerstvé poptávky zvýrazníme - o ně se má řemeslník ucházet hned
-        const stari = window.stariPoptavky(req.created_at || req.vytvoreno || req.time);
+        // POZOR: jen skutečná data. req.time je naformátovaný text
+        // ("11. 8. 2026, 16:14"), který new Date() přečte americky
+        // jako 8. listopadu - tedy budoucnost.
+        const stari = window.stariPoptavky(req.created_at || req.vytvoreno);
         const stariHtml = stari
             ? '<span class="px-2 py-1 rounded ' + (stari.cerstve
                 ? 'bg-remexo-50 dark:bg-remexo-500/15 text-remexo-600 dark:text-remexo-400'
