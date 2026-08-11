@@ -24,12 +24,18 @@ function zkratit(text: unknown, delka: number): string {
   return t.length > delka ? t.slice(0, delka - 1) + "…" : t;
 }
 
-function predmetUtf(text: string): string {
-  // Bez diakritiky není co řešit
-  // deno-lint-ignore no-control-regex
-  if (/^[\x00-\x7F]*$/.test(text)) return text;
-  const base64 = btoa(String.fromCharCode(...new TextEncoder().encode(text)));
-  return `=?UTF-8?B?${base64}?=`;
+// POZOR: nepoužívat. Knihovna si předmět kóduje sama a když dostane
+// už zakódovaný text, zabalí ho podruhé - v poště se pak objeví
+// "=?utf-8?Q?=3d?UTF-8?B?..." jako viditelný text.
+// Knihovna denomailer diakritiku v předmětu nezvládá. Zkusili jsme ji
+// nechat na ní i zakódovat sami - v obou případech se v poště objevila
+// hlavička jako viditelný text ("=?utf-8?Q?Nov=c3=a1...").
+//
+// Předmět proto posíláme bez diakritiky. Vypadá to hůř, ale je to
+// spolehlivé a čitelné ve všech poštovních klientech.
+// Tělo e-mailu diakritiku má, tam je kódování v pořádku.
+function bezDiakritiky(text: string): string {
+  return String(text ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
 function odpoved(stav: number, telo: Record<string, unknown>) {
@@ -130,7 +136,7 @@ Deno.serve(async (req) => {
       await client.send({
         from: Deno.env.get("SMTP_FROM") ?? Deno.env.get("SMTP_USER") ?? "",
         to: email,
-        subject: predmetUtf(predmet),
+        subject: bezDiakritiky(predmet),
         html,
       });
       odeslano++;
