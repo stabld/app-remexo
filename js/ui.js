@@ -114,13 +114,24 @@ window.toggleNotifDropdown = function() {
 // mu to neřekne - "před 20 minutami" ano. Kdo se ozve dřív, má větší šanci.
 window.stariPoptavky = function(datum) {
     if (!datum) return null;
-    const t = new Date(datum).getTime();
+
+    // Databáze vrací čas bez značky zóny ("2026-08-11T13:40:55.876769").
+    // Prohlížeč ho pak čte jako místní, přestože je uložený v UTC -
+    // poptávka tak vyjde o dvě hodiny v budoucnosti. Značku doplníme.
+    let vstup = datum;
+    if (typeof vstup === "string" && vstup.includes("T") && !/[Zz]|[+-]\d{2}:?\d{2}$/.test(vstup)) {
+        vstup = vstup + "Z";
+    }
+
+    const t = new Date(vstup).getTime();
     if (isNaN(t)) return null;
 
     const minut = Math.floor((Date.now() - t) / 60000);
     // Záporná hodnota = datum v budoucnosti, tedy špatně načtené.
     // Radši nezobrazíme nic než nesmysl.
-    if (minut < 0) return null;
+    // Hodiny na zařízení mohou být mírně napřed - to nevadí.
+    // Vyloučíme jen nesmysly (víc než hodina do budoucnosti).
+    if (minut < -60) return null;
     if (minut < 1)  return { text: "právě teď", cerstve: true };
     if (minut < 60) return { text: "před " + minut + " min", cerstve: true };
 
