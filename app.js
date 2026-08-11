@@ -33,6 +33,16 @@ window.addEventListener('load', async () => {
                 appEl.classList.remove("hidden");
                 appEl.style.opacity = "1";
             }
+            // Role musí být i v profiles - administrace a notifikace se ptají
+            // tabulky, ne tokenu. U starších účtů tam chyběla.
+            try {
+                await window.sb.from("profiles").upsert({
+                    id: session.user.id,
+                    full_name: name,
+                    role: window.APP_ROLE
+                }, { onConflict: "id" });
+            } catch (e) { /* nesmí zabránit přihlášení */ }
+
             window.initApp(window.APP_ROLE, name);
             // Aplikace je vykreslená - není důvod dál držet úvodní obrazovku
             if (window.skryjLoader) window.skryjLoader();
