@@ -491,6 +491,36 @@ window.handleProfilePhoto = async function(input) {
     } catch(err) { window._profilePhotoBlob = compressedBlob; window.showToast("Chyba fotky", err.message, "error"); }
 };
 
+// Stav ověření a IČO se čtou z profiles, ne z tokenu - v tokenu si je
+// uživatel může nastavit sám, což by z ověření udělalo ozdobu.
+window.nactiOvereni = async function() {
+    const badge = document.getElementById("prof-stav-overeni");
+    const icoPole = document.getElementById("prof-ico");
+    if (!badge && !icoPole) return;
+
+    try {
+        const { data, error } = await window.sb
+            .from("profiles").select("ico, overeno").eq("id", window.APP_USER.id).single();
+        if (error) throw error;
+
+        if (icoPole && data.ico) icoPole.value = data.ico;
+        if (!badge) return;
+
+        if (data.overeno) {
+            badge.textContent = "Ověřeno";
+            badge.className = "shrink-0 text-xs font-bold px-3 py-1.5 rounded-lg bg-green-100 dark:bg-green-500/15 text-green-700 dark:text-green-400 whitespace-nowrap";
+        } else if (data.ico) {
+            badge.textContent = "Čeká na kontrolu";
+            badge.className = "shrink-0 text-xs font-bold px-3 py-1.5 rounded-lg bg-amber-100 dark:bg-amber-500/15 text-amber-700 dark:text-amber-400 whitespace-nowrap";
+        } else {
+            badge.textContent = "Neověřeno";
+            badge.className = "shrink-0 text-xs font-bold px-3 py-1.5 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 whitespace-nowrap";
+        }
+    } catch (e) {
+        if (badge) badge.textContent = "Stav se nepodařilo zjistit";
+    }
+};
+
 window.saveProfile = async function(btnNode) {
     if (!window.sb || !window.APP_USER) return;
     const orig = btnNode.innerHTML; btnNode.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-2"></i>Ukládám...'; btnNode.disabled = true;
@@ -521,6 +551,19 @@ window.saveProfile = async function(btnNode) {
         const displayUrl = savedAvatarUrl || ("https://api.dicebear.com/7.x/avataaars/svg?seed=" + encodeURIComponent(name) + "&backgroundColor=" + (window.APP_ROLE==="customer"?"f59e0b":"0f172a"));
         
         try {
+            // IČO patří do profiles, ne do veřejného profilu.
+            // Příznak overeno tady vědomě neposíláme - nastavuje ho jen admin
+            // a spouštěč v databázi by pokus stejně odmítl.
+            const icoPole = document.getElementById("prof-ico");
+            if (icoPole) {
+                const ico = (icoPole.value || "").replace(/\s/g, "");
+                if (ico === "" || /^\d{8}$/.test(ico)) {
+                    await window.sb.from('profiles').update({ ico: ico || null }).eq('id', window.APP_USER.id);
+                } else {
+                    window.showToast("IČO nemá osm číslic", "Zbytek profilu jsme uložili, IČO ne.", "error");
+                }
+            }
+
             await window.sb.from('public_profiles').upsert({
                 id: window.APP_USER.id,
                 full_name: name,
@@ -1087,6 +1130,13 @@ window.loadOffersForRequest = async function(requestId, requestTitle) {
         if (ids.length) {
             const { data: vsechna } = await window.sb.from("hodnoceni")
                 .select("craftsman_id, hvezdicky").in("craftsman_id", ids);
+
+            // Odznak ověření: bez něj by ověřování řemeslníků nemělo
+            // pro zákazníka žádný smysl, protože by ho nikde neviděl.
+            const { data: overeni } = await window.sb
+                .from("public_profiles").select("id, overeno").in("id", ids);
+            window._overeniRemeslniku = {};
+            (overeni || []).forEach(p => { window._overeniRemeslniku[p.id] = !!p.overeno; });
             (vsechna||[]).forEach(h => {
                 const k = String(h.craftsman_id);
                 if (!hodnoceniPodleId[k]) hodnoceniPodleId[k] = { soucet: 0, pocet: 0 };
@@ -1113,9 +1163,13 @@ window.loadOffersForRequest = async function(requestId, requestTitle) {
         modalList.innerHTML=offers.map(o=>{
             // Zprávu i jméno píše řemeslník – do stránky nesmí syrové
             const bezpJmeno = window.escapeHtml(o.craftsman_name || "Řemeslník");
+            // Odznak ověření vedle jména - hlavní důvod, proč ověřování vůbec děláme
+            const odznakOvereni = (window._overeniRemeslniku || {})[o.craftsman_id]
+                ? '<span title="Ověřený řemeslník" class="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider bg-green-100 dark:bg-green-500/15 text-green-700 dark:text-green-400 px-2 py-0.5 rounded-md ml-2 align-middle"><i class="fa-solid fa-circle-check"></i> Ověřen</span>'
+                : '';
             const bezpZprava = window.escapeHtml(o.message || "").replace(/\n/g, "<br>");
             const bezpCena = window.escapeHtml(o.price || "Dohodou");
-            return '<div class="p-5 border border-slate-200 dark:border-slate-700 rounded-3xl bg-slate-50 dark:bg-slate-800/50"><div class="flex items-center gap-4 mb-4 cursor-pointer hover:opacity-75 transition" onclick="window.openPublicProfile(\'' + o.craftsman_id + '\')"><img id="offer-av-' + o.id + '" src="https://api.dicebear.com/7.x/avataaars/svg?seed=' + encodeURIComponent(o.craftsman_name || '') + '&backgroundColor=0f172a" class="w-12 h-12 rounded-full bg-white shadow-sm border border-slate-200 dark:border-slate-700 object-cover"><div><p class="font-extrabold dark:text-white">' + bezpJmeno + '</p><div class="flex items-center gap-2 mt-0.5">' + hodnoceniHtml(o.craftsman_id) + '<span class="text-xs font-bold text-slate-400">· ' + new Date(o.created_at).toLocaleDateString("cs") + '</span></div></div><span class="ml-auto font-black text-lg text-remexo-500">' + bezpCena + '</span></div><p class="text-sm text-slate-600 dark:text-slate-300 mb-5 bg-white dark:bg-[#0f172a] p-4 rounded-2xl border border-slate-100 dark:border-slate-700">' + bezpZprava + '</p>' + (jeUzavrena ? stavHtml(o) : '<div class="flex gap-2"><button onclick="window.rejectOffer(this, ' + o.id + ',' + requestId + ',\'' + (requestTitle||"").replace(/'/g,"\\'") + '\')" class="px-5 bg-red-50 hover:bg-red-100 dark:bg-red-500/10 dark:hover:bg-red-500/20 text-red-500 rounded-xl transition shadow-sm"><i class="fa-solid fa-times text-lg"></i></button><button onclick="window.acceptOffer(' + o.id + ',' + requestId + ',\'' + window.escapeHtml((o.craftsman_name||"").replace(/\\/g,"\\\\").replace(/'/g,"\\'")) + '\'); window.closeOffersModal();" class="flex-1 bg-slate-900 dark:bg-white text-white dark:text-slate-900 py-3.5 rounded-xl font-bold text-sm transition shadow-md hover:scale-[1.02]">Přijmout a zahájit zprávy</button></div>') + '</div>';
+            return '<div class="p-5 border border-slate-200 dark:border-slate-700 rounded-3xl bg-slate-50 dark:bg-slate-800/50"><div class="flex items-center gap-4 mb-4 cursor-pointer hover:opacity-75 transition" onclick="window.openPublicProfile(\'' + o.craftsman_id + '\')"><img id="offer-av-' + o.id + '" src="https://api.dicebear.com/7.x/avataaars/svg?seed=' + encodeURIComponent(o.craftsman_name || '') + '&backgroundColor=0f172a" class="w-12 h-12 rounded-full bg-white shadow-sm border border-slate-200 dark:border-slate-700 object-cover"><div><p class="font-extrabold dark:text-white">' + bezpJmeno + odznakOvereni + '</p><div class="flex items-center gap-2 mt-0.5">' + hodnoceniHtml(o.craftsman_id) + '<span class="text-xs font-bold text-slate-400">· ' + new Date(o.created_at).toLocaleDateString("cs") + '</span></div></div><span class="ml-auto font-black text-lg text-remexo-500">' + bezpCena + '</span></div><p class="text-sm text-slate-600 dark:text-slate-300 mb-5 bg-white dark:bg-[#0f172a] p-4 rounded-2xl border border-slate-100 dark:border-slate-700">' + bezpZprava + '</p>' + (jeUzavrena ? stavHtml(o) : '<div class="flex gap-2"><button onclick="window.rejectOffer(this, ' + o.id + ',' + requestId + ',\'' + (requestTitle||"").replace(/'/g,"\\'") + '\')" class="px-5 bg-red-50 hover:bg-red-100 dark:bg-red-500/10 dark:hover:bg-red-500/20 text-red-500 rounded-xl transition shadow-sm"><i class="fa-solid fa-times text-lg"></i></button><button onclick="window.acceptOffer(' + o.id + ',' + requestId + ',\'' + window.escapeHtml((o.craftsman_name||"").replace(/\\/g,"\\\\").replace(/'/g,"\\'")) + '\'); window.closeOffersModal();" class="flex-1 bg-slate-900 dark:bg-white text-white dark:text-slate-900 py-3.5 rounded-xl font-bold text-sm transition shadow-md hover:scale-[1.02]">Přijmout a zahájit zprávy</button></div>') + '</div>';
         }).join("");
     }
     // Skutečné profilovky doplníme až po vykreslení, ať se okno neotevírá pomalu
