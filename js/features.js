@@ -273,30 +273,43 @@ window.odstoupitZeZakazky = function(requestId) {
 
 // Zákazník mlčí i po týdnu od ohlášení – řemeslník zakázku uzavře sám
 window.uzavritBezPotvrzeni = async function(requestId, btnEl) {
+    // Zákazník zakázku neuzavírá sám. Označí ji za hotovou a čeká se,
+    // až to potvrdí i řemeslník. Bez toho by šlo uzavřít práci,
+    // kterou druhá strana za hotovou nepovažuje.
     if (!window.sb) return;
     const orig = btnEl ? btnEl.innerHTML : "";
-    if (btnEl) { btnEl.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-2"></i>Uzavírám...'; btnEl.disabled = true; }
+    if (btnEl) { btnEl.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-2"></i>Odesílám...'; btnEl.disabled = true; }
 
-    // Uzavřít jde jen rozdělaná zakázka. Bez podmínky by šlo přes API
-    // přepsat na "done" i zakázku, kterou zákazník mezitím zrušil.
-    const { data: zmenene, error } = await window.sb.from("requests")
-        .update({ status: "done" }).eq("id", requestId).eq("status", "active").select("id");
+    try {
+        // Když už řemeslník dokončení navrhl, zákazník ho tímhle potvrzuje
+        const { data: stav } = await window.sb.from("requests")
+            .select("dokonceni_navrzeno").eq("id", requestId).maybeSingle();
 
-    if (!error && (!zmenene || zmenene.length === 0)) {
-        window.showToast("Zakázku nelze uzavřít", "Její stav se mezitím změnil. Načtěte prosím stránku znovu.", "info");
+        if (stav && stav.dokonceni_navrzeno) {
+            const { data, error } = await window.sb.from("requests")
+                .update({ status: "done" }).eq("id", requestId).eq("status", "active").select("id");
+            if (error) throw error;
+            if (!data || !data.length) {
+                window.showToast("Zakázku nelze uzavřít", "Její stav se mezitím změnil. Načtěte prosím stránku znovu.", "info");
+            } else {
+                window.showToast("Zakázka dokončena", "Díky! Nezapomeňte řemeslníka ohodnotit.", "success");
+            }
+        } else {
+            const { error } = await window.sb.from("requests")
+                .update({ dokonceni_navrzeno_zakaznikem: new Date().toISOString() })
+                .eq("id", requestId).eq("status", "active");
+            if (error) throw error;
+            window.showToast("Označeno jako hotové", "Čekáme, až to potvrdí i řemeslník. Pak bude zakázka uzavřená.", "info");
+        }
+
+        if (window.loadRequestsFromDB) await window.loadRequestsFromDB();
+    } catch (e) {
+        window.showToast("Nepovedlo se", e.message, "error");
+    } finally {
         if (btnEl) { btnEl.innerHTML = orig; btnEl.disabled = false; }
-        if (window.loadCraftsmanJobsFromDB) window.loadCraftsmanJobsFromDB();
-        return;
     }
-
-    if (error) {
-        window.showToast("Nepodařilo se uzavřít", error.message || "Zkuste to prosím znovu.", "error");
-        if (btnEl) { btnEl.innerHTML = orig; btnEl.disabled = false; }
-        return;
-    }
-    window.showToast("Zakázka uzavřena", "Zákazník ji nepotvrdil do týdne, tak jsme ji uzavřeli za něj. Hodnocení vám tentokrát nepřijde.", "info");
-    if (window.loadCraftsmanJobsFromDB) window.loadCraftsmanJobsFromDB();
 };
+
 
 // Kolik dní uplynulo od ohlášení hotovo
 window.dnuOdOhlaseni = function(kdy) {
@@ -305,6 +318,32 @@ window.dnuOdOhlaseni = function(kdy) {
 };
 
 // Řemeslník oznámí, že je hotovo – potvrdit to musí zákazník
+// Řemeslník potvrzuje, že práce je hotová. Volá se ve chvíli,
+// kdy dokončení navrhl zákazník - pak se zakázka rovnou uzavře.
+window.potvrditDokonceniRemeslnikem = async function(requestId, btnEl) {
+    if (!window.sb) return;
+    const orig = btnEl ? btnEl.innerHTML : "";
+    if (btnEl) { btnEl.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-2"></i>Potvrzuji...'; btnEl.disabled = true; }
+
+    try {
+        const { data, error } = await window.sb.from("requests")
+            .update({ status: "done", dokonceni_navrzeno: new Date().toISOString() })
+            .eq("id", requestId).eq("status", "active").select("id");
+        if (error) throw error;
+
+        if (!data || !data.length) {
+            window.showToast("Nelze potvrdit", "Stav zakázky se mezitím změnil. Načtěte prosím stránku znovu.", "info");
+        } else {
+            window.showToast("Zakázka dokončena", "Obě strany potvrdily hotovo.", "success");
+        }
+        if (window.loadCraftJobsFromDB) await window.loadCraftJobsFromDB();
+    } catch (e) {
+        window.showToast("Nepovedlo se", e.message, "error");
+    } finally {
+        if (btnEl) { btnEl.innerHTML = orig; btnEl.disabled = false; }
+    }
+};
+
 window.navrhnoutDokonceni = async function(requestId, btnEl) {
     if (!window.sb) return;
     const orig = btnEl ? btnEl.innerHTML : "";
@@ -1375,6 +1414,13 @@ window.refreshCraftsmanJobs = function() {
                 if (dnu >= 7) {
                     dokonceniHtml += '<button onclick="window.uzavritBezPotvrzeni(\'' + job.requestId + '\', this)" class="w-full mb-4 py-3 rounded-2xl border-2 border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 font-bold text-sm transition"><i class="fa-solid fa-lock mr-2"></i>Zákazník nereaguje – uzavřít zakázku</button>';
                 }
+            } else if (job.dokonceniOdZakaznika) {
+                // Zákazník už práci označil za hotovou, čeká se na řemeslníka.
+                // Bez tohohle by zakázka zůstala viset donekonečna.
+                dokonceniHtml = '<div class="mb-3 p-3 rounded-2xl bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 text-sm font-bold text-green-700 dark:text-green-400">'
+                    + '<i class="fa-solid fa-circle-check mr-1.5"></i>Zákazník označil práci za hotovou. Potvrď to a zakázka bude uzavřená.</div>'
+                    + '<button onclick="window.potvrditDokonceniRemeslnikem(\'' + job.requestId + '\', this)" class="w-full mb-4 py-3 rounded-2xl bg-green-500 hover:bg-green-600 text-white font-bold transition">'
+                    + '<i class="fa-solid fa-check mr-2"></i>Potvrdit dokončení</button>';
             } else {
                 dokonceniHtml = '<button onclick="window.navrhnoutDokonceni(\'' + job.requestId + '\', this)" class="w-full mb-4 py-3 rounded-2xl border-2 border-green-500 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-500/10 font-bold text-sm transition"><i class="fa-solid fa-check mr-2"></i>Označit práci za hotovou</button>';
             }
@@ -1404,7 +1450,7 @@ window.loadCraftsmanJobsFromDB = async function() {
 
     // Zrušené nabídky sem nepatří vůbec
     const { data: nabidky } = await window.sb.from("offers")
-        .select("*, requests(title, category, status, description, customer_name, dokonceni_navrzeno, craftsman_id, zruseno_kym, zruseno_duvod)")
+        .select("*, requests(title, category, status, description, customer_name, dokonceni_navrzeno, dokonceni_navrzeno_zakaznikem, craftsman_id, zruseno_kym, zruseno_duvod)")
         .eq("craftsman_id", window.APP_USER.id)
         .neq("status", "rejected");
 
@@ -1436,7 +1482,7 @@ window.loadCraftsmanJobsFromDB = async function() {
             }
         } catch(e) {}
 
-        window.STATE.craftJobs=data.map(o=>{ let s=o.status;if(o.requests?.status==="done")s="done";if(o.requests?.status==="cancelled")s="cancelled"; return {title:o.requests?.title||"Zakázka",requestId:o.request_id,status:s,popis:o.requests?.description||"",zakaznik:o.requests?.customer_name||"Zákazník",kontakt:kontakty[String(o.request_id)]||null,dokonceniNavrzeno:o.requests?.dokonceni_navrzeno||null,zrusenoKym:o.requests?.zruseno_kym||null,zrusenoDuvod:o.requests?.zruseno_duvod||null,vytvoreno:o.created_at,time:window.formatDatumCas(o.created_at)}; });
+        window.STATE.craftJobs=data.map(o=>{ let s=o.status;if(o.requests?.status==="done")s="done";if(o.requests?.status==="cancelled")s="cancelled"; return {title:o.requests?.title||"Zakázka",requestId:o.request_id,status:s,popis:o.requests?.description||"",zakaznik:o.requests?.customer_name||"Zákazník",kontakt:kontakty[String(o.request_id)]||null,dokonceniNavrzeno:o.requests?.dokonceni_navrzeno||null,dokonceniOdZakaznika:o.requests?.dokonceni_navrzeno_zakaznikem||null,zrusenoKym:o.requests?.zruseno_kym||null,zrusenoDuvod:o.requests?.zruseno_duvod||null,vytvoreno:o.created_at,time:window.formatDatumCas(o.created_at)}; });
     } else {
         // Bez tohohle by po odstoupení z jediné zakázky zůstal na
         // obrazovce starý seznam, dokud uživatel nenačte stránku znovu
