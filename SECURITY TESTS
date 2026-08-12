@@ -28,7 +28,7 @@ nabídky měnitelné kýmkoliv) a testy nahlásily **FAIL** přesně na těch m�
 
 ## Poslední výsledky
 
-Datum: 6. 8. 2026 · Prostředí: produkční databáze · **15 z 15 PASS**
+Datum: 12. 8. 2026 · Prostředí: produkční databáze · **31 z 31 PASS**
 
 | # | Oblast | Test | Očekáváno | Skutečnost | Výsledek |
 |---|---|---|---|---|---|
@@ -161,3 +161,42 @@ nechráněného vkládání, neměl by žádnou vypovídací hodnotu.
 
 Žádné z toho nebylo zneužitelné, protože `<img>` cizí kód nespustí. Je to
 zpevnění, ne oprava díry.
+
+---
+
+## Rozšíření o novou plochu (12. 8. 2026)
+
+Admin, ověřování řemeslníků, notifikace a záznam přečtení zpráv vznikly až po
+prvním auditu. Testy je nepokrývaly, tak jich přibylo šest (26–31).
+
+**Hned odhalily dvě reálné díry:**
+
+**Ověření si šlo nasadit samo.** Spouštěč hlídal změnu existujícího profilu,
+ale ne vytvoření nového. Řemeslník si mohl založit řádek ve `public_profiles`
+rovnou s `overeno = true`. Tím by ověřování ztratilo veškerý smysl.
+
+**Interní funkce byly volatelné z aplikace.** PostgreSQL dává EXECUTE nových
+funkcí automaticky roli PUBLIC. U tří chyběl `revoke` — nejzávažnější
+`uklid_audit_logu`, kterou mohl kdokoliv přihlášený smazat auditní záznamy
+a zahladit stopy.
+
+Obojí opraveno v `oprava-funkce.sql`.
+
+### Nové testy
+
+| # | Oblast | Test |
+|---|---|---|
+| 26 | Notifikace | Uživatel spustí rozesílání e-mailů |
+| 27 | Notifikace | Uživatel čte tajemství pro Edge Function |
+| 28 | Audit | Uživatel spustí úklid audit logu |
+| 29 | Audit | Uživatel zapíše přímo do audit logu |
+| 30 | Zprávy | Cizí uživatel označí konverzaci jako přečtenou |
+| 31 | Ověření | Řemeslník si nastaví ověřeno ve veřejném profilu |
+
+Ověřeno obousměrně: po vypnutí ochrany testy 28 a 31 správně selhaly.
+
+### Poučení
+
+Obě díry vznikly z kódu psaného během předchozích dvou dnů. **Sadu je potřeba
+spouštět po každé změně**, která přidá tabulku, funkci nebo spouštěč — ne jen
+při auditu. Nová plocha je vždycky ta nejméně prověřená.
