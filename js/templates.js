@@ -15,7 +15,7 @@ window.customerHTML = function(name) {
             <div class="stat-card bg-white dark:bg-slate-800/80 rounded-2xl lg:rounded-3xl p-2.5 lg:p-6 border border-slate-200 dark:border-slate-700 shadow-sm"><p class="stat-lbl text-[9px] lg:text-[11px] font-extrabold text-slate-400 uppercase tracking-wide lg:tracking-widest mb-0.5 lg:mb-3">Aktivní</p><p class="stat-val text-xl lg:text-4xl font-black text-remexo-500" id="stat-active">0</p></div>
             <div class="stat-card bg-white dark:bg-slate-800/80 rounded-2xl lg:rounded-3xl p-2.5 lg:p-6 border border-slate-200 dark:border-slate-700 shadow-sm"><p class="stat-lbl text-[9px] lg:text-[11px] font-extrabold text-slate-400 uppercase tracking-wide lg:tracking-widest mb-0.5 lg:mb-3">Celkem</p><p class="stat-val text-xl lg:text-4xl font-black dark:text-white" id="stat-total">0</p></div>
             <div class="stat-card bg-white dark:bg-slate-800/80 rounded-2xl lg:rounded-3xl p-2.5 lg:p-6 border border-slate-200 dark:border-slate-700 shadow-sm"><p class="stat-lbl text-[9px] lg:text-[11px] font-extrabold text-slate-400 uppercase tracking-wide lg:tracking-widest mb-0.5 lg:mb-3">Zprávy</p><p class="stat-val text-xl lg:text-4xl font-black dark:text-white" id="stat-msgs">0</p></div>
-            <div class="stat-card bg-white dark:bg-slate-800/80 rounded-2xl lg:rounded-3xl p-2.5 lg:p-6 border border-slate-200 dark:border-slate-700 shadow-sm"><p class="stat-lbl text-[9px] lg:text-[11px] font-extrabold text-slate-400 uppercase tracking-wide lg:tracking-widest mb-0.5 lg:mb-3">V Escrow</p><p class="stat-val stat-val-money text-xl lg:text-4xl font-black dark:text-white" id="stat-escrow">0 Kč</p></div>
+            <div class="stat-card bg-white dark:bg-slate-800/80 rounded-2xl lg:rounded-3xl p-2.5 lg:p-6 border border-slate-200 dark:border-slate-700 shadow-sm"><p class="stat-lbl text-[9px] lg:text-[11px] font-extrabold text-slate-400 uppercase tracking-wide lg:tracking-widest mb-0.5 lg:mb-3">Platby</p><p class="stat-val text-xs lg:text-base font-bold text-slate-400" id="stat-escrow" title="Platby přes platformu teprve připravujeme">Připravujeme</p></div>
         </div>
         <div class="dash-panel bg-white dark:bg-slate-800/80 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm p-4 lg:p-8">
             <h3 class="text-base lg:text-xl font-extrabold mb-3 lg:mb-6 dark:text-white">Poslední poptávky</h3>
@@ -45,9 +45,24 @@ window.customerHTML = function(name) {
         </div>
     </div>
     <div id="view-payments" class="hidden fade-up max-w-4xl">
-        <h2 class="text-3xl font-extrabold mb-8 dark:text-white">Platby & Escrow</h2>
-        <div class="bg-gradient-to-br from-remexo-500 to-remexo-600 rounded-3xl p-8 mb-8 text-white shadow-xl relative overflow-hidden"><div class="absolute -right-10 -top-10 text-white/10 text-9xl"><i class="fa-solid fa-shield-halved"></i></div><p class="text-xs font-black uppercase tracking-widest opacity-80 mb-2 relative z-10">Peníze v bezpečné úschově</p><p class="text-5xl font-black mb-4 relative z-10">0 Kč</p><p class="text-sm opacity-90 relative z-10">Peníze jsou zablokovány u Remexo do vašeho potvrzení o dokončení opravy.</p></div>
-        <div class="bg-white dark:bg-slate-800/80 rounded-3xl border border-slate-200 dark:border-slate-700 p-8 text-center text-sm text-slate-400 py-12">Zatím neproběhly žádné platby.</div>
+        <h2 class="text-3xl font-extrabold mb-2 dark:text-white">Platby</h2>
+        <p class="text-slate-500 dark:text-slate-400 mb-8">Zatím se na ceně i platbě domlouváš přímo s řemeslníkem.</p>
+
+        <div class="bg-white dark:bg-slate-800/80 rounded-3xl border border-slate-200 dark:border-slate-700 p-8">
+            <div class="flex items-start gap-4">
+                <div class="w-12 h-12 rounded-2xl bg-amber-100 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xl shrink-0">
+                    <i class="fa-solid fa-hammer"></i>
+                </div>
+                <div>
+                    <p class="font-extrabold text-lg dark:text-white mb-1">Platby přes Remexo připravujeme</p>
+                    <p class="text-slate-500 dark:text-slate-400 leading-relaxed">
+                        Chceme, aby šlo zaplatit přímo v aplikaci a peníze zůstaly v úschově, dokud práci nepřevezmeš.
+                        Zatím to tak ale nefunguje — cenu i způsob platby si domluv s řemeslníkem napřímo,
+                        stejně jako doteď.
+                    </p>
+                </div>
+            </div>
+        </div>
     </div>
     <div id="view-profile" class="hidden fade-up max-w-4xl mx-auto">
         <h2 class="text-3xl font-extrabold mb-8 dark:text-white">Můj profil</h2>
