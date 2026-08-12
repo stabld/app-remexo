@@ -100,6 +100,15 @@ Deno.serve(async (req) => {
       cena ? ` za ${esc(cena)}` : ""
     }.<br><br>Podívej se na ni a rozhodni se, jestli ti sedí.`;
     tlacitko = "Zobrazit nabídku";
+  } else if (udalost === "neprectene_zpravy") {
+    // kategorie nese počet nepřečtených zpráv
+    const pocet = Number(kategorie) || 1;
+    const slovo = pocet === 1 ? "zprávu" : (pocet < 5 ? "zprávy" : "zpráv");
+    predmet = `Cekaji na tebe zpravy: ${zkratit(nazev, 40)}`;
+    nadpis = pocet === 1 ? "Čeká na tebe zpráva" : `Čekají na tebe ${pocet} ${slovo}`;
+    text = `V konverzaci u zakázky <strong>${esc(nazev)}</strong> máš nepřečtené zprávy.<br><br>`
+         + `Druhá strana čeká na odpověď — čím dřív se ozveš, tím líp.`;
+    tlacitko = "Přečíst zprávy";
   } else if (udalost === "zakazka_hotova") {
     // kategorie nese informaci, komu píšeme
     const zakaznikovi = kategorie === "zakaznik";
