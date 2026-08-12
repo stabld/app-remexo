@@ -102,7 +102,25 @@ export default async function handler(req, res) {
         return res.status(401).json({ error: 'Pro použití Bořka se musíte přihlásit.' });
     }
 
-    // 2) Rozumný počet dotazů za hodinu
+    // 2) Rozumný počet dotazů za hodinu.
+    // Databáze je jediné místo, kde limit obejít nejde - paměť serverless
+    // funkce se restartem vynuluje. Paměťová varianta níž zůstává jako záloha.
+    try {
+        const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '');
+        const r = await fetch(SUPABASE_URL + '/rest/v1/rpc/ai_limit_prekrocen', {
+            method: 'POST',
+            headers: {
+                apikey: SUPABASE_ANON,
+                Authorization: 'Bearer ' + token,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ p_limit: LIMIT_ZA_HODINU })
+        });
+        if (r.ok && (await r.json()) === true) {
+            return res.status(429).json({ error: 'Bořek dnes odpověděl už hodně lidem. Zkuste to prosím za chvíli.' });
+        }
+    } catch (e) { /* při výpadku spadneme zpět na paměťový limit */ }
+
     if (prekrocilLimit(uzivatel.id)) {
         return res.status(429).json({ error: 'Bořek dnes odpověděl už hodně lidem. Zkuste to prosím za chvíli.' });
     }
