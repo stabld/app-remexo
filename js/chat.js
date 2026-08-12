@@ -95,6 +95,12 @@ window.getUserAvatar = async function(userId, fallbackSeed, fallbackBg) {
 
 window.openConversation = async function(requestId, partnerName, partnerSeed, partnerUserId) {
     window.activeChatId = String(requestId);
+
+    // Zaznamenat přečtení v databázi. Bez toho by nešlo poznat,
+    // na koho zpráva čeká - a chodila by upozornění i na přečtené.
+    try {
+        if (window.sb) await window.sb.rpc("oznac_precteno", { p_konverzace: String(requestId) });
+    } catch (e) { /* nesmí zabránit otevření chatu */ }
     if (!partnerUserId && window._idProtistrany) partnerUserId = window._idProtistrany[String(requestId)] || null;
     const nameEl = document.getElementById("chat-partner-name")||document.getElementById("chat-partner-name-c");
     if(nameEl) nameEl.innerText = partnerName;
@@ -550,6 +556,12 @@ window.spustHlidaniZprav = function() {
                 if (window.activeChatId === konverzace) {
                     const boxId = window.APP_ROLE === "customer" ? "chat-msgs" : "chat-msgs-c";
                     window.renderMessage(msg, boxId);
+                    // Uživatel se na zprávu právě dívá, takže je přečtená.
+                    // Jinak by mu za tři hodiny přišlo upozornění na něco,
+                    // co má před očima.
+                    try {
+                        if (window.sb) window.sb.rpc("oznac_precteno", { p_konverzace: konverzace });
+                    } catch (e) {}
                     return;
                 }
 
