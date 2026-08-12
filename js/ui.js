@@ -335,7 +335,7 @@ window.refreshDashboard = function() {
 };
 
 window.initCustomer = function(name) {
-    window.buildNav([{id:"dash",icon:"fa-house",label:"Nástěnka"},{id:"requests",icon:"fa-list-check",label:"Moje poptávky"},{id:"messages",icon:"fa-comment-dots",label:"Zprávy"},{id:"payments",icon:"fa-shield-halved",label:"Platby & Escrow"},{id:"profile",icon:"fa-user",label:"Můj profil"}]);
+    window.buildNav([{id:"dash",icon:"fa-house",label:"Nástěnka"},{id:"requests",icon:"fa-list-check",label:"Moje poptávky"},{id:"messages",icon:"fa-comment-dots",label:"Zprávy"},{id:"payments",icon:"fa-shield-halved",label:"Platby"},{id:"profile",icon:"fa-user",label:"Můj profil"}]);
     document.getElementById("header-cta").innerHTML = '<button onclick="window.goTab(\'new\',\'Nová poptávka\')" class="bg-remexo-500 hover:bg-remexo-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg transition hover:scale-105"><i class="fa-solid fa-hard-hat"></i> <span>Nová poptávka</span></button>';
     if (window.customerHTML) { document.getElementById("main-content").innerHTML = window.customerHTML(name); }
     window.pridejSpravu();
