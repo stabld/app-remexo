@@ -36,11 +36,13 @@ window.addEventListener('load', async () => {
             // Role musí být i v profiles - administrace a notifikace se ptají
             // tabulky, ne tokenu. U starších účtů tam chyběla.
             try {
+                // Jméno se zapisuje přímo, role přes zmen_roli() -
+                // sloupec role hlídá spouštěč a přímý zápis odmítne.
                 await window.sb.from("profiles").upsert({
                     id: session.user.id,
-                    full_name: name,
-                    role: window.APP_ROLE
+                    full_name: name
                 }, { onConflict: "id" });
+                await window.sb.rpc("zmen_roli", { p_role: window.APP_ROLE });
             } catch (e) { /* nesmí zabránit přihlášení */ }
 
             window.initApp(window.APP_ROLE, name);
