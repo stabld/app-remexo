@@ -81,7 +81,20 @@ Deno.serve(async (req) => {
   }
 
   const { udalost, prijemci, nazev, mesto, kategorie, cena } = telo ?? {};
-  const seznam: string[] = Array.isArray(prijemci) ? prijemci.filter(Boolean).slice(0, 200) : [];
+  // Adresy: jen platný tvar, bez duplicit, s pevným stropem.
+  // Bez deduplikace by při chybě v dotazu přišlo jednomu člověku
+  // deset stejných e-mailů; strop brání zneužití k rozesílce.
+  const MAX_PRIJEMCU = 200;
+  // Povolené jsou jen znaky, které se v adresách běžně vyskytují.
+  // Volnější zápis by propustil i "<script>@x.cz".
+  const platny = (e: unknown) =>
+    typeof e === "string" && e.length <= 254 &&
+    /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(e.trim());
+
+  const seznam: string[] = Array.isArray(prijemci)
+    ? [...new Set(prijemci.filter(platny).map((e) => String(e).trim().toLowerCase()))]
+        .slice(0, MAX_PRIJEMCU)
+    : [];
   if (!seznam.length) return odpoved(200, { odeslano: 0, poznamka: "Žádní příjemci." });
 
   const app = "https://app.remexo.cz";
