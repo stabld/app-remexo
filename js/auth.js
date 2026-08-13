@@ -116,6 +116,9 @@ window.doLogin = async function() {
         // jinak by se po refreshi vrátila ta původní z registrace
         if (window.APP_ROLE && window.APP_ROLE !== data.user.user_metadata?.role) {
             try {
+                // Role v tokenu je jen pro vzhled rozhraní. O přístupu
+                // rozhoduje profiles.role, kam se zapisuje přes zmen_roli().
+                await window.sb.rpc("zmen_roli", { p_role: window.APP_ROLE });
                 await window.sb.auth.updateUser({ data: { role: window.APP_ROLE } });
                 const čerstvý = (await window.sb.auth.getUser()).data?.user;
                 if (čerstvý) window.APP_USER = čerstvý;
