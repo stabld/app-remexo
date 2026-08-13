@@ -6,8 +6,10 @@ const MODEL = 'gemini-3.5-flash';
 // a utrácet za Gemini na účet Remexa. Endpoint je veřejná adresa,
 // takže musí sám ověřit, kdo se ptá.
 
-const SUPABASE_URL = process.env.SUPABASE_URL || 'https://iyvvwsnhezjrjrkscbyc.supabase.co';
-const SUPABASE_ANON = process.env.SUPABASE_ANON_KEY || 'sb_publishable_OehKo_l9qTAp-xfmlHpzOA_OYBp4ouc';
+// Bez záložních hodnot: kdyby proměnná chyběla, má se to poznat hned,
+// ne se tiše připojit k natvrdo zadanému projektu.
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_ANON = process.env.SUPABASE_ANON_KEY;
 
 const MAX_TELO_ZNAKU = 8 * 1024 * 1024;   // ~8 MB, pět fotek v base64 se vejde
 const MAX_PROMPT_ZNAKU = 4000;            // systémový prompt od klienta
@@ -93,10 +95,15 @@ export default async function handler(req, res) {
 
     const apiKey = process.env.AI_MODEL_TOKEN;
     if (!apiKey) {
-        return res.status(500).json({ error: 'API klíč není nastaven na serveru.' });
+        return res.status(500).json({ error: 'Služba není správně nastavena.' });
     }
 
     // 1) Jen přihlášený uživatel
+    if (!SUPABASE_URL || !SUPABASE_ANON) {
+        console.error('Chybi SUPABASE_URL nebo SUPABASE_ANON_KEY.');
+        return res.status(500).json({ error: 'Služba není správně nastavena.' });
+    }
+
     const uzivatel = await zjistiUzivatele(req);
     if (!uzivatel) {
         return res.status(401).json({ error: 'Pro použití Bořka se musíte přihlásit.' });
