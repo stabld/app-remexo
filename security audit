@@ -1,0 +1,371 @@
+# Bezpečnostní audit Remexo
+
+Období: 6.–7. 8. 2026
+Rozsah: frontend, serverless funkce, databáze Supabase, Storage
+Metoda: čtení kódu + útočné testy proti produkční databázi
+
+---
+
+## Skóre
+
+Škála 0–10. Hodnotí se stav **ověřený testem**, ne stav popsaný v dokumentaci.
+
+| Oblast | Před | Po | Poznámka |
+|---|---:|---:|---|
+| Authentication | 7 | 7 | Supabase Auth, nezasahovali jsme; netestováno |
+| Authorization | 3 | 8 | Ověřeno 21 testy proti produkci |
+| RLS | 4 | 8 | Zapnuté všude, zúžené na přihlášené |
+| Ochrana sloupců | 0 | 8 | Spouštěče proti přepsání vlastnictví |
+| Storage | 1 | 7 | Byl otevřený zápis komukoliv včetně anonymů |
+| Signed URLs | 0 | 8 | Fotky přes dočasné odkazy, bucket neveřejný |
+| Upload security | 2 | 6 | Limity velikosti a typu; obsah se nekontroluje |
+| XSS | 3 | 6 | Tři díry opraveny, systematický audit neproběhl |
+| API security | 5 | 8 | Prompty na serveru, ověřená session |
+| Rate limiting | 1 | 7 | V databázi; chybí u uploadu a přihlašování |
+| Session security | ? | ? | Netestováno ani před, ani po |
+| Secrets | 8 | 8 | V repu ani v historii nic, service role nikde |
+| Input validation | 3 | 6 | Databáze vynucuje; serverová validace jen u AI |
+| Reviews | 5 | 8 | Ověřeno testy 12, 13 |
+| Security headers | 0 | 7 | CSP, frame-ancestors, HSTS a další |
+| Audit logging | 0 | 0 | Neexistuje |
+
+Session security je zapsaná otazníkem schválně. Nevíme, jestli je dobrá nebo
+špatná — nikdo ji netestoval a tvářit se, že je v pořádku, by bylo horší než
+přiznat, že to nevíme.
+
+---
+
+## Co bylo nalezeno a opraveno
+
+### P0
+
+**XSS v seznamu konverzací.** Jméno protistrany a název poptávky se vkládaly
+do stránky bez ošetření. Řemeslník si mohl nastavit jméno na `<img onerror=...>`
+a spustit kód v prohlížeči každého zákazníka, který ho viděl v seznamu zpráv.
+Odtud jde ukrást přihlašovací token.
+Opraveno v `js/chat.js`, ověřeno v prohlížeči před a po.
+
+**Kontakty bez přístupových pravidel.** Tabulka `poptavka_kontakt` s telefony
+a adresami neměla RLS. Filtrování běželo jen ve frontendu, takže kdokoliv
+přihlášený si mohl přes API stáhnout telefony všech zákazníků.
+
+**Storage s otevřeným zápisem.** Čtyři pravidla „avatars full access" měla
+podmínku `true` pro roli `public`. Kdokoliv, i nepřihlášený, mohl přepsat
+avatar komukoliv, smazat všechny soubory nebo nahrát cokoliv na cizí účet.
+
+**Přepsání vlastnictví.** Zákazník si mohl k vlastní poptávce přiřadit
+libovolného uživatele jako řemeslníka — i takového, který o ni nikdy neprojevil
+zájem — a otevřít mu tím chat. Mohl také převést poptávku na jiného uživatele
+nebo přepsat cenu v cizí nabídce.
+Opraveno spouštěči, protože RLS neumí chránit jednotlivé sloupce.
+
+### P1
+
+**Fotky poptávek v textu popisu.** Base64 přímo v `description`, takže je
+viděl každý přihlášený a zároveň to zpomalovalo načítání tržiště.
+Přesunuto do neveřejného bucketu s dočasnými odkazy.
+
+**Odstoupení viditelné komukoliv.** Důvod, proč řemeslník odstoupil ze zakázky,
+mohl přečíst i nepřihlášený.
+
+**Pravidla pro roli `public`.** Platila i pro anonymy; zachraňovaly je jen
+podmínky uvnitř. Zúženo na `authenticated` všude kromě veřejného čtení
+hodnocení a profilů řemeslníků.
+
+**Mazání zpráv.** Zákazník mohl smazat i zprávy řemeslníka. Teď maže každý své.
+
+**Systémové prompty od klienta.** Kdokoliv přihlášený si mohl nechat generovat
+cokoliv na naši Gemini kvótu. Prompty přesunuty na server.
+
+**Chybějící bezpečnostní hlavičky.** `vercel.json` v repu vůbec nebyl.
+
+**Rate limiting v paměti.** Jediný limit byl u AI a počítal se v paměti
+serverless funkce, takže se restartem vynuloval. Přesunuto do databáze
+a doplněno pro poptávky, nabídky a zprávy.
+
+---
+
+## Výsledky testů
+
+21 testů proti produkční databázi, **všechny PASS**. Podrobnosti
+v [SECURITY_TESTS.md](SECURITY_TESTS.md).
+
+Sada byla ověřena obráceně: po záměrném zavedení díry hlásí FAIL na správných
+místech. Není to test, který svítí zeleně vždycky.
+
+Testy pokrývají: cizí kontakty, cizí chat, podvržení odesílatele, sebeschválení
+nabídky, přesun nabídky, přepsání vlastníka, falešná hodnocení, přístup
+nepřihlášeného a ochranu sloupců. Dva testy zároveň kontrolují, že běžný
+workflow pořád funguje.
+
+Rate limiting ověřen samostatně: 15 poptávek po sobě → 6 zablokováno,
+40 zpráv → 10 zablokováno, běžné použití prošlo bez omezení.
+
+---
+
+## Zbývající rizika
+
+**Session security.** Netestováno chování při vypršení nebo zneplatnění
+přihlášení, po změně hesla a při odhlášení na jiném zařízení.
+
+**XSS systematicky.** Opraveno bylo, na co se přišlo. Celý průchod rozhraním
+neproběhl.
+
+**Obsah nahraných souborů.** Limity kontrolují hlavičku od prohlížeče, ne
+skutečný obsah. Zmírňuje to, že bucket není veřejný a soubory se nikdy
+nespouštějí jako stránka.
+
+**Registrace účtů.** Kdo si založí deset účtů, má deset limitů. Pomůže až
+ověřování e-mailu nebo řemeslníků.
+
+**Přihlašování a obnova hesla.** Běží uvnitř Supabase Auth, ochrana proti
+opakovaným pokusům se řeší jejich nastavením, ne naším kódem.
+
+**Audit log.** Neexistuje. Po incidentu nedohledáme, co se stalo.
+
+**Escrow v rozhraní.** Záložka Platby a dlaždice „V escrow" ukazují nuly
+a nejsou na nic napojené. Působí jako hotová funkce, kterou nemáme.
+
+**Externí posouzení.** Neproběhlo žádné. Tento audit dělal jazykový model.
+
+---
+
+## Zdarma vs. placené
+
+Vše výše je postavené na tom, co už projekt má: PostgreSQL, RLS, spouštěče,
+Supabase Storage a Auth, Vercel a hlavičky. **Nebyla přidána žádná placená
+služba.**
+
+Co by za peníze existovalo a čím to teď nahrazujeme:
+
+| Placené řešení | Naše náhrada zdarma |
+|---|---|
+| WAF (Cloudflare Pro apod.) | Rate limiting v databázi + CSP |
+| Antivirus pro upload | Omezení typu a velikosti, neveřejný bucket |
+| SIEM / centrální logování | Zatím nic — otevřené riziko |
+| Správa relací a zařízení | Výchozí Supabase Auth |
+| Penetrační test | Vlastní útočná sada 21 testů |
+
+---
+
+## Připravenost k provozu
+
+**READY FOR CLOSED MVP**
+
+Proč ano: přístup k datům hlídá databáze, ne frontend. Ověřeno útočnými testy
+proti produkci, ne jen čtením kódu. Telefony a adresy dostane jen vybraný
+řemeslník, fotky nejsou veřejné, zápis do Storage je omezený na vlastníka,
+vlastnictví záznamů se nedá přepsat a zahlcení má strop. Prostředí, kde víš,
+kdo se registruje — pozvaní řemeslníci a první zákazníci — je únosné.
+
+Proč ne veřejný provoz: session security netestovaná, XSS neprošlo
+systematickým auditem, chybí audit log, registrace se dá zneužít k obcházení
+limitů a aplikace neprošla žádným externím posouzením. Escrow v rozhraní navíc
+slibuje funkci, která neexistuje.
+
+Před veřejným spuštěním bych chtěl minimálně: otestovanou session security,
+systematický průchod XSS, audit log a nezávislé posouzení někým, kdo tohle
+dělá profesionálně.
+
+---
+
+# Doplněk: session, XSS a audit log (7. 8. 2026)
+
+## Testy přihlášení — 10 z 11 PASS
+
+Spuštěno proti produkci přes `session-testy.js` a ruční kroky.
+
+| # | Test | Očekáváno | Skutečnost | |
+|---|---|---|---|---|
+| 1 | Přihlášení vytvoří session | session | session | PASS |
+| 2 | Platný token čte vlastní data | 200 | 200 | PASS |
+| 3 | Poškozený access token | 401 | 401 | PASS |
+| 4 | Vymyšlený token | 401 | 401 | PASS |
+| 5 | Obnova vrátí nový token | nový | nový | PASS |
+| 6 | Rodičovský refresh token | vrátí aktivní | 200 | PASS¹ |
+| 7 | Po odhlášení není session v prohlížeči | žádná | žádná | PASS |
+| 8 | Starý access token po odhlášení | 401 | 200 | **známé omezení²** |
+| 9 | Refresh token po odhlášení | 400/401 | 400 | PASS |
+| 10 | Session po změně hesla | odmítnuto | odmítnuto | PASS |
+| 11 | Odhlášení na druhém zařízení | funguje | odhlásí všude | PASS³ |
+| 12 | Starší refresh token (přes 2 obnovy) | odmítnuto | 400 | PASS |
+
+¹ Dokumentovaná výjimka Supabase: použití přímého rodiče aktivního tokenu vrátí
+aktivní token, aby výpadek sítě nezrušil přihlášení. Skutečná detekce zneužití
+se ověřila testem 12 — starší token je odmítnut a session ukončena.
+
+² Access token je podepsaný JWT s vlastní platností. Odhlášení ho smaže
+z prohlížeče, ale server ho nezneplatní; zůstává použitelný do vypršení
+(nastaveno 3600 s). Návrhové rozhodnutí Supabase, ne chyba Remexa. Zmírnit jde
+zkrácením platnosti v Authentication → Sessions.
+
+³ Odhlášení je globální — vyhodí všechna zařízení. Bezpečnostně silnější,
+uživatelsky nepohodlné. Změnit lze na `signOut({ scope: 'local' })`.
+
+**Rotace refresh tokenů a detekce zneužití jsou zapnuté a ověřené.**
+
+## XSS testy — PASS
+
+Nalezena a opravena díra v notifikacích: jméno odesílatele zprávy se vkládalo
+do stránky neošetřené. Ověřeno v prohlížeči, že se před opravou útok spustil
+a po opravě ne.
+
+160 kombinací (8 útočných řetězců × 10 polí × 2 varianty karty) bez jediného
+průniku.
+
+## Regresní testy
+
+21 z 21 PASS proti produkci.
+
+## Návrh audit logu (neimplementováno)
+
+```sql
+create table public.audit_log (
+  id          bigserial primary key,
+  cas         timestamptz not null default now(),
+  uzivatel_id uuid,
+  udalost     text not null,
+  detail      jsonb,
+  ip          inet
+);
+alter table public.audit_log enable row level security;
+-- Žádné pravidlo pro čtení: zapisuje se přes security definer funkci,
+-- číst smí jen administrátor přes SQL editor.
+create index on public.audit_log (cas desc);
+create index on public.audit_log (uzivatel_id, cas desc);
+```
+
+**Co logovat:** neúspěšné přihlášení, změna hesla, změna e-mailu, změna role,
+odmítnutý přístup k citlivým datům, překročení limitu, přiřazení řemeslníka
+k zakázce, přijetí nabídky, smazání poptávky.
+
+**Co nelogovat nikdy:** hesla, tokeny, API klíče, obsah zpráv, telefony
+a adresy. Do `detail` patří id záznamu a typ akce, ne obsah.
+
+**Kam to napojit:** spouštěče, které už na tabulkách jsou, mohou zápis
+do logu doplnit. Neúspěšná přihlášení jsou v Supabase → Authentication →
+Audit Logs, ale s krátkou historií.
+
+---
+
+# FINÁLNÍ STAV (7. 8. 2026)
+
+Uzavření všech položek, které šlo v současné architektuře vyřešit zdarma.
+
+## Skóre po dokončení
+
+| Oblast | Před | Po | Změna |
+|---|---:|---:|---|
+| Authentication | 7 | 8 | potvrzování e-mailu, kratší platnost tokenu |
+| Authorization | 3 | 8 | 21 testů proti produkci |
+| RLS | 4 | 9 | vše jen pro přihlášené, dvě výjimky vědomé |
+| Ochrana sloupců | 0 | 8 | spouštěče |
+| Storage | 1 | 8 | neveřejné, omezené na vlastníka, limity typu a velikosti |
+| Signed URLs | 0 | 8 | dočasné odkazy, přístup podle stavu poptávky |
+| Upload security | 2 | 7 | limity nastavené; obsah se nekontroluje |
+| XSS | 3 | 8 | ověřeno v DOM, ne porovnáním textu |
+| API security | 5 | 8 | prompty na serveru |
+| Rate limiting | 1 | 8 | v databázi + limity Supabase Auth |
+| Session security | ? | 8 | otestováno 12 testy |
+| Secrets | 8 | 8 | beze změny, nic nenalezeno |
+| Input validation | 3 | 7 | databáze vynucuje, spouštěče hlídají workflow |
+| Reviews | 5 | 8 | ověřeno testy |
+| Security headers | 0 | 7 | CSP, frame-ancestors, HSTS |
+| Audit logging | 0 | 7 | běží, nečitelný přes API |
+
+## Co se udělalo v poslední fázi
+
+* Rozšířený XSS audit na formuláře, profily a modální okna. Měřeno tím, jestli
+  se kód provede v DOM, ne porovnáním řetězců — první dva pokusy dávaly falešné
+  poplachy právě proto, že porovnávaly text.
+* Zpevnění tří míst: `avatar_url` jen `https://`, MIME nahrané fotky jen čtyři
+  obrázkové typy (bez SVG), typ hlášky jen tři známé hodnoty.
+* Audit log s napojením na existující spouštěče. RLS bez pravidel pro čtení,
+  takže přes API se k němu nikdo nedostane.
+* Zkrácení platnosti access tokenu, potvrzování e-mailu při registraci,
+  přísnější limity registrací v Supabase Auth.
+
+## Zbývající rizika
+
+**Obsah nahraných souborů se nekontroluje.** Limity hlídají hlavičku od
+prohlížeče, ne skutečný obsah. Zmírňuje to neveřejný bucket a to, že se soubory
+nikdy nespouštějí jako stránka.
+
+**Access token přežije odhlášení** do vypršení (nově 15 minut místo hodiny).
+Vlastnost Supabase Auth.
+
+**Odesílání e-mailů z osobní schránky.** Potvrzení registrace chodí z adresy
+na cizí doméně. Není to bezpečnostní díra, ale zhoršuje to doručitelnost
+i důvěryhodnost. Řeší doménová schránka.
+
+**Escrow v rozhraní.** Záložka Platby slibuje funkci, která neexistuje.
+
+**Žádné externí posouzení.** Tento audit dělal jazykový model. Za dva dny našel
+čtyři skutečné díry — a přitom si u refresh tokenů třikrát po sobě špatně
+napsal test. To je samo o sobě dobrý argument pro nezávislou kontrolu.
+
+## Verdikt
+
+**CLOSED MVP: READY**
+**PUBLIC LAUNCH: READY s výhradou**
+
+Oproti předchozímu auditu se veřejné spuštění posunulo z NOT READY. Důvody,
+které tomu bránily — netestovaná session security, XSS bez systematického
+auditu a chybějící audit log — jsou vyřešené a ověřené.
+
+Výhrada zní: před veřejným spuštěním nechat aplikaci projít někým, kdo
+bezpečnost dělá profesionálně. Ne proto, že by byl znám konkrétní problém,
+ale protože všechno výše ověřoval tentýž nástroj, který to i stavěl.
+
+---
+
+# Hardening před pilotem (13.–14. 8. 2026)
+
+Cílená kontrola šesti oblastí. Architektura ani framework se neměnily.
+
+## Nález: role v tokenu nebyla důvěryhodná
+
+Storage pravidlo pro fotky poptávek se ptalo role v `user_metadata` tokenu.
+Tu si uživatel může sám přepsat přes `supabase.auth.updateUser` — a aplikace
+to při přepnutí role dokonce dělala. **Kterýkoliv zákazník se tak mohl
+prohlásit za řemeslníka a získat přístup k fotkám všech poptávek na tržišti.**
+
+Opraveno:
+* role se čte z `profiles` přes `je_remeslnik()` (security definer)
+* změnu provádí `zmen_roli()` — povolené jen `customer` a `craftsman`
+* přímý zápis do sloupce `role` blokuje spouštěč `hlidej_roli`
+* řemeslník s rozdělanou zakázkou nemůže odejít na zákazníka
+* admin zůstává výhradně v tabulce `admini`
+
+Ověřeno testem 12 ve `storage-testy.sql`: se starým pravidlem selhal,
+s novým prošel.
+
+## Ostatní oblasti
+
+**Storage** — nová sada 12 testů. Avatary (mazání, přepis, nahrání pod cizím
+id), fotky poptávek (čtyři identity plus anonym), podvržená role.
+
+**Podepsané odkazy** — ověřeno ručně. Řemeslník bez vazby odkaz nedostane
+(`error`, `signedUrl: null`). Odkaz s platností 5 s po 10 s vrací HTTP 400.
+
+**AI endpoint** — odstraněny záložní hodnoty `SUPABASE_URL` a
+`SUPABASE_ANON_KEY`. Bez proměnných prostředí endpoint vrátí chybu.
+
+**Edge Function** — doplněna deduplikace příjemců a kontrola formátu adres.
+Původní zápis propouštěl `<script>@x.cz`. Strop 200 příjemců.
+
+**Buckety** — limity 5 MB a 2 MB, povolené jen `image/jpeg`, `image/png`,
+`image/webp`. SVG záměrně ne — je to XML a umí obsahovat spustitelný kód.
+
+## Výsledky
+
+| Sada | Výsledek |
+|---|---|
+| Hlavní bezpečnostní testy | **31 / 31 PASS** |
+| Storage testy | **12 / 12 PASS** |
+| Podepsané odkazy a expirace | **2 / 2 PASS** (ručně) |
+| Kontrola konfigurace | **0 nálezů** |
+| Session security | **11 / 12** (jeden je vlastnost Supabase Auth) |
+
+**NOT TESTED:** obsah nahraných souborů (kontroluje se jen hlavička od
+prohlížeče), chování Storage API pod zátěží, doručitelnost e-mailů.
