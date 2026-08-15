@@ -1,0 +1,182 @@
+// =====================================================
+// REMEXO: testy zabezpečení přihlášení
+//
+// POUŽITÍ:
+//   1. Přihlas se v app.remexo.cz
+//   2. F12 -> Console
+//   3. Vlož celý tenhle soubor a odešli
+//   4. Test 9 a 10 vyžadují ruční kroky, skript ti řekne jak
+//
+// POZOR: test 3 tě odhlásí. Je to schválně - testuje se právě to,
+// jestli starý token po odhlášení pořád funguje.
+// =====================================================
+
+(async function testySession() {
+  const vysledky = [];
+  const zapis = (c, test, ocekavano, skutecnost, ok) =>
+    vysledky.push({ c, test, ocekavano, skutecnost, vysledek: ok ? 'PASS' : 'FAIL' });
+
+  const URL = window.SB_URL;
+  const KEY = window.SB_KEY;
+
+  // Zkusí načíst vlastní poptávky s daným tokenem
+  async function zkusToken(token) {
+    try {
+      const r = await fetch(URL + '/rest/v1/requests?select=id&limit=1', {
+        headers: { apikey: KEY, Authorization: 'Bearer ' + token }
+      });
+      return r.status;
+    } catch (e) { return 'chyba sítě'; }
+  }
+
+  // --- 1) Přihlášení ---
+  const s1 = (await window.sb.auth.getSession()).data.session;
+  zapis(1, 'Prihlaseni funguje a session existuje', 'session s tokenem',
+        s1 ? 'session nalezena' : 'zadna session', !!s1);
+
+  if (!s1) {
+    // --- 10) Podvržený access token (změněná doba platnosti) ---
+  // Vezmeme platný token a posuneme mu v těle čas vypršení do minulosti.
+  // Podpis tím přestane sedět - server ho musí odmítnout.
+  // POZOR: tohle NENÍ test skutečně prošlého tokenu. Ten se podepsaný
+  // ověřit nedá jinak než čekáním, viz ruční postup na konci souboru.
+  try {
+    const casti = (novyAccess || puvodniAccess).split('.');
+    const telo = JSON.parse(atob(casti[1].replace(/-/g,'+').replace(/_/g,'/')));
+    telo.exp = Math.floor(Date.now()/1000) - 3600;
+    const podvrh = casti[0] + '.' +
+      btoa(JSON.stringify(telo)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'') +
+      '.' + casti[2];
+    const st10 = await zkusToken(podvrh);
+    zapis(10, 'Podvrzeny access token se zmenenou platnosti', '401', st10, st10 === 401);
+  } catch (e) {
+    zapis(10, 'Podvrzeny access token se zmenenou platnosti', '401', 'test selhal: ' + e.message, false);
+  }
+
+  // --- 11) Starší refresh token (přes dvě obnovy) ---
+  // Rodič aktivního tokenu se podle dokumentace Supabase přijímá schválně
+  // (kvůli výpadkům sítě). Zneužití se pozná až u staršího tokenu.
+  try {
+    await window.sb.auth.refreshSession();
+    const r11 = await fetch(URL + '/auth/v1/token?grant_type=refresh_token', {
+      method: 'POST',
+      headers: { apikey: KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token: puvodniRefresh })
+    });
+    zapis(11, 'Starsi refresh token (pres dve obnovy)', '400 nebo 401', r11.status,
+          r11.status === 400 || r11.status === 401);
+  } catch (e) {
+    zapis(11, 'Starsi refresh token (pres dve obnovy)', '400 nebo 401', 'test selhal', false);
+  }
+
+  console.table(vysledky);
+    console.warn('Nejsi prihlaseny. Prihlas se a spust znovu.');
+    return;
+  }
+
+  const puvodniAccess  = s1.access_token;
+  const puvodniRefresh = s1.refresh_token;
+
+  // --- 2) Platný token čte data ---
+  const st2 = await zkusToken(puvodniAccess);
+  zapis(2, 'Platny access token cte vlastni data', '200', st2, st2 === 200);
+
+  // --- 3) Cizí / poškozený token ---
+  const rozbity = puvodniAccess.slice(0, -6) + 'AAAAAA';
+  const st3 = await zkusToken(rozbity);
+  zapis(3, 'Poskozeny access token', '401', st3, st3 === 401);
+
+  // --- 4) Úplně vymyšlený token ---
+  const st4 = await zkusToken('eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ4In0.podvrh');
+  zapis(4, 'Vymysleny token', '401', st4, st4 === 401);
+
+  // --- 5) Obnova session (refresh) ---
+  const r5 = await window.sb.auth.refreshSession();
+  const novyAccess = r5.data?.session?.access_token;
+  zapis(5, 'Obnova session vrati novy token', 'novy token',
+        novyAccess ? (novyAccess !== puvodniAccess ? 'novy token' : 'stejny token') : 'selhalo',
+        !!novyAccess && novyAccess !== puvodniAccess);
+
+  // --- 6) Starý refresh token po obnově ---
+  const r6 = await fetch(URL + '/auth/v1/token?grant_type=refresh_token', {
+    method: 'POST',
+    headers: { apikey: KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ refresh_token: puvodniRefresh })
+  });
+  zapis(6, 'Stary refresh token po obnove', '400 nebo 401', r6.status,
+        r6.status === 400 || r6.status === 401);
+
+  // --- 7) Odhlášení ---
+  await window.sb.auth.signOut();
+  const s7 = (await window.sb.auth.getSession()).data.session;
+  zapis(7, 'Po odhlaseni neni session v prohlizeci', 'zadna session',
+        s7 ? 'session stale existuje' : 'zadna session', !s7);
+
+  // --- 8) Starý access token po odhlášení ---
+  // POZOR: Supabase access tokeny jsou podepsané JWT s vlastní platností.
+  // Odhlášení je smaže z prohlížeče, ale server je nezneplatní.
+  // Do vypršení (typicky 1 hodina) zůstávají použitelné.
+  const st8 = await zkusToken(novyAccess || puvodniAccess);
+  zapis(8, 'Stary access token po odhlaseni', '401 (viz poznamka)', st8, st8 === 401);
+
+  // --- 9) Starý refresh token po odhlášení ---
+  const r9 = await fetch(URL + '/auth/v1/token?grant_type=refresh_token', {
+    method: 'POST',
+    headers: { apikey: KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ refresh_token: r5.data?.session?.refresh_token || puvodniRefresh })
+  });
+  zapis(9, 'Refresh token po odhlaseni', '400 nebo 401', r9.status,
+        r9.status === 400 || r9.status === 401);
+
+  console.table(vysledky);
+  console.log('%cRUCNI TESTY (nelze automatizovat):', 'font-weight:bold');
+  console.log('');
+  console.log('11) SESSION PO ZMENE HESLA');
+  console.log('    a) prihlas se v druhem prohlizeci (nebo anonymnim okne)');
+  console.log('    b) v prvnim prohlizeci zmen heslo v Muj profil');
+  console.log('    c) v druhem prohlizeci zkus ulozit zmenu profilu');
+  console.log('    OCEKAVANO: odmitnuto, hlaska "Prihlaseni vyprselo"');
+  console.log('');
+  console.log('12) DVE SOUCASNA ZARIZENI');
+  console.log('    a) prihlas se na mobilu i na PC');
+  console.log('    b) na PC se odhlas');
+  console.log('    c) zkus na mobilu neco ulozit');
+  console.log('    OCEKAVANO: odhlaseni je globalni, mobil je take odhlaseny');
+  console.log('    (bezpecnostne silnejsi varianta; lze zmenit na signOut({scope:"local"}))');
+  console.log('');
+  console.log('Nyni jsi odhlaseny - prihlas se znovu.');
+})();
+
+/* =====================================================
+   CO NELZE AUTOMATIZOVAT — RUČNÍ POSTUP
+
+   A) SKUTEČNĚ PROŠLÝ ACCESS TOKEN
+   Token je podepsaný, takže jeho platnost nejde posunout bez rozbití
+   podpisu. Jediná cesta je počkat.
+
+   1. Supabase → Authentication → Sessions → Access token expiry time
+      dočasně nastav na 60 (vteřin).
+   2. Odhlas se a znovu přihlas.
+   3. V konzoli si ulož token:
+        const t = (await window.sb.auth.getSession()).data.session.access_token;
+   4. Počkej 90 vteřin, pak:
+        const r = await fetch(window.SB_URL + '/rest/v1/requests?select=id&limit=1',
+          { headers: { apikey: window.SB_KEY, Authorization: 'Bearer ' + t } });
+        console.log(r.status);
+   5. OČEKÁVÁNO: 401.
+   6. Vrať platnost zpět na 900.
+
+   B) SESSION PO ZMĚNĚ HESLA
+   1. Přihlas se ve dvou prohlížečích (nebo v anonymním okně).
+   2. V prvním změň heslo v profilu.
+   3. Ve druhém zkus něco uložit.
+   4. OČEKÁVÁNO: operace neprojde, aplikace vyzve k novému přihlášení.
+
+   C) DVĚ SOUČASNÁ ZAŘÍZENÍ
+   1. Přihlas se na počítači i na mobilu.
+   2. Na počítači se odhlas.
+   3. Zkus pokračovat na mobilu.
+   4. OČEKÁVÁNO: Supabase odhlašuje globálně, druhé zařízení tedy také
+      vyzve k přihlášení. Je to bezpečnější varianta; kdyby vadila,
+      mění se na signOut({ scope: 'local' }).
+   ===================================================== */
