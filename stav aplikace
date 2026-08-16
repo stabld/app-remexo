@@ -1,4 +1,4 @@
-# Remexo — zpráva o stavu aplikace
+# Remexo — stav aplikace
 
 Podklad pro nezávislé posouzení. Stav k 14. 8. 2026.
 
@@ -6,11 +6,11 @@ Podklad pro nezávislé posouzení. Stav k 14. 8. 2026.
 
 ## Co Remexo je
 
-Marketplace propojující domácnosti v Brně s řemeslníky. Zákazník vyfotí
-problém a popíše ho, AI asistent (Bořek) z toho vytvoří srozumitelné zadání,
-řemeslníci z okolí pošlou nabídky, zákazník si vybere.
+Marketplace propojující domácnosti v Brně s řemeslníky. Zákazník vyfotí problém
+a popíše ho, AI asistent (Bořek) z toho vytvoří srozumitelné zadání, řemeslníci
+z okolí pošlou nabídky, zákazník si vybere.
 
-**Stav:** před spuštěním, pilot plánovaný na podzim 2026, Brno.
+**Stav:** před spuštěním, pilot plánovaný na podzim 2026 v Brně.
 **Zásadní údaj:** v Brně zatím není zaregistrovaný ani jeden řemeslník.
 
 **Odlišení od konkurence:** žádná provize ze zakázek, jen měsíční předplatné
@@ -30,12 +30,11 @@ prohlížeč (vanilla JS)
    └─→ Supabase Edge Function ── notifikace (odesílání e-mailů přes SMTP)
 ```
 
-**Vlastní backend neexistuje.** Prohlížeč mluví přímo s databází, takže
-veškerá autorizace musí být vynucená v PostgreSQL. To je hlavní architektonické
-rozhodnutí, od kterého se odvíjí všechno ostatní.
+**Vlastní backend neexistuje.** Prohlížeč mluví přímo s databází, takže veškerá
+autorizace musí být vynucená v PostgreSQL. Od toho se odvíjí všechno ostatní.
 
 **Technologie:** vanilla JS bez frameworku, Tailwind (předgenerovaný, ne CDN),
-Leaflet pro mapy, Gemini `gemini-3.5-flash`, Deno pro Edge Function.
+Leaflet, Gemini `gemini-3.5-flash`, Deno pro Edge Function.
 
 ---
 
@@ -45,158 +44,107 @@ Leaflet pro mapy, Gemini `gemini-3.5-flash`, Deno pro Edge Function.
 |---|---|
 | Registrace, přihlášení, obnova hesla | funguje, e-mail se potvrzuje |
 | Zadání poptávky přes AI | funguje |
-| Zadání poptávky ručně (bez AI) | funguje — záložní cesta při výpadku Gemini |
+| Zadání poptávky ručně | funguje — záložní cesta při výpadku Gemini |
 | Fotky závady | neveřejný bucket, dočasné podepsané odkazy |
 | Tržiště zakázek, seznam i mapa | funguje, se stářím poptávky |
 | Nabídky, přijetí, odmítnutí | funguje |
-| Chat zákazník ↔ řemeslník | funguje, realtime, se záznamem přečtení |
+| Chat zákazník ↔ řemeslník | realtime, se záznamem přečtení |
 | Oboustranné potvrzení dokončení | funguje |
 | Hodnocení po dokončení | funguje |
 | Ověřování řemeslníků | IČO v profilu, ověřuje admin, odznak u nabídek |
 | Administrace | přehledy, ověřování, audit log |
-| E-mailová upozornění | nová poptávka, nová nabídka, dokončení, nepřečtené zprávy |
+| E-mailová upozornění | nová poptávka, nabídka, dokončení, nepřečtené zprávy |
 
-**Co nefunguje a je to v rozhraní přiznané:** platby přes platformu a úschova
-prostředků. Záložka Platby říká „připravujeme" a podmínky použití to uvádějí
-také.
+**Co nefunguje a je to přiznané:** platby přes platformu a úschova prostředků.
+Záložka Platby říká „připravujeme" a stejně to uvádějí podmínky použití.
 
 ---
 
 ## Zabezpečení
 
-Podrobně v `SECURITY_AUDIT.md` a `SECURITY_TESTS.md`, tady souhrn.
+Podrobně v [SECURITY_AUDIT.md](SECURITY_AUDIT.md)
+a [SECURITY_TESTS.md](SECURITY_TESTS.md).
 
-### Přístup k datům
+### Kdo se k čemu dostane
 
-Vynucený v PostgreSQL přes RLS, doplněný spouštěči tam, kde RLS nestačí — ta
-umí říct jen „tenhle řádek smíš měnit", ne „smíš, ale sloupec `customer_id`
-nech být".
-
-| Data | Kdo se k nim dostane |
+| Data | Přístup |
 |---|---|
 | Poptávky se stavem `waiting` | každý přihlášený (jsou na tržišti) |
 | Telefon a adresa zákazníka | jen řemeslník s **přijatou** nabídkou |
 | Fotky poptávky | zákazník; řemeslník u poptávek na tržišti, u svých nabídek a přidělených zakázek |
 | Chat | jen zákazník a přidělený řemeslník |
 | Hodnocení, veřejné profily | veřejné záměrně |
-| Audit log, tabulka adminů, nastavení, počítadlo AI | přes API nedostupné vůbec |
+| Audit log, admini, nastavení, počítadlo AI | přes API nedostupné vůbec |
 
-### Otestováno útokem
+### Ověřeno testy
 
-**31 testů proti produkční databázi, všechny prošly** (`bezpecnostni-testy.sql`)
-plus **12 testů pro Storage** (`storage-testy.sql`).
-Skript se vydává za čtyři různé uživatele a zkouší obejít pravidla.
+| Sada | Výsledek |
+|---|---|
+| Přístup k datům | 31 / 31 PASS |
+| Storage | 12 / 12 PASS |
+| Volatelnost funkcí přes RPC | 22 / 22 PASS |
+| Přihlášení | 10 / 11 PASS |
+| XSS | 160 kombinací, 0 průniků |
+| Podepsané odkazy a expirace | 2 / 2 PASS |
+| Konfigurace | 0 nálezů |
 
-Sada byla ověřena obráceně: po záměrném zavedení díry hlásí FAIL na správných
+Sady byly ověřeny obráceně: po záměrném vypnutí ochrany hlásí FAIL na správných
 místech.
 
-**Session security:** 12 testů, 11 prošlo. Jediný neúspěch je návrhové
-rozhodnutí Supabase (access token přežije odhlášení do vypršení, nastaveno
-15 minut).
+### Role není v tokenu
 
-**XSS:** systematický průchod všech míst vkládajících data do stránky.
-160 kombinací útočných řetězců, žádný průnik. Měřeno tím, jestli se kód
-v DOM skutečně provede.
+`user_metadata.role` si uživatel může sám přepsat přes
+`supabase.auth.updateUser`. O přístupu proto rozhoduje `profiles.role` a funkce
+`je_remeslnik()`. Změnu provádí `zmen_roli()`, která povoluje jen `customer`
+a `craftsman`; admin zůstává výhradně v tabulce `admini`.
 
-### Další opatření
-
-Rate limiting v databázi (poptávky 10/hod, nabídky 30/hod, zprávy 30/min,
-AI 30/hod), bezpečnostní hlavičky včetně CSP, audit log, systémové prompty AI
-na serveru, limity velikosti a typu nahrávaných souborů, pevný `search_path`
-u všech `security definer` funkcí.
+Tohle bylo dlouho špatně — Storage pravidlo se ptalo role v tokenu, takže se
+každý zákazník mohl prohlásit za řemeslníka a dostat se k fotkám všech poptávek.
 
 ---
-
-## Co se změnilo od minulé zprávy
-
-Přibyl admin, ověřování řemeslníků, e-mailová upozornění, záznam přečtení
-zpráv a oboustranné potvrzení dokončení. Testovací sada se rozšířila z 25 na 31
-testů a **hned odhalila čtyři skutečné díry, které vznikly z nově psaného kódu:**
-
-1. **Ověření si šlo nasadit samo.** Spouštěč hlídal změnu profilu, ale ne
-   vytvoření nového řádku s `overeno = true`.
-2. **Úklid audit logu mohl spustit kdokoliv přihlášený** — tedy zahladit stopy.
-   PostgreSQL dává EXECUTE nových funkcí automaticky roli PUBLIC a chyběl
-   `revoke`.
-3. **Limit AI se dal obejít.** Počítal se v paměti serverless funkce, kterou
-   Vercel restartuje.
-4. **`handle_new_user` bez pevného `search_path`.**
-
-Všechno opraveno a pokryto testy. Je to zároveň hlavní poučení: **nová plocha
-je vždycky ta nejméně prověřená.**
-
----
-
-## Poslední hardening (13.–14. 8. 2026)
-
-Před pilotem proběhl cílený hardening šesti oblastí. **Odhalil jednu vážnou díru:**
-
-**Role v tokenu nebyla důvěryhodná.** Storage pravidlo pro fotky poptávek se
-ptalo `auth.jwt() -> 'user_metadata' ->> 'role'`. Tuhle hodnotu si uživatel může
-sám přepsat přes `supabase.auth.updateUser` — a aplikace to dokonce dělala.
-Kterýkoliv zákazník se tak mohl prohlásit za řemeslníka a získat přístup
-k fotkám všech poptávek na tržišti.
-
-Opraveno: role se čte z `profiles` přes funkci `je_remeslnik()`. Změnu role
-provádí `zmen_roli()`, která povoluje jen `customer` a `craftsman`; přímý zápis
-do sloupce blokuje spouštěč. Admin zůstává výhradně v tabulce `admini`.
-
-Dále v rámci hardeningu:
-
-* Nová sada 12 testů pro Storage (avatary, fotky, čtyři identity, anonym).
-* Odstraněny záložní hodnoty `SUPABASE_URL` a `SUPABASE_ANON_KEY` z AI endpointu.
-* Edge Function: deduplikace příjemců, kontrola formátu adres (původní zápis
-  propouštěl `<script>@x.cz`), strop 200 příjemců.
-* Limity bucketů: 5 MB / 2 MB, jen `image/jpeg`, `image/png`, `image/webp`.
-  SVG záměrně nepovoleno — je to XML a umí obsahovat spustitelný kód.
 
 ## Známá rizika
 
 **Obsah nahraných souborů se nekontroluje.** Limity hlídají hlavičku od
-prohlížeče, ne skutečný obsah. Zmírňuje to neveřejný bucket a to, že se
-soubory nikdy nespouštějí jako stránka.
+prohlížeče, ne skutečný obsah. Zmírňuje to neveřejný bucket a to, že se soubory
+nespouštějí jako stránka.
 
-**Access token přežije odhlášení** do vypršení (15 minut). Vlastnost Supabase
-Auth.
+**Access token přežije odhlášení** do vypršení (15 minut). Vlastnost Supabase.
 
-**Odesílání e-mailů z osobní schránky na Seznamu.** Není to bezpečnostní díra,
-ale zhoršuje doručitelnost. Předmět navíc nemůže obsahovat diakritiku —
-použitá knihovna ji kóduje chybně. Řeší přechod na Resend s doménovou
-schránkou.
+**E-maily chodí z osobní schránky na Seznamu.** Zhoršuje doručitelnost, předmět
+nemůže obsahovat diakritiku. Řeší přechod na Resend s doménovou schránkou.
 
-**Registrace lze zneužít k obcházení limitů** — deset účtů, deset limitů.
-Zmírněno potvrzováním e-mailu a omezením registrací z jedné IP.
+**Registrace se dá zneužít k obcházení limitů** — deset účtů, deset limitů.
 
-**Fotky poptávek na tržišti vidí každý řemeslník**, ne jen ten s nabídkou.
-Je to záměr: bez fotky nelze zakázku nacenit. Přístup je zúžený podle stavu
-poptávky, takže do historie a cizích uzavřených zakázek nikdo nevidí.
+**Fotky poptávek na tržišti vidí každý řemeslník**, ne jen ten s nabídkou. Je to
+záměr: bez fotky nelze zakázku nacenit. Přístup je zúžený podle stavu poptávky,
+takže do historie a cizích uzavřených zakázek nikdo nevidí.
 
-**Aplikace neprošla žádným externím posouzením.** Veškeré výše uvedené
-ověřování prováděl jazykový model, který aplikaci zároveň upravoval.
+**Aplikace neprošla externím posouzením.**
 
 ---
 
 ## Na co se při posouzení zaměřit
 
 1. **Autorizace v databázi.** Celý model stojí na RLS a spouštěčích.
-   Konfiguraci lze vyexportovat skriptem `export-konfigurace.sql` — obsahuje
-   plné znění pravidel, těla funkcí i oprávnění rolí, bez dat uživatelů.
+   Konfiguraci vyexportuje `export-konfigurace.sql` — plné znění pravidel,
+   těla funkcí i oprávnění rolí, bez dat uživatelů.
 
-2. **Ochrana sloupců spouštěči.** Zda jde obejít neměnnost `customer_id`,
-   `craftsman_id`, `request_id` a příznaku `overeno`, a workflow stavů nabídky.
+2. **Důvěryhodnost role.** Poslední audit odhalil, že se Storage pravidlo ptalo
+   role v tokenu. Opraveno, ale stojí za to prověřit, jestli podobná chyba není
+   i jinde.
 
-3. **Edge Function pro e-maily.** Je veřejně dostupná a chráněná jen sdíleným
+3. **Ochrana sloupců spouštěči.** Zda jde obejít neměnnost `customer_id`,
+   `craftsman_id`, `request_id` a příznaku `overeno`.
+
+4. **Funkce se `security definer`.** Je jich 37 a obcházejí RLS. Zajímavé jsou
+   hlavně `admin_*`, které si samy ověřují oprávnění, a `zmen_roli()`.
+
+5. **Edge Function pro e-maily.** Veřejně dostupná, chráněná jen sdíleným
    tajemstvím v hlavičce.
 
-4. **Podepsané odkazy na fotky.** Platnost hodina, generují se pro každého
+6. **Podepsané odkazy na fotky.** Platnost hodina, generují se pro každého
    zvlášť podle jeho oprávnění.
-
-5. **RPC funkce administrace.** Osm funkcí se `security definer`, které si
-   samy ověřují, že volá administrátor. Obcházejí RLS — pokud by kontrola
-   selhala, vrátily by cizí data včetně e-mailů.
-
-6. **Plánovaná úloha pro nepřečtené zprávy.** Běží každou půlhodinu přes
-   `pg_cron`, rozesílá e-maily podle stavu v databázi.
 
 ---
 
@@ -204,22 +152,25 @@ ověřování prováděl jazykový model, který aplikaci zároveň upravoval.
 
 | Soubor | Obsah |
 |---|---|
-| `SECURITY_AUDIT.md` | audit se skóre před/po a seznamem oprav |
+| `README.md` | technický popis, struktura, pořadí SQL skriptů |
+| `SECURITY_AUDIT.md` | audit se skóre a seznamem nalezených děr |
 | `SECURITY_TESTS.md` | co bylo testováno a s jakým výsledkem |
-| `bezpecnostni-testy.sql` | spustitelná sada 31 útočných testů |
-| `kontrola.sql`, `kontrola2.sql` | kontrola konfigurace |
-| `export-konfigurace.sql` | export konfigurace k posouzení, bez dat |
-| `README.md` | technický popis projektu |
+| `bezpecnostni-testy.sql` | 31 útočných testů |
+| `storage-testy.sql` | 12 testů pro Storage |
+| `audit-rpc.sql` | 22 testů volatelnosti funkcí |
+| `session-testy.js` | 11 testů přihlášení (konzole prohlížeče) |
+| `kontrola.sql`, `kontrola2.sql`, `audit-funkci.sql` | kontrola konfigurace |
+| `export-konfigurace.sql` | export konfigurace, bez dat |
 
 ---
 
 ## Závěrem
 
 Zabezpečení je na úrovni, kterou lze ověřit — ne jen popsat. Ale všechno
-ověřoval tentýž nástroj, který to i stavěl, a za dobu práce našel osm
-skutečných děr, z toho polovinu ve vlastním čerstvém kódu. To je samo o sobě
-argument pro nezávislou kontrolu.
+ověřoval tentýž nástroj, který to i stavěl, a za devět dní našel osm skutečných
+děr, z toho polovinu ve vlastním čerstvém kódu. To je argument pro nezávislou
+kontrolu, ne proti ní.
 
-Největší riziko projektu není technické. Aplikace je připravená, spuštění se
+Největší riziko projektu ale technické není. Aplikace je připravená, spuštění se
 blíží a v Brně není ani jeden řemeslník. Marketplace bez nabídkové strany
 nespustíte, ať je kód jakkoli čistý.
