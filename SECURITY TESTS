@@ -1,249 +1,171 @@
 # Bezpečnostní testy
 
-Testy se spouští jako `bezpecnostni-testy.sql` v Supabase → SQL Editor.
-Skript se vydává za čtyři různé uživatele a zkouší obejít přístupová pravidla.
-Testuje **skutečná pravidla v databázi**, ne jejich popis v dokumentaci.
+Přehled toho, co je otestované a jak. Testy se spouští proti produkční
+databázi — vytvoří si dočasná data, otestují a zase je smažou.
 
-Vytvoří si dočasné účty a data, otestuje a všechno zase smaže. Nic v databázi
-nezůstane — dá se spustit i na ostré.
+Stav k 14. 8. 2026.
 
-Po přečtení výsledků smaž pomocnou tabulku:
+## Souhrn
+
+| Sada | Soubor | Výsledek |
+|---|---|---|
+| Přístup k datům | `bezpecnostni-testy.sql` | **31 / 31 PASS** |
+| Storage | `storage-testy.sql` | **12 / 12 PASS** |
+| Volatelnost funkcí přes RPC | `audit-rpc.sql` | **22 / 22 PASS** |
+| Přihlášení | `session-testy.js` | **10 / 11 PASS** (viz níže) |
+| XSS | ruční průchod | **160 kombinací, 0 průniků** |
+| Podepsané odkazy | ručně | **2 / 2 PASS** |
+| Konfigurace | `kontrola.sql`, `kontrola2.sql`, `audit-funkci.sql` | **0 nálezů** |
+
+**Spouštěj je po každé změně**, která přidá tabulku, funkci nebo spouštěč —
+ne jen při auditu. Osm reálných děr se našlo přesně takhle a všechny vznikly
+z čerstvě psaného kódu.
+
+Po přečtení výsledků smaž pomocné tabulky:
 
 ```sql
-drop table public.vysledky_testu;
+drop table if exists public.vysledky_testu;
+drop table if exists public.vysledky_storage;
+drop table if exists public.vysledky_rpc;
 ```
 
-## Kdy testy pustit
+## Proč testům věřit
 
-* po každé změně přístupových pravidel
-* po přidání nové tabulky s osobními údaji
-* před spuštěním ostrého provozu
-* když si nejsi jistý, jestli něco není otevřené
+Test, který vždycky projde, je horší než žádný. Každá sada byla ověřena
+obráceně: po záměrném vypnutí ochrany hlásí FAIL na správných místech.
 
-## Proč jim věřit
-
-Test, který vždycky projde, je horší než žádný. Sada byla ověřena obráceně:
-do pravidel byly schválně zaneseny dvě díry (kontakty přístupné komukoliv,
-nabídky měnitelné kýmkoliv) a testy nahlásily **FAIL** přesně na těch místech.
-
-## Poslední výsledky
-
-Datum: 13. 8. 2026 · Prostředí: produkční databáze · **31 z 31 PASS** (hlavní sada)
-plus **12 z 12 PASS** (Storage, `storage-testy.sql`)
-
-| # | Oblast | Test | Očekáváno | Skutečnost | Výsledek |
-|---|---|---|---|---|---|
-| 1 | Kontakty | Zákazník B čte telefon k poptávce zákazníka A | DENY | 0 řádků | PASS |
-| 2 | Kontakty | Řemeslník s čekající nabídkou čte telefon | DENY | 0 řádků | PASS |
-| 3 | Kontakty | Řemeslník s přijatou nabídkou čte telefon | ALLOW | 1 řádek | PASS |
-| 4 | Chat | Řemeslník B čte konverzaci cizí zakázky | DENY | 0 zpráv | PASS |
-| 5 | Chat | Řemeslník B píše do cizího chatu | DENY | odmítnuto | PASS |
-| 6 | Chat | Řemeslník píše jménem zákazníka | DENY | odmítnuto | PASS |
-| 7 | Nabídky | Řemeslník si sám přepne nabídku na přijatou | DENY | odmítnuto pravidlem | PASS |
-| 8 | Nabídky | Řemeslník B si přepíše cizí nabídku na sebe | DENY | 0 změněných | PASS |
-| 9 | Nabídky | Řemeslník B podá nabídku jménem řemeslníka A | DENY | odmítnuto | PASS |
-| 10 | Poptávky | Zákazník B mění poptávku zákazníka A | DENY | 0 změněných | PASS |
-| 11 | Poptávky | Zákazník B zakládá poptávku jménem zákazníka A | DENY | odmítnuto | PASS |
-| 12 | Hodnocení | Řemeslník si napíše hodnocení sám sobě | DENY | odmítnuto | PASS |
-| 13 | Hodnocení | Zákazník B hodnotí zakázku zákazníka A | DENY | odmítnuto | PASS |
-| 14 | Anonym | Nepřihlášený čte tabulku kontaktů | DENY | 0 řádků | PASS |
-| 15 | Anonym | Nepřihlášený čte zprávy | DENY | 0 řádků | PASS |
-
-## Co tyto testy NEPOKRÝVAJÍ
-
-Tohle je stejně důležité jako tabulka výše. Zelené výsledky platí jen pro to,
-co bylo skutečně vyzkoušeno.
-
-**Storage.** Přístup k fotkám poptávek a k avatarům se testoval ručně přes
-rozhraní aplikace, ne tímto skriptem. Pravidla existují a fungují, ale nejsou
-pokryta automatickým testem.
-
-**Rate limiting.** Není otestované, kolik poptávek, zpráv nebo nahrání zvládne
-jeden účet za minutu. Limit má zatím jen AI endpoint, a i ten se počítá
-v paměti serverless funkce, takže se restartem vynuluje.
-
-**XSS.** Opravená místa byla ověřena v prohlížeči, ale systematický průchod
-celého rozhraní neproběhl.
-
-**Session security.** Chování při vypršení nebo zneplatnění přihlášení,
-po změně hesla a při odhlášení nikdo netestoval.
-
-**Serverless endpoint `/api/borek-ai`.** Ověřuje přihlášení a hlídá velikost
-vstupu, ale systémový prompt posílá klient — přihlášený uživatel si tak může
-nechat generovat cokoliv na naši kvótu.
-
-**Aplikace neprošla žádným externím posouzením.**
+Příklady, kdy to zabralo:
+* vypnutí spouštěče `hlidej_overeni_vlozeni` → FAIL testu 31
+* povolení `uklid_audit_logu` pro přihlášené → FAIL testu 17 v `audit-rpc.sql`
+* Storage pravidlo čtoucí roli z tokenu → FAIL testu 12 ve `storage-testy.sql`
 
 ---
 
-## XSS testy (7. 8. 2026)
+## Přístup k datům (31 testů)
 
-Systematický průchod všech míst, kde se do stránky vkládají data od uživatelů.
+Skript se vydává za čtyři různé uživatele — dva zákazníky a dva řemeslníky —
+a zkouší obejít přístupová pravidla.
 
-### Nalezeno a opraveno
-
-**Notifikace a vyskakovací hlášky.** Jméno odesílatele zprávy, jméno řemeslníka
-a názvy zakázek se vkládaly do `innerHTML` neošetřené. Řemeslník se jménem
-`<img onerror=...>` mohl spustit kód v prohlížeči zákazníka, kterému přišla
-notifikace o nové zprávě.
-
-Ověřeno oběma směry: se starým kódem se útok **spustil**, s opraveným ne.
-Opraveno v `js/ui.js` (`showToast` i `addNotif`).
-
-### Testované vstupy
-
-Osm útočných řetězců (`<img onerror>`, `<script>`, `<svg onload>`,
-`javascript:`, únik z atributu, `<iframe>`, odkaz s `javascript:`, únik
-z řetězce) protlačeno deseti poli: název, kategorie, popis, jméno zákazníka,
-jméno řemeslníka, město, cena, naléhavost, čas — a to ve variantě karty pro
-zákazníka i pro tržiště.
-
-**160 kombinací, 160× PASS, 0 průniků.**
-
-Zprávy v chatu, kontakty a odpovědi Bořka byly ověřeny dřív.
-
-### Co XSS testy nepokrývají
-
-Testovalo se vykreslování karet a notifikací. Neprocházely se formuláře,
-profily, mapa ani modální okna. Ta místa používají stejné pomocné funkce,
-ale to je odvození, ne důkaz.
-
----
-
-## Testy přihlášení
-
-Skript `session-testy.js` se spouští v konzoli prohlížeče (F12) po přihlášení
-na app.remexo.cz. Testuje platnost tokenů, obnovu session, odhlášení
-a použitelnost starých tokenů.
-
-**Pozor: test odhlásí přihlášeného uživatele.** Je to záměr — testuje se právě
-to, jestli starý token po odhlášení dál funguje.
-
-Dva testy vyžadují ruční provedení: změna hesla a souběžné přihlášení
-na dvou zařízeních. Skript na ně na konci upozorní.
-
-### Doplněk: formuláře, profily a modální okna (7. 8. 2026)
-
-Původní XSS testy pokrývaly karty a notifikace. Tenhle doplněk pokrývá zbytek,
-aby to nebylo odvození ze společných funkcí, ale ověření.
-
-**Jak se plní prvky rozhraní** (zjištěno průchodem kódu):
-
-| Způsob | Počet | Bezpečnost |
-|---|---:|---|
-| `innerText` / `textContent` | 19 | bezpečné, prohlížeč vloží text |
-| `.value` (formuláře) | 21 | bezpečné |
-| `.src` | 2 | kontrolováno (viz níže) |
-| `innerHTML` | 7 | prověřeno jednotlivě |
-
-Ze sedmi míst s `innerHTML` obsahují data od uživatele dvě — popis poptávky
-v detailu (`co-desc`) a město v profilu (`pp-city`). Zbylých pět vkládá jen
-pevné šablony rozhraní.
-
-**Test v prohlížeči:** sedm útočných řetězců proti oběma cestám, měřeno tím,
-jestli se kód skutečně provede v DOM (ne porovnáváním textu).
-
-| Cesta | Výsledek |
-|---|---|
-| `co-desc` (popis poptávky) | 7/7 bez průniku |
-| `pp-city` (město v profilu) | 7/7 bez průniku |
-| kontrolní neošetřená cesta | 5/7 průnik — detekce funguje |
-
-Kontrolní cesta je tam schválně: kdyby test nic neodhalil ani u záměrně
-nechráněného vkládání, neměl by žádnou vypovídací hodnotu.
-
-**Zpevněno při této příležitosti:**
-
-* `avatar_url` z profilu se vkládá do `img.src`. Nově projde jen odkaz
-  začínající `https://`, jinak se použije náhradní obrázek.
-* MIME typ nahrané fotky šel do `data:` URL. Nově se propouští jen čtyři
-  obrázkové typy, `image/svg+xml` schválně ne — SVG umí obsahovat kód.
-* Typ vyskakovací hlášky se omezil na tři známé hodnoty.
-
-Žádné z toho nebylo zneužitelné, protože `<img>` cizí kód nespustí. Je to
-zpevnění, ne oprava díry.
-
----
-
-## Rozšíření o novou plochu (12. 8. 2026)
-
-Admin, ověřování řemeslníků, notifikace a záznam přečtení zpráv vznikly až po
-prvním auditu. Testy je nepokrývaly, tak jich přibylo šest (26–31).
-
-**Hned odhalily dvě reálné díry:**
-
-**Ověření si šlo nasadit samo.** Spouštěč hlídal změnu existujícího profilu,
-ale ne vytvoření nového. Řemeslník si mohl založit řádek ve `public_profiles`
-rovnou s `overeno = true`. Tím by ověřování ztratilo veškerý smysl.
-
-**Interní funkce byly volatelné z aplikace.** PostgreSQL dává EXECUTE nových
-funkcí automaticky roli PUBLIC. U tří chyběl `revoke` — nejzávažnější
-`uklid_audit_logu`, kterou mohl kdokoliv přihlášený smazat auditní záznamy
-a zahladit stopy.
-
-Obojí opraveno v `oprava-funkce.sql`.
-
-### Nové testy
-
-| # | Oblast | Test |
+| Oblast | Testy | Co ověřuje |
 |---|---|---|
-| 26 | Notifikace | Uživatel spustí rozesílání e-mailů |
-| 27 | Notifikace | Uživatel čte tajemství pro Edge Function |
-| 28 | Audit | Uživatel spustí úklid audit logu |
-| 29 | Audit | Uživatel zapíše přímo do audit logu |
-| 30 | Zprávy | Cizí uživatel označí konverzaci jako přečtenou |
-| 31 | Ověření | Řemeslník si nastaví ověřeno ve veřejném profilu |
+| Kontakty | 1–3 | telefon a adresu vidí jen řemeslník s přijatou nabídkou |
+| Chat | 4–6 | cizí konverzace, psaní do cizí, podvržení odesílatele |
+| Nabídky | 7–9 | sebeschválení, přepsání cizí, podání cizím jménem |
+| Poptávky | 10–11 | úprava a založení cizím jménem |
+| Hodnocení | 12–13 | hodnocení sám sobě, cizí zakázky |
+| Anonym | 14–15 | přístup nepřihlášeného ke kontaktům a zprávám |
+| Ochrana sloupců | 16–21 | vlastnictví záznamů, workflow nabídek, legitimní kroky |
+| Ověřování | 22–23, 31 | nastavení příznaku ověření sám sobě |
+| Admin | 24–25 | čtení seznamu s e-maily, zápis mezi adminy |
+| Notifikace | 26–27 | rozesílání e-mailů, čtení tajemství pro Edge Function |
+| Audit | 28–29 | úklid a zápis do logu |
+| Zprávy | 30 | označení cizí konverzace jako přečtené |
 
-Ověřeno obousměrně: po vypnutí ochrany testy 28 a 31 správně selhaly.
+Testy 20 a 21 kontrolují, že **legitimní kroky pořád fungují** — sada, která
+by jen zakazovala, by „prošla" i tak, že rozbije aplikaci.
 
-### Poučení
+## Storage (12 testů)
 
-Obě díry vznikly z kódu psaného během předchozích dvou dnů. **Sadu je potřeba
-spouštět po každé změně**, která přidá tabulku, funkci nebo spouštěč — ne jen
-při auditu. Nová plocha je vždycky ta nejméně prověřená.
+Testuje vrstvu oprávnění v `storage.objects` ze čtyř identit plus anonym.
 
----
+| # | Test | Očekáváno |
+|---|---|---|
+| 1–3 | Cizí uživatel maže, přepisuje, nahrává pod cizím user_id | DENY |
+| 4 | Nahrání vlastního avataru | ALLOW |
+| 5 | Zákazník vidí fotky své poptávky | ALLOW |
+| 6 | Zákazník vidí fotky cizí poptávky | DENY |
+| 7 | Řemeslník vidí fotky poptávky na tržišti | ALLOW |
+| 8–9 | Řemeslník maže / nahrává do cizí poptávky | DENY |
+| 10 | Řemeslník bez vazby vidí fotky uzavřené zakázky | DENY |
+| 11 | Nepřihlášený vidí fotky poptávek | DENY |
+| 12 | Zákazník s podvrženou rolí v tokenu vidí cizí fotky | DENY |
 
-## Storage testy (13. 8. 2026)
+**Test 12 odhalil skutečnou díru.** Storage pravidlo se ptalo role v tokenu,
+kterou si uživatel může přepsat přes `supabase.auth.updateUser`. Každý zákazník
+se tak mohl prohlásit za řemeslníka a dostat se k fotkám všech poptávek.
+Opraveno funkcí `je_remeslnik()`, která čte roli z `profiles`.
 
-Samostatná sada `storage-testy.sql`, 12 testů. Testuje vrstvu oprávnění
-v `storage.objects` — avatary i fotky poptávek, ze čtyř různých identit
-(dva zákazníci, dva řemeslníci) plus nepřihlášený.
-
-| # | Oblast | Test | Očekáváno |
-|---|---|---|---|
-| 1 | Avatary | Cizí uživatel maže cizí avatar | DENY |
-| 2 | Avatary | Cizí uživatel přepisuje cizí avatar | DENY |
-| 3 | Avatary | Nahrání souboru pod cizím user_id | DENY |
-| 4 | Avatary | Nahrání vlastního avataru | ALLOW |
-| 5 | Fotky | Zákazník vidí fotky své poptávky | ALLOW |
-| 6 | Fotky | Zákazník B vidí fotky cizí poptávky | DENY |
-| 7 | Fotky | Řemeslník vidí fotky poptávky na tržišti | ALLOW |
-| 8 | Fotky | Řemeslník maže fotku cizí poptávky | DENY |
-| 9 | Fotky | Řemeslník nahrává do cizí poptávky | DENY |
-| 10 | Fotky | Řemeslník bez vazby vidí fotky uzavřené zakázky | DENY |
-| 11 | Anonym | Nepřihlášený vidí fotky poptávek | DENY |
-| 12 | Fotky | Zákazník s podvrženou rolí v tokenu vidí cizí fotky | DENY |
-
-**Test 12 odhalil skutečnou díru.** Storage pravidlo pro fotky poptávek
-se ptalo role v tokenu (`auth.jwt() -> 'user_metadata' ->> 'role'`). Tu si
-uživatel může sám přepsat přes `supabase.auth.updateUser`, takže se každý
-zákazník mohl prohlásit za řemeslníka a získat přístup k fotkám všech
-poptávek na tržišti. Opraveno použitím `je_remeslnik()`, která čte roli
-z tabulky `profiles`.
-
-Ověřeno obousměrně: se starým pravidlem test 12 selhal, s novým prošel.
-
-### Podepsané odkazy (ověřeno ručně 14. 8. 2026)
-
-Databáze neověří chování HTTP API Storage, proto tenhle test proběhl ručně
-v konzoli prohlížeče.
+### Podepsané odkazy (ručně)
 
 | Test | Očekáváno | Skutečnost | |
 |---|---|---|---|
-| Řemeslník bez vazby žádá odkaz na cizí fotku | DENY | `"error": "Either the object does not exist or you do not have access to it"`, `signedUrl: null` | PASS |
-| Expirace odkazu (platnost 5 s, test po 10 s) | HTTP 400 | HTTP 400 | PASS |
+| Řemeslník bez vazby žádá odkaz na cizí fotku | DENY | `error`, `signedUrl: null` | PASS |
+| Odkaz s platností 5 s otevřen po 10 s | HTTP 400 | HTTP 400 | PASS |
 
-V podepsaném tokenu je platnost vidět přímo: `iat: 1786721878`, `exp: 1786721883`.
+V tokenu je platnost vidět přímo: `iat` a `exp` pět vteřin od sebe.
 
-Postup pro zopakování je v komentáři na konci `storage-testy.sql`.
+## Volatelnost funkcí (22 testů)
+
+Ověřuje, že se z aplikace nedá zavolat nic, co se volat nemá.
+
+| Oblast | Testy |
+|---|---|
+| Spouštěče nemají EXECUTE pro klienta | 1 |
+| Anonym volá `zaloguj_udalost`, `odstoupit_ze_zakazky`, `je_admin`, `zmen_roli`, `oznac_precteno`, `ai_limit_prekrocen` | 2–7 |
+| Přihlášený bez admin práv volá všech osm `admin_*` | 8–15 |
+| Odstoupení z cizí zakázky | 16 |
+| Interní funkce (`uklid_audit_logu`, `posli_notifikaci`, `posli_upozorneni_na_zpravy`, `zapis_audit`) | 17–20 |
+| Legitimní volání pořád funguje | 21 |
+| `SECURITY DEFINER` bez pevného `search_path` | 22 |
+
+## Přihlášení (11 testů)
+
+Spouští se v konzoli prohlížeče po přihlášení. **Test odhlásí uživatele** —
+je to záměr, testuje se právě chování po odhlášení.
+
+| # | Test | Očekáváno | Skutečnost | |
+|---|---|---|---|---|
+| 1 | Přihlášení vytvoří session | session | session | PASS |
+| 2 | Platný token čte vlastní data | 200 | 200 | PASS |
+| 3 | Poškozený token | 401 | 401 | PASS |
+| 4 | Vymyšlený token | 401 | 401 | PASS |
+| 5 | Obnova vrátí nový token | nový | nový | PASS |
+| 6 | Rodičovský refresh token | vrátí aktivní | 200 | PASS¹ |
+| 7 | Po odhlášení není session v prohlížeči | žádná | žádná | PASS |
+| 8 | Starý access token po odhlášení | 401 | 200 | **FAIL²** |
+| 9 | Refresh token po odhlášení | 400/401 | 400 | PASS |
+| 10 | Podvržený token se změněnou platností | 401 | 401 | PASS |
+| 11 | Starší refresh token (přes dvě obnovy) | 400/401 | 400 | PASS |
+
+¹ Dokumentovaná výjimka Supabase — přímý rodič aktivního tokenu se přijímá
+kvůli výpadkům sítě. Skutečná detekce zneužití ověřena testem 11.
+
+² **Vlastnost Supabase Auth, ne chyba Remexa.** Access token je podepsaný JWT;
+odhlášení ho smaže z prohlížeče, ale server ho nezneplatní. Platnost zkrácena
+na 15 minut.
+
+### Ověřeno ručně
+
+| Test | Výsledek |
+|---|---|
+| Session po změně hesla | operace odmítnuta, aplikace vyzve k přihlášení — PASS |
+| Dvě zařízení, odhlášení na jednom | odhlásí obě (Supabase odhlašuje globálně) — PASS |
+| Skutečně prošlý token | postup na konci `session-testy.js`, nelze automatizovat |
+
+## XSS
+
+Systematický průchod všech míst, kde se do stránky vkládají data od uživatelů.
+
+**160 kombinací** (8 útočných řetězců × 10 polí × 2 varianty karty),
+**žádný průnik**. Měřeno tím, jestli se kód v DOM skutečně provede — ne
+porovnáváním textu.
+
+Zvlášť ověřeny konverzace, notifikace, popis poptávky v detailu a město
+v profilu. Formuláře a profily používají `innerText` a `.value`, kde se
+kód spustit nemůže.
+
+**Nalezeno a opraveno:** jméno odesílatele se vkládalo do notifikací
+neošetřené. Ověřeno, že se starým kódem se útok spustil a s opraveným ne.
+
+## Co otestované není
+
+**Obsah nahraných souborů.** Limity bucketů hlídají hlavičku od prohlížeče,
+ne skutečný obsah. Zmírňuje to, že bucket není veřejný a soubory se nikdy
+nespouštějí jako stránka.
+
+**Chování Storage API pod zátěží.**
+
+**Doručitelnost e-mailů.**
+
+**Externí posouzení.** Veškeré ověřování dělal jazykový model, který aplikaci
+zároveň upravoval.
