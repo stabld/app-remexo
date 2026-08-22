@@ -114,6 +114,11 @@ window.initApp = function(role, name) {
     }, 100);
 
     setTimeout(async () => {
+        // Základnu řemeslníka potřebujeme dřív než tržiště, jinak by se
+        // karty vykreslily bez vzdálenosti a musely se překreslovat.
+        if (role !== "customer" && window.nactiPolohuRemeslnika) {
+            await window.nactiPolohuRemeslnika();
+        }
         if (role==="customer") { 
             if (window.loadCustomerRequestsFromDB) await window.loadCustomerRequestsFromDB(); 
             if (window.loadCustomerConversations) await window.loadCustomerConversations(); 
