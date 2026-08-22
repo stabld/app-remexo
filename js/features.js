@@ -539,10 +539,12 @@ window.nactiOvereni = async function() {
 
     try {
         const { data, error } = await window.sb
-            .from("profiles").select("ico, overeno").eq("id", window.APP_USER.id).single();
+            .from("profiles").select("ico, overeno, adresa").eq("id", window.APP_USER.id).single();
         if (error) throw error;
 
         if (icoPole && data.ico) icoPole.value = data.ico;
+        var adresaPole = document.getElementById("prof-adresa");
+        if (adresaPole && data.adresa) adresaPole.value = data.adresa;
         if (!badge) return;
 
         if (data.overeno) {
@@ -603,11 +605,13 @@ window.saveProfile = async function(btnNode) {
                 }
             }
 
-            // Město z profilu přepočítáme na souřadnice, ať řemeslník vidí
-            // na tržišti vzdálenost. Selhání geokódování není důvod
-            // shodit uložení profilu - jen se odznak vzdálenosti neukáže.
-            if (window.APP_ROLE === "craftsman" && window.ulozPolohuRemeslnika) {
-                await window.ulozPolohuRemeslnika(updateData.city);
+            // Neveřejnou adresu přepočítáme na souřadnice, ať řemeslník vidí
+            // na tržišti vzdálenost. Vědomě NEpoužíváme pole "city" - to jde
+            // do public_profiles a adresa bydliště tam nemá co dělat.
+            // Selhání geokódování není důvod shodit uložení profilu.
+            var adresaPole = document.getElementById("prof-adresa");
+            if (window.APP_ROLE === "craftsman" && adresaPole && window.ulozPolohuRemeslnika) {
+                await window.ulozPolohuRemeslnika(adresaPole.value);
             }
 
             await window.sb.from('public_profiles').upsert({
