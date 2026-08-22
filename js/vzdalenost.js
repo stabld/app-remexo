@@ -65,7 +65,11 @@
                 encodeURIComponent(misto + ", Česká republika") + "&limit=1",
                 { headers: { "Accept-Language": "cs" } });
             var geo = await resp.json();
-            if (!geo || geo.length === 0) return null;
+            if (!geo || geo.length === 0) {
+                if (window.showToast) window.showToast("Místo se nepodařilo najít",
+                    "Zkuste zadat jen město nebo čtvrť, např. Brno-Bystrc. Zbytek profilu je uložený.", "error");
+                return null;
+            }
 
             // Stejné zaokrouhlení jako u poptávek (~100 m). Přesná adresa
             // řemeslníka nemá důvod ležet v databázi.
@@ -137,8 +141,8 @@
 
     window.prepniRazeni = function (jak) {
         if (jak === "blizko" && !window.APP_POLOHA) {
-            window.showToast("Nevíme, odkud jezdíte",
-                "Doplňte si město v profilu a řazení podle vzdálenosti se zapne.", "info");
+            window.showToast("Nevíme, odkud vyjíždíte",
+                "Vyplňte Můj profil → Odkud vyjíždíte a uložte. Pak se řazení zapne.", "info");
             return;
         }
         window.RAZENI = jak;
