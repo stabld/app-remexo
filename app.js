@@ -38,10 +38,12 @@ window.addEventListener('load', async () => {
             try {
                 // Jméno se zapisuje přímo, role přes zmen_roli() -
                 // sloupec role hlídá spouštěč a přímý zápis odmítne.
-                await window.sb.from("profiles").upsert({
-                    id: session.user.id,
-                    full_name: name
-                }, { onConflict: "id" });
+                // Update, ne upsert. Řádek v profiles zakládá spouštěč při
+                // registraci, takže tu nic vkládat nepotřebujeme - a upsert
+                // by po klientovi chtěl právo INSERT, které schválně nemá.
+                await window.sb.from("profiles")
+                    .update({ full_name: name })
+                    .eq("id", session.user.id);
                 await window.sb.rpc("zmen_roli", { p_role: window.APP_ROLE });
             } catch (e) { /* nesmí zabránit přihlášení */ }
 
