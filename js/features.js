@@ -1606,9 +1606,24 @@ window.initMarketMap = async function() {
     const requests = filtr==="all" ? vsechny
         : filtr==="saved" ? vsechny.filter(r=>window.jeOblibena(r.id))
         : vsechny.filter(r=>window.kategorieSedi(r.category, filtr));
-    if(requests.length===0)return;
-    const pinIcon=L.divIcon({className:"",html:'<div style="background:#f59e0b;color:white;width:36px;height:36px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(245,158,11,0.45);border:2px solid white;"><i class="fa-solid fa-hammer" style="transform:rotate(45deg);font-size:13px;"></i></div>',iconSize:[36,36],iconAnchor:[18,36],popupAnchor:[0,-38]});
     const bounds=[];
+
+    // Základna řemeslníka. Kulatý tmavý pin, aby se nepletl s kapkovitými
+    // oranžovými piny zakázek. Vykresluje se i tehdy, když filtr nic nenajde -
+    // "nikde nic, a tady jsem já" je platná informace.
+    if (window.APP_POLOHA) {
+        const domuIcon=L.divIcon({className:"",html:'<div style="background:#0f172a;color:#f59e0b;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(15,23,42,0.4);border:3px solid white;"><i class="fa-solid fa-house" style="font-size:13px;"></i></div>',iconSize:[34,34],iconAnchor:[17,17],popupAnchor:[0,-20]});
+        const domuPopup=L.popup({maxWidth:240,minWidth:180}).setContent('<div class="remexo-pin-popup"><p class="title">Odsud vyjíždíte</p><p class="addr" style="margin-bottom:10px">Od tohoto místa počítáme vzdálenost k poptávkám. Změnit ho můžete v profilu.</p></div>');
+        L.marker([window.APP_POLOHA.lat,window.APP_POLOHA.lon],{icon:domuIcon,zIndexOffset:1000}).addTo(window._marketMap).bindPopup(domuPopup);
+        bounds.push([window.APP_POLOHA.lat,window.APP_POLOHA.lon]);
+    }
+
+    if(requests.length===0){
+        if(bounds.length>0)window._marketMap.setView(bounds[0],12);
+        setTimeout(()=>window._marketMap&&window._marketMap.invalidateSize(),100);
+        return;
+    }
+    const pinIcon=L.divIcon({className:"",html:'<div style="background:#f59e0b;color:white;width:36px;height:36px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(245,158,11,0.45);border:2px solid white;"><i class="fa-solid fa-hammer" style="transform:rotate(45deg);font-size:13px;"></i></div>',iconSize:[36,36],iconAnchor:[18,36],popupAnchor:[0,-38]});
     for(let i=0;i<requests.length;i++){
         const r=requests[i];
         // Umísťujeme podle města, ne podle přesné adresy – ta je chráněná
