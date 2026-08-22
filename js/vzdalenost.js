@@ -53,7 +53,7 @@
         if (!misto) {
             try {
                 await window.sb.from("profiles")
-                    .update({ lat: null, lon: null }).eq("id", window.APP_USER.id);
+                    .update({ lat: null, lon: null, adresa: null }).eq("id", window.APP_USER.id);
             } catch (e) {}
             window.APP_POLOHA = null;
             return null;
@@ -67,7 +67,7 @@
             var geo = await resp.json();
             if (!geo || geo.length === 0) {
                 if (window.showToast) window.showToast("Místo se nepodařilo najít",
-                    "Zkuste zadat jen město nebo čtvrť, např. Brno-Bystrc. Zbytek profilu je uložený.", "error");
+                    "Zkuste ulici a město, např. Veveří 12, Brno. Zbytek profilu je uložený.", "error");
                 return null;
             }
 
@@ -77,8 +77,10 @@
             var lon = Math.round(parseFloat(geo[0].lon) * 1000) / 1000;
             if (isNaN(lat) || isNaN(lon)) return null;
 
+            // Text adresy zůstává jen tady, v profiles. Do public_profiles
+            // se neposílá a RLS ho vydá výhradně vlastníkovi řádku.
             var vysledek = await window.sb.from("profiles")
-                .update({ lat: lat, lon: lon }).eq("id", window.APP_USER.id);
+                .update({ lat: lat, lon: lon, adresa: misto }).eq("id", window.APP_USER.id);
             if (vysledek.error) return null;
 
             window.APP_POLOHA = { lat: lat, lon: lon };
@@ -142,7 +144,7 @@
     window.prepniRazeni = function (jak) {
         if (jak === "blizko" && !window.APP_POLOHA) {
             window.showToast("Nevíme, odkud vyjíždíte",
-                "Vyplňte Můj profil → Odkud vyjíždíte a uložte. Pak se řazení zapne.", "info");
+                "Vyplňte v profilu pole Odkud vyjíždíte a uložte. Pak se řazení zapne.", "info");
             return;
         }
         window.RAZENI = jak;
