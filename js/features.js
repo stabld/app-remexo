@@ -603,6 +603,13 @@ window.saveProfile = async function(btnNode) {
                 }
             }
 
+            // Město z profilu přepočítáme na souřadnice, ať řemeslník vidí
+            // na tržišti vzdálenost. Selhání geokódování není důvod
+            // shodit uložení profilu - jen se odznak vzdálenosti neukáže.
+            if (window.APP_ROLE === "craftsman" && window.ulozPolohuRemeslnika) {
+                await window.ulozPolohuRemeslnika(updateData.city);
+            }
+
             await window.sb.from('public_profiles').upsert({
                 id: window.APP_USER.id,
                 full_name: name,
@@ -1536,7 +1543,7 @@ window.loadMarketFromDB = async function() {
     window.STATE.marketRequests=data;
     if(window.nactiOblibene) await window.nactiOblibene();
     if(window.nactiMojeNabidky) await window.nactiMojeNabidky();
-    list.innerHTML=(window.vyzvaKProfilu?window.vyzvaKProfilu():"")+data.map((r,i)=>window.createBeautifulCard({id:r.id,sbId:r.id,created_at:r.created_at,title:r.title,kat:r.category||"Ostatní",popis:r.description||"",mesto:r.mesto||null,time:new Date(r.created_at).toLocaleDateString("cs"),status:r.status,urgency:r.urgency||"Střední",category:r.category,customer_name:r.customer_name||"Zákazník",price_estimate:r.price_estimate||"Dohodou"},true,i)).join("");
+    list.innerHTML=(window.vyzvaKProfilu?window.vyzvaKProfilu():"")+window.seradPoptavky(data).map((r,i)=>window.createBeautifulCard({id:r.id,sbId:r.id,created_at:r.created_at,title:r.title,kat:r.category||"Ostatní",popis:r.description||"",mesto:r.mesto||null,lat:r.lat,lon:r.lon,time:new Date(r.created_at).toLocaleDateString("cs"),status:r.status,urgency:r.urgency||"Střední",category:r.category,customer_name:r.customer_name||"Zákazník",price_estimate:r.price_estimate||"Dohodou"},true,i)).join("");
     window.doplnFotky(list);
 };
 
@@ -1619,7 +1626,7 @@ window.initMarketMap = async function() {
             if(lat!=null && lon!=null && !isNaN(lat) && !isNaN(lon)){
                 bounds.push([lat,lon]);
                 const urgencyColor=r.urgency==="Vysoká"?"#ef4444":r.urgency==="Nízká"?"#22c55e":"#f59e0b";
-                const popup=L.popup({maxWidth:280,minWidth:220}).setContent('<div class="remexo-pin-popup"><span class="cat-badge">'+window.escapeHtml(r.category||"Ostatní")+'</span><p class="title">'+window.escapeHtml(r.title||"Poptávka")+'</p><p class="addr"><i class="fa-solid fa-location-dot" style="color:#f59e0b;margin-right:4px"></i>'+window.escapeHtml(displayCity)+'</p><div style="display:flex;gap:8px;margin-bottom:10px"><span style="font-size:11px;font-weight:700;color:'+urgencyColor+';background:'+urgencyColor+'18;padding:3px 8px;border-radius:6px;">'+window.escapeHtml(r.urgency||"Střední")+' priorita</span>'+(r.price_estimate?'<span style="font-size:11px;font-weight:700;color:#0f172a;background:#f1f5f9;padding:3px 8px;border-radius:6px;">'+window.escapeHtml(r.price_estimate)+'</span>':'')+'</div><button class="offer-btn" onclick="window.openOfferModal(\''+r.id+'\'); document.querySelectorAll(\'.leaflet-popup-close-button\').forEach(b=>b.click());">Poslat nabídku →</button><button onclick="window.showRequestDetail(\''+r.id+'\')" style="width:100%;margin-top:6px;padding:8px;border:1px solid #e2e8f0;background:#fff;color:#475569;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;">Zobrazit detail poptávky</button></div>');
+                const popup=L.popup({maxWidth:280,minWidth:220}).setContent('<div class="remexo-pin-popup"><span class="cat-badge">'+window.escapeHtml(r.category||"Ostatní")+'</span><p class="title">'+window.escapeHtml(r.title||"Poptávka")+'</p><p class="addr"><i class="fa-solid fa-location-dot" style="color:#f59e0b;margin-right:4px"></i>'+window.escapeHtml(displayCity)+(function(){var t=window.formatVzdalenost&&window.formatVzdalenost(window.vzdalenostPoptavky({lat:lat,lon:lon}));return t?' &middot; '+window.escapeHtml(t)+' od vás':'';})()+'</p><div style="display:flex;gap:8px;margin-bottom:10px"><span style="font-size:11px;font-weight:700;color:'+urgencyColor+';background:'+urgencyColor+'18;padding:3px 8px;border-radius:6px;">'+window.escapeHtml(r.urgency||"Střední")+' priorita</span>'+(r.price_estimate?'<span style="font-size:11px;font-weight:700;color:#0f172a;background:#f1f5f9;padding:3px 8px;border-radius:6px;">'+window.escapeHtml(r.price_estimate)+'</span>':'')+'</div><button class="offer-btn" onclick="window.openOfferModal(\''+r.id+'\'); document.querySelectorAll(\'.leaflet-popup-close-button\').forEach(b=>b.click());">Poslat nabídku →</button><button onclick="window.showRequestDetail(\''+r.id+'\')" style="width:100%;margin-top:6px;padding:8px;border:1px solid #e2e8f0;background:#fff;color:#475569;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;">Zobrazit detail poptávky</button></div>');
                 const marker=L.marker([lat,lon],{icon:pinIcon}).addTo(window._marketMap).bindPopup(popup);
                 window._marketMarkers[r.id]=marker;
             }
@@ -1848,7 +1855,7 @@ window.filterMarket = function(kat, triggerEl) {
         window.aktualizujCtaTrziste(0);
         return;
     }
-    list.innerHTML = (window.vyzvaKProfilu?window.vyzvaKProfilu():"") + filtered.map((req, i) => window.createBeautifulCard(req, true, i)).join('');
+    list.innerHTML = (window.vyzvaKProfilu?window.vyzvaKProfilu():"") + window.seradPoptavky(filtered).map((req, i) => window.createBeautifulCard(req, true, i)).join('');
     window.doplnFotky(list);
     window.aktualizujCtaTrziste(filtered.length);
 };
