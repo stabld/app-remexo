@@ -282,8 +282,14 @@ window.craftsmanHTML = function(name) {
                     </div>
                     <div class="grid md:grid-cols-2 gap-5">
                         <div><label class="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2">Telefonní číslo</label><input type="tel" id="prof-phone" class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-5 py-3.5 text-sm focus:ring-2 focus:ring-remexo-500 outline-none dark:text-white" placeholder="+420 123 456 789"></div>
-                        <div><label class="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2">Odkud vyjíždíte</label><input type="text" id="prof-city" class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-5 py-3.5 text-sm focus:ring-2 focus:ring-remexo-500 outline-none dark:text-white" placeholder="Např. Brno-Bystrc"><p class="text-[11px] text-slate-400 mt-2 leading-relaxed">Podle tohoto místa vám u poptávek počítáme vzdálenost. Uveďte konkrétní město nebo čtvrť, ne kraj - &bdquo;Brno a okolí&ldquo; se na mapě najít neda.</p></div>
+                        <div><label class="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2">Město / Působnost</label><input type="text" id="prof-city" class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-5 py-3.5 text-sm focus:ring-2 focus:ring-remexo-500 outline-none dark:text-white" placeholder="Např. Brno a okolí"><p class="text-[11px] text-slate-400 mt-2">Uvidí zákazníci ve vašem profilu.</p></div>
                     </div>
+                    <div class="pt-5 border-t border-slate-100 dark:border-slate-800">
+                        <label class="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2">Odkud vyjíždíte</label>
+                        <input type="text" id="prof-adresa" class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-5 py-3.5 text-sm focus:ring-2 focus:ring-remexo-500 outline-none dark:text-white" placeholder="Např. Veveří 12, Brno">
+                        <p class="text-[11px] text-slate-400 mt-2 leading-relaxed"><i class="fa-solid fa-lock mr-1 opacity-70"></i>Neveřejné. Slouží jen k výpočtu vzdálenosti k poptávkám &ndash; zákazníci ani ostatní řemeslníci ji nevidí. Čím přesnější adresa, tím přesnější kilometry; stačí i jen ulice a město.</p>
+                    </div>
+
                     <!-- Ověření: IČO vyplňuje řemeslník, příznak nastavuje jen admin -->
                     <div class="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-2xl p-5">
                         <div class="flex items-start justify-between gap-4 mb-4">
