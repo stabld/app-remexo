@@ -221,6 +221,11 @@ window.craftsmanHTML = function(name) {
             <button onclick="window.filterMarket('Ostatní', this)" class="filter-btn shrink-0 px-5 py-2.5 rounded-xl text-sm font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-remexo-500 transition hover:scale-105">Ostatní</button>
             <button onclick="window.filterMarket('saved', this)" id="filter-saved" class="filter-btn shrink-0 px-5 py-2.5 rounded-xl text-sm font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-remexo-500 transition hover:scale-105"><i class="fa-solid fa-bookmark mr-1.5"></i>Uložené</button>
         </div>
+        <div id="razeni-pruh" class="flex items-center gap-2 mb-5">
+            <span class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mr-1">Seřadit</span>
+            <button id="razeni-nove" onclick="window.prepniRazeni('nove')" class="shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition bg-remexo-500 text-white shadow-md">Nejnovější</button>
+            <button id="razeni-blizko" onclick="window.prepniRazeni('blizko')" class="shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-remexo-500"><i class="fa-solid fa-route mr-1.5"></i>Nejblíž</button>
+        </div>
         <div id="market-list" class="space-y-5"><div class="text-center p-16 bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-3xl"><i class="fa-solid fa-circle-notch fa-spin text-5xl text-remexo-500 mb-5 block"></i><p class="font-bold text-slate-500 text-lg">Hledám nové poptávky ve vašem okolí...</p></div></div>
         <div id="market-map" class="hidden"></div>
     </div>
