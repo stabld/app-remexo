@@ -1543,7 +1543,7 @@ window.loadMarketFromDB = async function() {
     window.STATE.marketRequests=data;
     if(window.nactiOblibene) await window.nactiOblibene();
     if(window.nactiMojeNabidky) await window.nactiMojeNabidky();
-    list.innerHTML=(window.vyzvaKProfilu?window.vyzvaKProfilu():"")+window.seradPoptavky(data).map((r,i)=>window.createBeautifulCard({id:r.id,sbId:r.id,created_at:r.created_at,title:r.title,kat:r.category||"Ostatní",popis:r.description||"",mesto:r.mesto||null,lat:r.lat,lon:r.lon,time:new Date(r.created_at).toLocaleDateString("cs"),status:r.status,urgency:r.urgency||"Střední",category:r.category,customer_name:r.customer_name||"Zákazník",price_estimate:r.price_estimate||"Dohodou"},true,i)).join("");
+    list.innerHTML=(window.vyzvaKProfilu?window.vyzvaKProfilu():"")+(window.seradPoptavky?window.seradPoptavky(data):data).map((r,i)=>window.createBeautifulCard({id:r.id,sbId:r.id,created_at:r.created_at,title:r.title,kat:r.category||"Ostatní",popis:r.description||"",mesto:r.mesto||null,lat:r.lat,lon:r.lon,time:new Date(r.created_at).toLocaleDateString("cs"),status:r.status,urgency:r.urgency||"Střední",category:r.category,customer_name:r.customer_name||"Zákazník",price_estimate:r.price_estimate||"Dohodou"},true,i)).join("");
     window.doplnFotky(list);
 };
 
@@ -1855,7 +1855,7 @@ window.filterMarket = function(kat, triggerEl) {
         window.aktualizujCtaTrziste(0);
         return;
     }
-    list.innerHTML = (window.vyzvaKProfilu?window.vyzvaKProfilu():"") + window.seradPoptavky(filtered).map((req, i) => window.createBeautifulCard(req, true, i)).join('');
+    list.innerHTML = (window.vyzvaKProfilu?window.vyzvaKProfilu():"") + (window.seradPoptavky?window.seradPoptavky(filtered):filtered).map((req, i) => window.createBeautifulCard(req, true, i)).join('');
     window.doplnFotky(list);
     window.aktualizujCtaTrziste(filtered.length);
 };
