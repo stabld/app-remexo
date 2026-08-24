@@ -1,53 +1,70 @@
 // hlaseni.js — nahlášení problému uživatelem
-// Vyžaduje inicializovaného Supabase klienta (window.supabase nebo window.supabaseClient).
 (function () {
+  // Pozor: window.supabase je knihovna z CDN, ne klient.
+  function klient() {
+    const kandidati = [
+      window.supabaseClient, window.sb, window.db, window.supa,
+      window.klient, window.supabase
+    ];
+    for (let i = 0; i < kandidati.length; i++) {
+      const k = kandidati[i];
+      if (k && typeof k.from === 'function' && k.auth) return k;
+    }
+    return null;
+  }
+
   const styl = document.createElement('style');
   styl.textContent = `
-    #hl-btn{position:fixed;right:16px;bottom:16px;z-index:9998;
-      background:#1c1917;color:#fbbf24;border:1px solid #44403c;
-      border-radius:9999px;padding:10px 16px;font-size:14px;
-      font-family:inherit;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.25)}
-    #hl-btn:hover{background:#292524}
-    #hl-overlay{position:fixed;inset:0;z-index:9999;display:none;
-      background:rgba(0,0,0,.55);align-items:center;justify-content:center;padding:16px}
-    #hl-box{background:#1c1917;color:#e7e5e4;border:1px solid #44403c;
-      border-radius:16px;padding:20px;width:100%;max-width:420px;font-family:inherit}
-    #hl-box h3{margin:0 0 8px;font-size:17px;color:#fbbf24}
-    #hl-box p{margin:0 0 12px;font-size:13px;color:#a8a29e}
+    #hl-btn{position:fixed;left:16px;bottom:16px;z-index:149;
+      background:#1e293b;color:#f59e0b;border:1px solid #334155;
+      border-radius:9999px;padding:9px 15px;font-size:13px;font-weight:700;
+      font-family:inherit;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+    #hl-btn:hover{background:#334155}
+    @media (max-width:1024px){#hl-btn{bottom:80px}}
+    #hl-overlay{position:fixed;inset:0;z-index:800;display:none;
+      background:rgba(15,23,42,.6);backdrop-filter:blur(4px);
+      align-items:center;justify-content:center;padding:16px}
+    #hl-box{background:#fff;color:#0f172a;border-radius:24px;padding:26px;
+      width:100%;max-width:420px;font-family:inherit;box-shadow:0 20px 50px rgba(0,0,0,.25)}
+    html.dark #hl-box{background:#0f172a;color:#e2e8f0;border:1px solid #1e293b}
+    #hl-box h3{margin:0 0 6px;font-size:20px;font-weight:900}
+    #hl-box p{margin:0 0 14px;font-size:13px;color:#64748b}
     #hl-box textarea,#hl-box input{width:100%;box-sizing:border-box;
-      background:#292524;color:#e7e5e4;border:1px solid #57534e;
-      border-radius:10px;padding:10px;font-size:14px;font-family:inherit}
+      background:#f8fafc;color:#0f172a;border:1px solid #e2e8f0;
+      border-radius:12px;padding:11px 14px;font-size:16px;font-family:inherit}
+    html.dark #hl-box textarea,html.dark #hl-box input{background:#1e293b;color:#e2e8f0;border-color:#334155}
     #hl-box textarea{min-height:110px;resize:vertical;margin-bottom:10px}
-    #hl-box textarea:focus,#hl-box input:focus{outline:none;border-color:#fbbf24}
-    #hl-akce{display:flex;gap:8px;margin-top:14px}
-    #hl-akce button{flex:1;border-radius:10px;padding:10px;font-size:14px;
-      font-family:inherit;cursor:pointer;border:1px solid #57534e}
-    #hl-zrus{background:transparent;color:#a8a29e}
-    #hl-odesli{background:#fbbf24;color:#1c1917;border-color:#fbbf24;font-weight:600}
+    #hl-box textarea:focus,#hl-box input:focus{outline:none;border-color:#f59e0b}
+    #hl-akce{display:flex;gap:10px;margin-top:16px}
+    #hl-akce button{flex:1;border-radius:12px;padding:12px;font-size:14px;
+      font-weight:700;font-family:inherit;cursor:pointer;border:none}
+    #hl-zrus{background:transparent;color:#64748b}
+    #hl-zrus:hover{background:#f1f5f9}
+    html.dark #hl-zrus:hover{background:#1e293b}
+    #hl-odesli{background:#f59e0b;color:#fff;box-shadow:0 6px 16px rgba(245,158,11,.3)}
+    #hl-odesli:hover{background:#d97706}
     #hl-odesli:disabled{opacity:.6;cursor:default}
-    #hl-stav{font-size:13px;color:#a8a29e;margin-top:10px;min-height:18px}
+    #hl-stav{font-size:13px;color:#64748b;margin-top:10px;min-height:18px;font-weight:600}
   `;
   document.head.appendChild(styl);
 
   const btn = document.createElement('button');
   btn.id = 'hl-btn';
   btn.type = 'button';
-  btn.textContent = 'Nahlásit problém';
+  btn.innerHTML = '<i class="fa-solid fa-bug"></i> Nahlásit problém';
 
   const ov = document.createElement('div');
   ov.id = 'hl-overlay';
-  ov.innerHTML = `
-    <div id="hl-box">
-      <h3>Nahlásit problém</h3>
-      <p>Co nefungovalo? Klidně stručně, pomůže i pár slov.</p>
-      <textarea id="hl-text" placeholder="Například: po odeslání poptávky se stránka zasekla…"></textarea>
-      <input id="hl-email" type="email" placeholder="E-mail (nepovinné, kdybych se chtěl ozvat)">
-      <div id="hl-stav"></div>
-      <div id="hl-akce">
-        <button id="hl-zrus" type="button">Zavřít</button>
-        <button id="hl-odesli" type="button">Odeslat</button>
-      </div>
-    </div>`;
+  ov.innerHTML = '<div id="hl-box">' +
+    '<h3>Nahlásit problém</h3>' +
+    '<p>Co nefungovalo? Klidně stručně, pomůže i pár slov.</p>' +
+    '<textarea id="hl-text" placeholder="Například: po odeslání poptávky se stránka zasekla…"></textarea>' +
+    '<input id="hl-email" type="email" placeholder="E-mail (nepovinné, kdybych se chtěl ozvat)">' +
+    '<div id="hl-stav"></div>' +
+    '<div id="hl-akce">' +
+      '<button id="hl-zrus" type="button">Zavřít</button>' +
+      '<button id="hl-odesli" type="button">Odeslat</button>' +
+    '</div></div>';
 
   document.body.appendChild(btn);
   document.body.appendChild(ov);
@@ -85,7 +102,7 @@
     stav.textContent = 'Odesílám…';
 
     try {
-      const sb = window.supabase || window.supabaseClient;
+      const sb = klient();
       if (!sb) throw new Error('chybí Supabase klient');
 
       let uid = null;
