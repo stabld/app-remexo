@@ -1,4 +1,6 @@
 // hlaseni.js — nahlášení problému uživatelem
+// Na počítači: položka v levém panelu nad odhlášením.
+// Na mobilu: plovoucí tlačítko vlevo dole nad spodní navigací.
 (function () {
   // Pozor: window.supabase je knihovna z CDN, ne klient.
   function klient() {
@@ -15,12 +17,12 @@
 
   const styl = document.createElement('style');
   styl.textContent = `
-    #hl-btn{position:fixed;left:16px;bottom:16px;z-index:149;
-      background:#1e293b;color:#f59e0b;border:1px solid #334155;
-      border-radius:9999px;padding:9px 15px;font-size:13px;font-weight:700;
-      font-family:inherit;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.2)}
-    #hl-btn:hover{background:#334155}
-    @media (max-width:1024px){#hl-btn{bottom:80px}}
+    #hl-mobil{position:fixed;left:14px;bottom:78px;z-index:149;display:none;
+      align-items:center;gap:7px;background:#1e293b;color:#f59e0b;
+      border:1px solid #334155;border-radius:9999px;padding:9px 14px;
+      font-size:13px;font-weight:800;font-family:inherit;cursor:pointer;
+      box-shadow:0 4px 14px rgba(0,0,0,.25)}
+    @media (max-width:1023px){#hl-mobil{display:flex}}
     #hl-overlay{position:fixed;inset:0;z-index:800;display:none;
       background:rgba(15,23,42,.6);backdrop-filter:blur(4px);
       align-items:center;justify-content:center;padding:16px}
@@ -48,11 +50,6 @@
   `;
   document.head.appendChild(styl);
 
-  const btn = document.createElement('button');
-  btn.id = 'hl-btn';
-  btn.type = 'button';
-  btn.innerHTML = '<i class="fa-solid fa-bug"></i> Nahlásit problém';
-
   const ov = document.createElement('div');
   ov.id = 'hl-overlay';
   ov.innerHTML = '<div id="hl-box">' +
@@ -65,8 +62,6 @@
       '<button id="hl-zrus" type="button">Zavřít</button>' +
       '<button id="hl-odesli" type="button">Odeslat</button>' +
     '</div></div>';
-
-  document.body.appendChild(btn);
   document.body.appendChild(ov);
 
   const txt = ov.querySelector('#hl-text');
@@ -84,7 +79,26 @@
     ov.style.display = 'none';
   }
 
-  btn.addEventListener('click', otevri);
+  // --- Položka v levém panelu, nad tlačítkem Odhlásit se ---
+  const odhlasit = document.querySelector('#sidebar button[onclick*="doLogout"]');
+  if (odhlasit && odhlasit.parentNode) {
+    const polozka = document.createElement('button');
+    polozka.id = 'hl-panel';
+    polozka.type = 'button';
+    polozka.className = 'w-full mb-2 px-4 py-2 rounded-xl text-sm font-bold text-slate-500 hover:text-remexo-500 hover:bg-remexo-50 dark:hover:bg-remexo-500/10 transition flex items-center justify-center gap-2';
+    polozka.innerHTML = '<i class="fa-solid fa-bug"></i> Nahlásit problém';
+    polozka.addEventListener('click', otevri);
+    odhlasit.parentNode.insertBefore(polozka, odhlasit);
+  }
+
+  // --- Plovoucí tlačítko pro mobil ---
+  const mobil = document.createElement('button');
+  mobil.id = 'hl-mobil';
+  mobil.type = 'button';
+  mobil.innerHTML = '<i class="fa-solid fa-bug"></i> Nahlásit problém';
+  mobil.addEventListener('click', otevri);
+  document.body.appendChild(mobil);
+
   ov.querySelector('#hl-zrus').addEventListener('click', zavri);
   ov.addEventListener('click', function (e) { if (e.target === ov) zavri(); });
   document.addEventListener('keydown', function (e) {
@@ -133,4 +147,6 @@
       odesli.disabled = false;
     }
   });
+
+  window.otevriHlaseni = otevri;
 })();
