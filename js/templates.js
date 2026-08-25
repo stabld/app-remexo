@@ -194,7 +194,7 @@ window.customerHTML = function(name) {
 window.craftsmanHTML = function(name) {
     return `
     <div id="view-market" class="hidden fade-up">
-        <button onclick="window.filterMarket('all', document.getElementById('filter-all')); document.getElementById('market-list').scrollIntoView({behavior:'smooth',block:'start'});" class="dash-cta w-full text-left bg-remexo-500 hover:bg-remexo-600 active:scale-[0.99] text-white rounded-3xl p-5 lg:p-7 mb-5 lg:mb-8 shadow-lg shadow-remexo-500/25 transition flex items-center gap-4">
+        <button onclick="window.filterMarket('all', document.getElementById('filter-all')); document.getElementById('market-list').scrollIntoView({behavior:'smooth',block:'start'});" class="dash-cta w-full text-left bg-remexo-500 hover:bg-remexo-600 active:scale-[0.99] text-white rounded-3xl p-4 lg:p-6 mb-4 lg:mb-6 shadow-lg shadow-remexo-500/25 transition flex items-center gap-4">
             <div class="w-12 h-12 lg:w-14 lg:h-14 rounded-2xl bg-white/20 flex items-center justify-center text-2xl shrink-0"><i class="fa-solid fa-bolt"></i></div>
             <div class="flex-1 min-w-0">
                 <p class="text-lg lg:text-2xl font-extrabold leading-tight">Získat nové zakázky</p>
@@ -202,7 +202,7 @@ window.craftsmanHTML = function(name) {
             </div>
             <i class="fa-solid fa-arrow-right text-xl opacity-80 shrink-0"></i>
         </button>
-        <div class="flex items-center justify-between mb-5 lg:mb-8">
+        <div class="flex items-center justify-between mb-3 lg:mb-5">
             <h2 class="market-title text-xl lg:text-3xl font-extrabold dark:text-white">Tržiště zakázek</h2>
             <div class="flex items-center gap-2">
                 <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-1 flex gap-1 shadow-sm">
@@ -211,22 +211,22 @@ window.craftsmanHTML = function(name) {
                 </div>
             </div>
         </div>
-        <div class="flex gap-3 mb-8 overflow-x-auto hide-scroll pb-2">
-            <button onclick="window.filterMarket('all', this)" id="filter-all" class="filter-btn shrink-0 px-5 py-2.5 rounded-xl text-sm font-bold bg-remexo-500 text-white shadow-md transition hover:scale-105">Vše</button>
-            <button onclick="window.filterMarket('Instalatérství', this)" class="filter-btn shrink-0 px-5 py-2.5 rounded-xl text-sm font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-remexo-500 transition hover:scale-105">Instalatérství</button>
-            <button onclick="window.filterMarket('Elektrikář', this)" class="filter-btn shrink-0 px-5 py-2.5 rounded-xl text-sm font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-remexo-500 transition hover:scale-105">Elektrikář</button>
-            <button onclick="window.filterMarket('Malíř', this)" class="filter-btn shrink-0 px-5 py-2.5 rounded-xl text-sm font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-remexo-500 transition hover:scale-105">Malíř</button>
-            <button onclick="window.filterMarket('Tesař', this)" class="filter-btn shrink-0 px-5 py-2.5 rounded-xl text-sm font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-remexo-500 transition hover:scale-105">Tesař</button>
-            <button onclick="window.filterMarket('Zámečník', this)" class="filter-btn shrink-0 px-5 py-2.5 rounded-xl text-sm font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-remexo-500 transition hover:scale-105">Zámečník</button>
-            <button onclick="window.filterMarket('Ostatní', this)" class="filter-btn shrink-0 px-5 py-2.5 rounded-xl text-sm font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-remexo-500 transition hover:scale-105">Ostatní</button>
-            <button onclick="window.filterMarket('saved', this)" id="filter-saved" class="filter-btn shrink-0 px-5 py-2.5 rounded-xl text-sm font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-remexo-500 transition hover:scale-105"><i class="fa-solid fa-bookmark mr-1.5"></i>Uložené</button>
+        <div class="flex gap-2 mb-3 lg:mb-5 overflow-x-auto hide-scroll pb-1">
+            <button onclick="window.filterMarket('all', this)" id="filter-all" class="filter-btn shrink-0 px-4 py-2 rounded-xl text-sm font-bold bg-remexo-500 text-white shadow-md transition hover:scale-105">Vše</button>
+            <button onclick="window.filterMarket('Instalatérství', this)" class="filter-btn shrink-0 px-4 py-2 rounded-xl text-sm font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-remexo-500 transition hover:scale-105">Instalatérství</button>
+            <button onclick="window.filterMarket('Elektrikář', this)" class="filter-btn shrink-0 px-4 py-2 rounded-xl text-sm font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-remexo-500 transition hover:scale-105">Elektrikář</button>
+            <button onclick="window.filterMarket('Malíř', this)" class="filter-btn shrink-0 px-4 py-2 rounded-xl text-sm font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-remexo-500 transition hover:scale-105">Malíř</button>
+            <button onclick="window.filterMarket('Tesař', this)" class="filter-btn shrink-0 px-4 py-2 rounded-xl text-sm font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-remexo-500 transition hover:scale-105">Tesař</button>
+            <button onclick="window.filterMarket('Zámečník', this)" class="filter-btn shrink-0 px-4 py-2 rounded-xl text-sm font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-remexo-500 transition hover:scale-105">Zámečník</button>
+            <button onclick="window.filterMarket('Ostatní', this)" class="filter-btn shrink-0 px-4 py-2 rounded-xl text-sm font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-remexo-500 transition hover:scale-105">Ostatní</button>
+            <button onclick="window.filterMarket('saved', this)" id="filter-saved" class="filter-btn shrink-0 px-4 py-2 rounded-xl text-sm font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-remexo-500 transition hover:scale-105"><i class="fa-solid fa-bookmark mr-1.5"></i>Uložené</button>
         </div>
-        <div id="razeni-pruh" class="flex items-center gap-2 mb-5">
+        <div id="razeni-pruh" class="flex items-center gap-2 mb-4">
             <span class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mr-1">Seřadit</span>
             <button id="razeni-nove" onclick="window.prepniRazeni('nove')" class="shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition bg-remexo-500 text-white shadow-md">Nejnovější</button>
             <button id="razeni-blizko" onclick="window.prepniRazeni('blizko')" class="shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-remexo-500"><i class="fa-solid fa-route mr-1.5"></i>Nejblíž</button>
         </div>
-        <div id="market-list" class="space-y-5"><div class="text-center p-16 bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-3xl"><i class="fa-solid fa-circle-notch fa-spin text-5xl text-remexo-500 mb-5 block"></i><p class="font-bold text-slate-500 text-lg">Hledám nové poptávky ve vašem okolí...</p></div></div>
+        <div id="market-list" class="space-y-4"><div class="text-center p-16 bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-3xl"><i class="fa-solid fa-circle-notch fa-spin text-5xl text-remexo-500 mb-5 block"></i><p class="font-bold text-slate-500 text-lg">Hledám nové poptávky ve vašem okolí...</p></div></div>
         <div id="market-map" class="hidden"></div>
     </div>
     <div id="view-jobs" class="hidden fade-up">
