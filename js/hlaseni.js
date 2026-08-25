@@ -1,6 +1,6 @@
 // hlaseni.js — nahlášení problému uživatelem
 // Na počítači: položka v levém panelu nad odhlášením.
-// Na mobilu: plovoucí tlačítko vlevo dole nad spodní navigací.
+// Na mobilu: úchyt přilepený k levé hraně, ve výšce Bořka.
 (function () {
   // Pozor: window.supabase je knihovna z CDN, ne klient.
   function klient() {
@@ -17,11 +17,13 @@
 
   const styl = document.createElement('style');
   styl.textContent = `
-    #hl-mobil{position:fixed;left:14px;bottom:78px;z-index:149;display:none;
-      align-items:center;gap:7px;background:#1e293b;color:#f59e0b;
-      border:1px solid #334155;border-radius:9999px;padding:9px 14px;
-      font-size:13px;font-weight:800;font-family:inherit;cursor:pointer;
-      box-shadow:0 4px 14px rgba(0,0,0,.25)}
+    /* Úchyt přilepený k levé hraně, ve výšce Bořka. Dovnitř trčí jen 30 px. */
+    #hl-mobil{position:fixed;left:0;bottom:78px;z-index:149;display:none;
+      width:30px;height:46px;padding:0;align-items:center;justify-content:center;
+      background:#1e293b;color:#f59e0b;border:1px solid #334155;border-left:none;
+      border-radius:0 14px 14px 0;font-size:14px;font-family:inherit;cursor:pointer;
+      box-shadow:2px 3px 12px rgba(0,0,0,.3)}
+    #hl-mobil:active{background:#334155}
     @media (max-width:1023px){#hl-mobil{display:flex}}
     #hl-overlay{position:fixed;inset:0;z-index:800;display:none;
       background:rgba(15,23,42,.6);backdrop-filter:blur(4px);
@@ -95,7 +97,9 @@
   const mobil = document.createElement('button');
   mobil.id = 'hl-mobil';
   mobil.type = 'button';
-  mobil.innerHTML = '<i class="fa-solid fa-bug"></i> Nahlásit problém';
+  mobil.title = 'Nahlásit problém';
+  mobil.setAttribute('aria-label', 'Nahlásit problém');
+  mobil.innerHTML = '<i class="fa-solid fa-bug"></i>';
   mobil.addEventListener('click', otevri);
   document.body.appendChild(mobil);
 
