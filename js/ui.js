@@ -144,6 +144,29 @@ window.stariPoptavky = function(datum) {
     return { text: new Date(t).toLocaleDateString("cs"), cerstve: false };
 };
 
+// Rozbalí zkrácený popis karty na tržišti i skryté doplňky pod ním.
+window.prepniPopisKarty = function(btn) {
+    var karta = btn.closest(".market-item");
+    if (!karta) return;
+    var popis = karta.querySelector(".market-popis");
+    var vice = karta.querySelector(".market-vice");
+    var rozbaleno = btn.getAttribute("data-otevreno") === "1";
+
+    if (rozbaleno) {
+        if (popis) popis.style.webkitLineClamp = "2";
+        if (vice) vice.style.display = "none";
+        btn.setAttribute("data-otevreno", "0");
+        btn.innerHTML = 'Zobrazit více <i class="fa-solid fa-chevron-down ml-1 text-[10px]"></i>';
+    } else {
+        if (popis) popis.style.webkitLineClamp = "unset";
+        if (vice) vice.style.display = "block";
+        btn.setAttribute("data-otevreno", "1");
+        btn.innerHTML = 'Zobrazit méně <i class="fa-solid fa-chevron-up ml-1 text-[10px]"></i>';
+        // Fotky se dotahují až při zobrazení, jinak by se stahovaly zbytečně
+        if (window.doplnFotky) window.doplnFotky(karta);
+    }
+};
+
 window.createBeautifulCard = function(req, isMarket, i) {
     try {
         const statusMap = { waiting:"Hledáme profíka", active:"Probíhá oprava", done:"Dokončeno", cancelled:"Zrušeno" };
@@ -283,16 +306,31 @@ window.createBeautifulCard = function(req, isMarket, i) {
             const oblibena = (typeof window.jeOblibena === "function") ? window.jeOblibena(req.id) : false;
             const zalozkaIkona = oblibena ? "fa-solid fa-bookmark" : "fa-regular fa-bookmark";
             const zalozkaBarva = oblibena ? "text-remexo-500 border-remexo-500" : "text-slate-400 border-slate-200 dark:border-slate-700";
-            return '<div id="market-card-' + req.id + '" class="market-item bg-white dark:bg-[#0f172a] rounded-3xl border border-slate-200 dark:border-slate-800 p-6 hover:border-remexo-500/50 hover:shadow-xl transition-all duration-300 cursor-pointer fade-up overflow-hidden relative group" data-kat="' + window.escapeHtml(reqCat) + '" style="animation-delay:' + (i*60) + 'ms">' +
+            return '<div id="market-card-' + req.id + '" class="market-item bg-white dark:bg-[#0f172a] rounded-3xl border border-slate-200 dark:border-slate-800 p-5 hover:border-remexo-500/50 hover:shadow-xl transition-all duration-300 cursor-pointer fade-up overflow-hidden relative group" data-kat="' + window.escapeHtml(reqCat) + '" style="animation-delay:' + (i*60) + 'ms">' +
                 '<div class="absolute top-0 left-0 w-1.5 h-full bg-remexo-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>' +
-                '<div class="pl-2"><div class="flex items-start gap-5"><div class="w-14 h-14 bg-remexo-50 dark:bg-remexo-500/10 text-remexo-500 rounded-2xl flex items-center justify-center text-2xl shrink-0 shadow-inner border border-remexo-100 dark:border-remexo-500/20"><i class="fa-solid ' + (iconMap[reqCat]||iconMap.default) + '"></i></div>' +
+                '<div class="pl-2"><div class="flex items-start gap-4"><div class="w-12 h-12 bg-remexo-50 dark:bg-remexo-500/10 text-remexo-500 rounded-2xl flex items-center justify-center text-2xl shrink-0 shadow-inner border border-remexo-100 dark:border-remexo-500/20"><i class="fa-solid ' + (iconMap[reqCat]||iconMap.default) + '"></i></div>' +
                 '<div class="flex-1 min-w-0"><div class="flex items-start justify-between gap-3 mb-2"><h4 class="text-xl font-extrabold dark:text-white leading-tight">' + bezpTitle + '</h4><span class="status-badge ' + (reqUrg==="Vysoká"?"bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400":"status-waiting") + ' shrink-0">' + window.escapeHtml(reqUrg) + '</span></div>' +
-                '<div class="flex flex-wrap items-center gap-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-4">' + stariHtml + (window.odznakVzdalenosti?window.odznakVzdalenosti(req):"") + '<span class="bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded"><i class="fa-solid fa-tag mr-1.5 opacity-70"></i>' + window.escapeHtml(reqCat) + '</span><span class="bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded"><i class="fa-solid fa-user mr-1.5 opacity-70"></i>' + firstName + '</span><span class="bg-remexo-50 dark:bg-remexo-500/10 text-remexo-600 dark:text-remexo-400 px-2 py-1 rounded"><i class="fa-solid fa-coins mr-1.5"></i>' + bezpCena + '</span></div>' +
-                '<p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed mb-2">' + window.escapeHtml(mainDesc) + '</p>' +
+                '<div class="flex flex-wrap items-center gap-2 mb-3">' +
+                // Vzdálenost a cena rozhodují, jestli se řemeslníkovi zakázka vyplatí.
+                // Zbytek je kontext, proto jde o stupeň níž.
+                (window.odznakVzdalenosti?window.odznakVzdalenosti(req):"") +
+                '<span class="bg-remexo-50 dark:bg-remexo-500/10 text-remexo-600 dark:text-remexo-400 px-2.5 py-1 rounded text-[11px] font-bold uppercase tracking-wider"><i class="fa-solid fa-coins mr-1.5"></i>' + bezpCena + '</span>' +
+                '</div>' +
+                '<div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">' +
+                (stari ? '<span><i class="fa-regular fa-clock mr-1 opacity-70"></i>' + window.escapeHtml(stari.text) + '</span>' : "") +
+                '<span><i class="fa-solid fa-tag mr-1 opacity-70"></i>' + window.escapeHtml(reqCat) + '</span>' +
+                '<span><i class="fa-solid fa-user mr-1 opacity-70"></i>' + firstName + '</span></div>' +
+                '<p class="market-popis text-sm text-slate-600 dark:text-slate-400 leading-relaxed mb-2" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">' + window.escapeHtml(mainDesc) + '</p>' +
+                // Dlouhý popis a doplňující informace kartu nafouknou přes celou
+                // obrazovku. Řemeslník potřebuje hlavně rychle proskenovat, co je nové.
+                ((mainDesc.length > 110 || marketDetailsHtml || fotkyNaTrzisti)
+                    ? '<button onclick="window.prepniPopisKarty(this)" class="text-xs font-bold text-remexo-500 hover:text-remexo-600 transition mb-1">Zobrazit více <i class="fa-solid fa-chevron-down ml-1 text-[10px]"></i></button>'
+                    : "") +
+                '<div class="market-vice" style="display:none">' +
                 // Náhledy fotek. Bez nich řemeslník nemá podle čeho nacenit.
                 (fotkyNaTrzisti ? '<div class="flex flex-wrap gap-2 mt-3 mb-1">' + fotkyNaTrzisti + '</div>' : '') +
-                marketDetailsHtml +
-                '<div class="flex gap-3 mt-6 pt-5 border-t border-slate-100 dark:border-slate-800">' + tlacitkoNabidky + '<button onclick="window.showOnMap(\'' + req.id + '\')" title="Zobrazit na mapě" class="px-4 h-12 border-2 border-slate-200 dark:border-slate-700 rounded-xl flex items-center justify-center gap-2 text-slate-500 dark:text-slate-400 hover:text-remexo-500 hover:border-remexo-500 hover:bg-remexo-50 dark:hover:bg-remexo-500/10 transition-colors font-bold text-sm"><i class="fa-solid fa-map-location-dot"></i><span>Na mapě</span></button><button onclick="window.toggleOblibene(\'' + req.id + '\', this)" title="Uložit do oblíbených" class="w-12 h-12 border-2 ' + zalozkaBarva + ' rounded-xl flex items-center justify-center hover:text-remexo-500 hover:border-remexo-500 hover:bg-remexo-50 dark:hover:bg-remexo-500/10 transition-colors shrink-0"><i class="' + zalozkaIkona + '"></i></button></div>' +
+                marketDetailsHtml + '</div>' +
+                '<div class="flex gap-3 mt-5 pt-4 border-t border-slate-100 dark:border-slate-800">' + tlacitkoNabidky + '<button onclick="window.showOnMap(\'' + req.id + '\')" title="Zobrazit na mapě" class="px-4 h-12 border-2 border-slate-200 dark:border-slate-700 rounded-xl flex items-center justify-center gap-2 text-slate-500 dark:text-slate-400 hover:text-remexo-500 hover:border-remexo-500 hover:bg-remexo-50 dark:hover:bg-remexo-500/10 transition-colors font-bold text-sm"><i class="fa-solid fa-map-location-dot"></i><span>Na mapě</span></button><button onclick="window.toggleOblibene(\'' + req.id + '\', this)" title="Uložit do oblíbených" class="w-12 h-12 border-2 ' + zalozkaBarva + ' rounded-xl flex items-center justify-center hover:text-remexo-500 hover:border-remexo-500 hover:bg-remexo-50 dark:hover:bg-remexo-500/10 transition-colors shrink-0"><i class="' + zalozkaIkona + '"></i></button></div>' +
                 '</div></div></div></div>';
         }
     } catch(err) { return '<div class="p-4 bg-red-50 text-red-500 rounded-xl">Chyba vykreslení karty.</div>'; }
