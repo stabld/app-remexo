@@ -336,6 +336,7 @@ window.adminHTML = function() {
             <button onclick="window.adminZalozka('cisla')"     data-azal="cisla"      class="admin-tab px-4 py-2.5 rounded-xl font-bold text-sm whitespace-nowrap transition">Čísla</button>
             <button onclick="window.adminZalozka('poptavky')"  data-azal="poptavky"   class="admin-tab px-4 py-2.5 rounded-xl font-bold text-sm whitespace-nowrap transition">Poptávky</button>
             <button onclick="window.adminZalozka('uzivatele')" data-azal="uzivatele"  class="admin-tab px-4 py-2.5 rounded-xl font-bold text-sm whitespace-nowrap transition">Uživatelé</button>
+            <button onclick="window.adminZalozka('hlaseni')"   data-azal="hlaseni"    class="admin-tab px-4 py-2.5 rounded-xl font-bold text-sm whitespace-nowrap transition">Hlášení</button>
             <button onclick="window.adminZalozka('audit')"     data-azal="audit"      class="admin-tab px-4 py-2.5 rounded-xl font-bold text-sm whitespace-nowrap transition">Záznamy</button>
         </div>
 
