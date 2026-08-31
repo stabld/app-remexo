@@ -18,12 +18,16 @@
   const styl = document.createElement('style');
   styl.textContent = `
     /* Úchyt přilepený k levé hraně, ve výšce Bořka. Dovnitř trčí jen 30 px. */
+    /* Světlý režim je výchozí, tmavý se přebíjí přes html.dark */
     #hl-mobil{position:fixed;left:0;bottom:78px;z-index:149;display:none;
       width:30px;height:46px;padding:0;align-items:center;justify-content:center;
-      background:#1e293b;color:#f59e0b;border:1px solid #334155;border-left:none;
+      background:#fff;color:#d97706;border:1px solid #e2e8f0;border-left:none;
       border-radius:0 14px 14px 0;font-size:14px;font-family:inherit;cursor:pointer;
+      box-shadow:2px 3px 12px rgba(15,23,42,.12)}
+    #hl-mobil:active{background:#f8fafc}
+    html.dark #hl-mobil{background:#1e293b;color:#f59e0b;border-color:#334155;
       box-shadow:2px 3px 12px rgba(0,0,0,.3)}
-    #hl-mobil:active{background:#334155}
+    html.dark #hl-mobil:active{background:#334155}
     @media (max-width:1023px){#hl-mobil{display:flex}}
     #hl-overlay{position:fixed;inset:0;z-index:800;display:none;
       background:rgba(15,23,42,.6);backdrop-filter:blur(4px);
