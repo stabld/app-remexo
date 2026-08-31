@@ -68,9 +68,93 @@ window.adminZalozka = async function (ktera) {
         else if (ktera === "cisla") await adminCisla(cil);
         else if (ktera === "poptavky") await adminPoptavky(cil);
         else if (ktera === "uzivatele") await adminUzivatele(cil);
+        else if (ktera === "hlaseni") await adminHlaseni(cil);
         else if (ktera === "audit") await adminAudit(cil);
     } catch (e) {
         cil.innerHTML = aChyba(e);
+    }
+};
+
+// ---------- HLÁŠENÍ PROBLÉMŮ ----------
+// Text hlášení píše kdokoliv z aplikace, takže je to jediné pole v databázi
+// s libovolným vstupem od cizího člověka. Vždy přes aEsc(), nikdy syrově.
+async function adminHlaseni(cil) {
+    const { data, error } = await window.sb.rpc("admin_hlaseni", { p_limit: 200 });
+    if (error) throw error;
+
+    const vse = data || [];
+    const otevrena = vse.filter(h => !h.vyreseno);
+    const vyresena = vse.filter(h => h.vyreseno);
+
+    function karta(h) {
+        const stav = h.vyreseno
+            ? '<span class="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 text-[10px] font-extrabold uppercase tracking-wider">Vyřešeno</span>'
+            : '<span class="px-2 py-1 rounded-lg bg-remexo-50 dark:bg-remexo-500/10 text-remexo-600 dark:text-remexo-400 text-[10px] font-extrabold uppercase tracking-wider">Otevřené</span>';
+
+        const kontakt = h.email
+            ? '<a href="mailto:' + aEsc(h.email) + '" class="text-remexo-500 hover:underline">' + aEsc(h.email) + '</a>'
+            : '<span class="text-slate-400">bez kontaktu</span>';
+
+        // Z adresy stačí cesta, doména je pořád stejná a jen by zabírala místo
+        let kde = "—";
+        try { kde = new URL(h.url).pathname + new URL(h.url).search; } catch (e) { kde = h.url || "—"; }
+
+        const tlacitko = h.vyreseno
+            ? '<button onclick="window.adminHlaseniStav(' + h.id + ', false)" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition">Znovu otevřít</button>'
+            : '<button onclick="window.adminHlaseniStav(' + h.id + ', true)" class="px-4 py-2 rounded-xl text-xs font-bold bg-green-500 hover:bg-green-600 text-white transition">Označit vyřešené</button>';
+
+        return '<div class="border border-slate-200 dark:border-slate-800 rounded-2xl p-4 mb-3 ' + (h.vyreseno ? 'opacity-60' : '') + '">'
+            + '<div class="flex items-center gap-3 mb-3">' + stav
+            + '<span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">' + aEsc(aDatum(h.vytvoreno)) + '</span>'
+            + '<span class="text-[11px] font-bold text-slate-400">#' + h.id + '</span></div>'
+            + '<p class="text-sm dark:text-slate-200 leading-relaxed mb-3" style="white-space:pre-wrap">' + aEsc(h.text) + '</p>'
+            + '<div class="flex flex-wrap gap-3 text-xs text-slate-500 mb-3">'
+            + '<span><i class="fa-solid fa-user mr-1.5 opacity-60"></i>' + aEsc(h.jmeno) + '</span>'
+            + '<span><i class="fa-solid fa-envelope mr-1.5 opacity-60"></i>' + kontakt + '</span>'
+            + '<span><i class="fa-solid fa-link mr-1.5 opacity-60"></i>' + aEsc(kde) + '</span></div>'
+            + '<div class="flex flex-wrap items-center gap-2">'
+            + '<input id="hl-pozn-' + h.id + '" value="' + aEsc(h.poznamka || "") + '" placeholder="Interní poznámka..." '
+            + 'class="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs outline-none dark:text-white">'
+            + '<button onclick="window.adminHlaseniPoznamka(' + h.id + ')" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition">Uložit</button>'
+            + tlacitko + '</div></div>';
+    }
+
+    let html = '';
+    html += '<div class="flex items-center gap-3 mb-4">'
+        + '<h3 class="font-extrabold dark:text-white">Otevřená hlášení</h3>'
+        + '<span class="px-2.5 py-1 rounded-lg bg-remexo-500 text-white text-xs font-black">' + otevrena.length + '</span></div>';
+    html += otevrena.length
+        ? otevrena.map(karta).join("")
+        : '<p class="text-slate-400 text-center py-8">Žádné otevřené hlášení. Dobrá zpráva.</p>';
+
+    if (vyresena.length) {
+        html += '<h3 class="font-extrabold dark:text-white mt-8 mb-4">Vyřešená (' + vyresena.length + ')</h3>';
+        html += vyresena.map(karta).join("");
+    }
+
+    cil.innerHTML = html;
+}
+
+window.adminHlaseniStav = async function (id, vyreseno) {
+    try {
+        const { error } = await window.sb.rpc("admin_hlaseni_stav", { p_id: id, p_vyreseno: vyreseno });
+        if (error) throw error;
+        if (window.showToast) window.showToast("Hotovo", vyreseno ? "Hlášení označeno jako vyřešené." : "Hlášení znovu otevřeno.", "success");
+        await window.adminZalozka("hlaseni");
+    } catch (e) {
+        if (window.showToast) window.showToast("Nepovedlo se", (e && e.message) || "Zkuste to znovu.", "error");
+    }
+};
+
+window.adminHlaseniPoznamka = async function (id) {
+    const pole = document.getElementById("hl-pozn-" + id);
+    if (!pole) return;
+    try {
+        const { error } = await window.sb.rpc("admin_hlaseni_poznamka", { p_id: id, p_text: pole.value });
+        if (error) throw error;
+        if (window.showToast) window.showToast("Uloženo", "Poznámka byla uložena.", "success");
+    } catch (e) {
+        if (window.showToast) window.showToast("Nepovedlo se", (e && e.message) || "Zkuste to znovu.", "error");
     }
 };
 
