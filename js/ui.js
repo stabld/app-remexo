@@ -132,16 +132,16 @@ window.stariPoptavky = function(datum) {
     // Hodiny na zařízení mohou být mírně napřed - to nevadí.
     // Vyloučíme jen nesmysly (víc než hodina do budoucnosti).
     if (minut < -60) return null;
-    if (minut < 1)  return { text: "právě teď", cerstve: true };
-    if (minut < 60) return { text: "před " + minut + " min", cerstve: true };
+    if (minut < 1)  return { text: "právě teď", cerstve: true, minut: minut };
+    if (minut < 60) return { text: "před " + minut + " min", cerstve: true, minut: minut };
 
     const hodin = Math.floor(minut / 60);
-    if (hodin < 24) return { text: "před " + hodin + " h", cerstve: hodin < 3 };
+    if (hodin < 24) return { text: "před " + hodin + " h", cerstve: hodin < 3, minut: minut };
 
     const dnu = Math.floor(hodin / 24);
-    if (dnu === 1)  return { text: "včera", cerstve: false };
-    if (dnu < 31)   return { text: "před " + dnu + " dny", cerstve: false };
-    return { text: new Date(t).toLocaleDateString("cs"), cerstve: false };
+    if (dnu === 1)  return { text: "včera", cerstve: false, minut: minut };
+    if (dnu < 31)   return { text: "před " + dnu + " dny", cerstve: false, minut: minut };
+    return { text: new Date(t).toLocaleDateString("cs"), cerstve: false, minut: minut };
 };
 
 // Rozbalí zkrácený popis karty na tržišti i skryté doplňky pod ním.
@@ -232,6 +232,44 @@ window.createBeautifulCard = function(req, isMarket, i) {
             : '';
 
         const photoHtml = (prvniSoubor || reqPhoto) ? obalFotky + vnitrekFotky + '<div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center"><i class="fa-solid fa-expand text-white opacity-0 group-hover:opacity-100 text-2xl transition-all"></i></div></div>' : '';
+        // Poptávka, na kterou se nikdo neozval. Bez vysvětlení zákazník neví,
+        // jestli se něco pokazilo, nebo má jen počkat - a to je nejhorší stav,
+        // ve kterém ho můžeme nechat.
+        function panelBezNabidek(req) {
+            const s = window.stariPoptavky(req.created_at || req.vytvoreno);
+            const minut = s && typeof s.minut === "number" ? s.minut : null;
+            const hodin = minut != null ? minut / 60 : 0;
+
+            let ikona, nadpis, text, tridy;
+
+            if (hodin < 24) {
+                ikona = "fa-satellite-dish";
+                tridy = "bg-remexo-50 dark:bg-remexo-500/10 border-remexo-200 dark:border-remexo-500/30 text-remexo-700 dark:text-remexo-400";
+                nadpis = "Poptávka je vypsaná";
+                text = "Řemeslníci ve vašem okolí ji vidí na tržišti. Jakmile někdo pošle nabídku, dáme vám vědět e-mailem.";
+            } else if (hodin < 72) {
+                ikona = "fa-clock";
+                tridy = "bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/30 text-amber-700 dark:text-amber-400";
+                nadpis = "Zatím se nikdo neozval";
+                text = "Někdy to chvíli trvá. Pomůže, když do popisu doplníte fotku závady a kdy se vám hodí termín - řemeslníci pak umí nacenit rychleji.";
+            } else {
+                ikona = "fa-circle-info";
+                tridy = "bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300";
+                nadpis = "Na tuhle poptávku zatím nemáme řemeslníka";
+                text = "Remexo v Brně a Olomouci teprve začíná a v některých oborech nám řemeslníci ještě chybí. Nenecháváme to být - napište nám a zkusíme někoho oslovit napřímo.";
+            }
+
+            return '<div class="mt-5 p-4 rounded-2xl border ' + tridy + '">'
+                + '<p class="font-bold text-sm mb-1"><i class="fa-solid ' + ikona + ' mr-2"></i>' + nadpis + '</p>'
+                + '<p class="text-sm leading-relaxed opacity-90">' + text + '</p>'
+                + (hodin >= 24
+                    ? '<div class="flex flex-wrap gap-2 mt-3">'
+                        + '<button onclick="window.otevriHlaseni && window.otevriHlaseni()" class="px-4 py-2 rounded-xl text-xs font-bold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-remexo-500 transition">Napsat nám</button>'
+                        + '</div>'
+                    : '')
+                + '</div>';
+        }
+
         if (!isMarket) {
             // Text tlačítka se řídí stavem zakázky, ne jen počtem čekajících nabídek
             let barvaNabidek, textNabidek;
@@ -253,6 +291,7 @@ window.createBeautifulCard = function(req, isMarket, i) {
                 '<div class="req-hlavicka flex items-start justify-between gap-4 mb-4"><h4 class="req-nadpis text-xl md:text-2xl font-extrabold dark:text-white leading-tight">' + bezpTitle + '</h4><span class="status-badge ' + (badgeMap[req.status]||'status-waiting') + ' shrink-0">' + (statusMap[req.status]||'Čeká') + '</span></div>' +
                 '<div class="flex flex-col md:flex-row gap-5 mb-2">' + photoHtml + '<div class="flex-1 min-w-0"><p class="req-popis text-sm md:text-base text-slate-600 dark:text-slate-300 leading-relaxed">' + window.escapeHtml(mainDesc) + '</p></div></div>' +
                 detailsHtml +
+                ((req.status === 'waiting' && !(req.pocetNabidek > 0)) ? panelBezNabidek(req) : '') +
                 '<div class="req-akce flex flex-wrap gap-3 mt-6 pt-5 border-t border-slate-100 dark:border-slate-800">' +
                 '<button onclick="window.loadOffersForRequest(' + (req.sbId||0) + ',\'' + titleDoOnclick + '\')" class="flex-1 ' + barvaNabidek + ' py-3.5 rounded-xl font-bold text-sm hover:scale-[1.02] transition-transform shadow-md flex items-center justify-center gap-2">' + textNabidek + '</button>' +
                 (req.status==='active' ? '<button onclick="window.zrusitZakazku(' + i + ',' + (req.sbId||'null') + ')" class="px-5 py-3.5 rounded-xl border-2 border-slate-200 dark:border-slate-700 text-slate-400 hover:text-red-500 hover:border-red-200 font-bold text-sm transition"><i class="fa-solid fa-xmark mr-2"></i>Zrušit</button>' : '') +
