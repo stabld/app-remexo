@@ -292,16 +292,16 @@ window.createBeautifulCard = function(req, isMarket, i) {
             const stavNabidky = (typeof window.stavMeNabidky === "function") ? window.stavMeNabidky(req.id) : null;
             let tlacitkoNabidky;
             if (stavNabidky === "pending") {
-                tlacitkoNabidky = '<button disabled class="flex-1 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 py-3.5 rounded-xl font-bold text-sm cursor-not-allowed border border-slate-200 dark:border-slate-700"><i class="fa-solid fa-hourglass-half mr-2"></i>Čeká na rozhodnutí zákazníka</button>';
+                tlacitkoNabidky = '<button disabled class="w-full bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 py-3.5 rounded-xl font-bold text-sm cursor-not-allowed border border-slate-200 dark:border-slate-700"><i class="fa-solid fa-hourglass-half mr-2"></i>Čeká na zákazníka</button>';
             } else if (stavNabidky === "accepted") {
-                tlacitkoNabidky = '<button disabled class="flex-1 bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400 py-3.5 rounded-xl font-bold text-sm cursor-not-allowed border border-green-200 dark:border-green-500/30"><i class="fa-solid fa-check mr-2"></i>Zakázka je vaše</button>';
+                tlacitkoNabidky = '<button disabled class="w-full bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400 py-3.5 rounded-xl font-bold text-sm cursor-not-allowed border border-green-200 dark:border-green-500/30"><i class="fa-solid fa-check mr-2"></i>Zakázka je vaše</button>';
             } else if (stavNabidky === "rejected" && typeof window.dosleMiPokusy === "function" && window.dosleMiPokusy(req.id)) {
-                tlacitkoNabidky = '<button disabled class="flex-1 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 py-3.5 rounded-xl font-bold text-sm cursor-not-allowed border border-slate-200 dark:border-slate-700"><i class="fa-solid fa-ban mr-2"></i>Nabídka odmítnuta</button>';
+                tlacitkoNabidky = '<button disabled class="w-full bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 py-3.5 rounded-xl font-bold text-sm cursor-not-allowed border border-slate-200 dark:border-slate-700"><i class="fa-solid fa-ban mr-2"></i>Nabídka odmítnuta</button>';
             } else if (stavNabidky === "rejected") {
                 const zbyva = window.MAX_POKUSU - (window.pocetPokusu ? window.pocetPokusu(req.id) : 1);
-                tlacitkoNabidky = '<button onclick="window.openOfferModal(\'' + req.id + '\')" class="flex-1 bg-white dark:bg-slate-800 border-2 border-remexo-500 text-remexo-600 dark:text-remexo-400 hover:bg-remexo-50 dark:hover:bg-remexo-500/10 py-3.5 rounded-xl font-bold text-sm transition"><i class="fa-solid fa-rotate-right mr-2"></i>Zkusit znovu (zbývá ' + zbyva + ')</button>';
+                tlacitkoNabidky = '<button onclick="window.openOfferModal(\'' + req.id + '\')" class="w-full bg-white dark:bg-slate-800 border-2 border-remexo-500 text-remexo-600 dark:text-remexo-400 hover:bg-remexo-50 dark:hover:bg-remexo-500/10 py-3.5 rounded-xl font-bold text-sm transition"><i class="fa-solid fa-rotate-right mr-2"></i>Zkusit znovu (' + zbyva + ')</button>';
             } else {
-                tlacitkoNabidky = '<button onclick="window.openOfferModal(\'' + req.id + '\')" class="flex-1 bg-remexo-500 hover:bg-remexo-600 text-white py-3.5 rounded-xl font-bold text-sm transition shadow-md hover:scale-[1.02]">Podat nabídku zákazníkovi</button>';
+                tlacitkoNabidky = '<button onclick="window.openOfferModal(\'' + req.id + '\')" class="w-full bg-remexo-500 hover:bg-remexo-600 text-white py-3.5 rounded-xl font-bold text-sm transition shadow-md">Podat nabídku</button>';
             }
             const oblibena = (typeof window.jeOblibena === "function") ? window.jeOblibena(req.id) : false;
             const zalozkaIkona = oblibena ? "fa-solid fa-bookmark" : "fa-regular fa-bookmark";
@@ -316,7 +316,7 @@ window.createBeautifulCard = function(req, isMarket, i) {
                 (window.odznakVzdalenosti?window.odznakVzdalenosti(req):"") +
                 '<span class="bg-remexo-50 dark:bg-remexo-500/10 text-remexo-600 dark:text-remexo-400 px-2.5 py-1 rounded text-[11px] font-bold uppercase tracking-wider"><i class="fa-solid fa-coins mr-1.5"></i>' + bezpCena + '</span>' +
                 '</div>' +
-                '<div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">' +
+                '<div class="flex flex-wrap items-center gap-3 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">' +
                 (stari ? '<span><i class="fa-regular fa-clock mr-1 opacity-70"></i>' + window.escapeHtml(stari.text) + '</span>' : "") +
                 '<span><i class="fa-solid fa-tag mr-1 opacity-70"></i>' + window.escapeHtml(reqCat) + '</span>' +
                 '<span><i class="fa-solid fa-user mr-1 opacity-70"></i>' + firstName + '</span></div>' +
@@ -330,7 +330,7 @@ window.createBeautifulCard = function(req, isMarket, i) {
                 // Náhledy fotek. Bez nich řemeslník nemá podle čeho nacenit.
                 (fotkyNaTrzisti ? '<div class="flex flex-wrap gap-2 mt-3 mb-1">' + fotkyNaTrzisti + '</div>' : '') +
                 marketDetailsHtml + '</div>' +
-                '<div class="flex gap-3 mt-5 pt-4 border-t border-slate-100 dark:border-slate-800">' + tlacitkoNabidky + '<button onclick="window.showOnMap(\'' + req.id + '\')" title="Zobrazit na mapě" class="px-4 h-12 border-2 border-slate-200 dark:border-slate-700 rounded-xl flex items-center justify-center gap-2 text-slate-500 dark:text-slate-400 hover:text-remexo-500 hover:border-remexo-500 hover:bg-remexo-50 dark:hover:bg-remexo-500/10 transition-colors font-bold text-sm"><i class="fa-solid fa-map-location-dot"></i><span>Na mapě</span></button><button onclick="window.toggleOblibene(\'' + req.id + '\', this)" title="Uložit do oblíbených" class="w-12 h-12 border-2 ' + zalozkaBarva + ' rounded-xl flex items-center justify-center hover:text-remexo-500 hover:border-remexo-500 hover:bg-remexo-50 dark:hover:bg-remexo-500/10 transition-colors shrink-0"><i class="' + zalozkaIkona + '"></i></button></div>' +
+                '<div class="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800">' + tlacitkoNabidky + '<div class="flex gap-2 mt-2">' + '<button onclick="window.showOnMap(\'' + req.id + '\')" title="Zobrazit na mapě" class="flex-1 h-12 border-2 border-slate-200 dark:border-slate-700 rounded-xl flex items-center justify-center gap-2 text-slate-500 dark:text-slate-400 hover:text-remexo-500 hover:border-remexo-500 hover:bg-remexo-50 dark:hover:bg-remexo-500/10 transition-colors font-bold text-sm"><i class="fa-solid fa-map-location-dot"></i><span>Na mapě</span></button><button onclick="window.toggleOblibene(\'' + req.id + '\', this)" title="Uložit do oblíbených" class="w-12 h-12 border-2 ' + zalozkaBarva + ' rounded-xl flex items-center justify-center hover:text-remexo-500 hover:border-remexo-500 hover:bg-remexo-50 dark:hover:bg-remexo-500/10 transition-colors shrink-0"><i class="' + zalozkaIkona + '"></i></button></div></div>' +
                 '</div></div></div></div>';
         }
     } catch(err) { return '<div class="p-4 bg-red-50 text-red-500 rounded-xl">Chyba vykreslení karty.</div>'; }
