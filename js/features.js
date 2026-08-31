@@ -724,51 +724,131 @@ window.vykresliGalerii = function(galleryId, zoneId) {
     if (zone) zone.classList.add("hidden");
 };
 
+window.MAX_FOTEK = 5;
+window.MAX_VELIKOST_FOTKY = 5 * 1024 * 1024;   // shodné s limitem zásobníku
+
+// Vykreslí galerii z window.poptPhotos. Musí projít celé pole, ne jen
+// poslední výběr - jinak se fotky v poli hromadí, ale vidět je jen část.
+function vykresliGalerii(galleryId, zoneId) {
+    const gallery = document.getElementById(galleryId);
+    const zone = document.getElementById(zoneId);
+    if (!gallery) return;
+
+    const fotky = window.poptPhotos || [];
+    gallery.innerHTML = "";
+
+    if (!fotky.length) {
+        gallery.classList.add("hidden");
+        if (zone) zone.classList.remove("hidden");
+        return;
+    }
+
+    gallery.classList.remove("hidden");
+    if (zone) zone.classList.add("hidden");
+
+    fotky.forEach(function (p, idx) {
+        const url = "data:" + (p.mime || "image/jpeg") + ";base64," + p.base64;
+        const obal = document.createElement("div");
+        obal.className = "relative pointer-events-auto";
+
+        const imgEl = document.createElement("img");
+        imgEl.src = url;
+        imgEl.className = "w-full h-20 object-cover rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 cursor-pointer hover:opacity-80 transition";
+        imgEl.onclick = function (e) { e.stopPropagation(); window.openLightbox(url); };
+
+        const smazat = document.createElement("button");
+        smazat.type = "button";
+        smazat.title = "Odebrat fotku";
+        smazat.className = "absolute -top-2 -right-2 w-6 h-6 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-400 hover:text-red-500 shadow-sm flex items-center justify-center";
+        smazat.innerHTML = '<i class="fa-solid fa-xmark text-xs"></i>';
+        smazat.onclick = function (e) {
+            e.stopPropagation();
+            window.poptPhotos.splice(idx, 1);
+            vykresliGalerii(galleryId, zoneId);
+        };
+
+        obal.appendChild(imgEl);
+        obal.appendChild(smazat);
+        gallery.appendChild(obal);
+    });
+}
+
 window.handlePhoto = async function(input, galleryId, zoneId) {
     galleryId = galleryId || "photo-gallery";
     zoneId = zoneId || "photo-zone";
 
-    const files = Array.from(input.files).slice(0, 5);
-    if (!files.length) return;
-
     window.poptPhotos = window.poptPhotos || [];
-    const gallery = document.getElementById(galleryId);
-    const zone = document.getElementById(zoneId);
+    const vybrane = Array.from(input.files || []);
+    if (!vybrane.length) return;
 
-    gallery.innerHTML = "";
-    gallery.classList.remove("hidden");
-    if (zone) zone.classList.add("hidden");
+    // Vstup od uživatele: co neprojde, o tom se musí dozvědět.
+    const volno = window.MAX_FOTEK - window.poptPhotos.length;
+    if (volno <= 0) {
+        if (window.showToast) window.showToast("Víc fotek už ne",
+            "Připojit můžete nejvýš " + window.MAX_FOTEK + " fotek.", "info");
+        input.value = "";
+        return;
+    }
 
-    for (let file of files) {
-        const compressedBase64 = await new Promise((resolve) => {
+    const povolene = ["image/jpeg", "image/png", "image/webp"];
+    let odmitnutoTypem = 0, odmitnutoVelikosti = 0, nadLimit = 0;
+
+    const kZpracovani = [];
+    for (const file of vybrane) {
+        if (!povolene.includes(file.type)) { odmitnutoTypem++; continue; }
+        if (file.size > window.MAX_VELIKOST_FOTKY) { odmitnutoVelikosti++; continue; }
+        if (kZpracovani.length >= volno) { nadLimit++; continue; }
+        kZpracovani.push(file);
+    }
+
+    if (odmitnutoTypem) {
+        window.showToast("Nepodporovaný formát",
+            odmitnutoTypem + (odmitnutoTypem === 1 ? " soubor jsme přeskočili." : " souborů jsme přeskočili.")
+            + " Připojit lze JPG, PNG nebo WEBP.", "error");
+    }
+    if (odmitnutoVelikosti) {
+        window.showToast("Fotka je příliš velká",
+            "Maximální velikost jedné fotky je 5 MB.", "error");
+    }
+    if (nadLimit) {
+        window.showToast("Vešlo se jen několik fotek",
+            "Připojit můžete nejvýš " + window.MAX_FOTEK + " fotek.", "info");
+    }
+
+    for (const file of kZpracovani) {
+        const zmenseny = await new Promise(function (resolve) {
             const reader = new FileReader();
-            reader.onload = (e) => {
+            reader.onload = function (e) {
                 const img = new Image();
-                img.onload = () => {
-                    const MAX = 800; 
+                img.onload = function () {
+                    const MAX = 800;
                     let w = img.width, h = img.height;
-                    if(w>h){if(w>MAX){h=Math.round(h*MAX/w);w=MAX;}} else {if(h>MAX){w=Math.round(w*MAX/h);h=MAX;}}
+                    if (w > h) { if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; } }
+                    else { if (h > MAX) { w = Math.round(w * MAX / h); h = MAX; } }
                     const canvas = document.createElement("canvas");
                     canvas.width = w; canvas.height = h;
                     canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+                    // Překódováním přes plátno vzniká nový JPEG. Původní bajty
+                    // se do úložiště nedostanou, ať v souboru bylo cokoliv.
                     resolve(canvas.toDataURL("image/jpeg", 0.8));
                 };
-                img.onerror = () => resolve(null);
+                img.onerror = function () { resolve(null); };
                 img.src = e.target.result;
             };
-            reader.onerror = () => resolve(null);
+            reader.onerror = function () { resolve(null); };
             reader.readAsDataURL(file);
         });
 
-        if (compressedBase64) {
-            window.poptPhotos.push({ base64: compressedBase64.split(",")[1], mime: "image/jpeg" });
-            const imgEl = document.createElement("img");
-            imgEl.src = compressedBase64;
-            imgEl.className = "w-full h-20 object-cover rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 pointer-events-auto cursor-pointer hover:opacity-80 transition";
-            imgEl.onclick = (e) => { e.stopPropagation(); window.openLightbox(imgEl.src); };
-            gallery.appendChild(imgEl);
+        if (zmenseny) {
+            window.poptPhotos.push({ base64: zmenseny.split(",")[1], mime: "image/jpeg" });
+        } else {
+            window.showToast("Fotku se nepodařilo načíst",
+                "Soubor je nejspíš poškozený nebo to není obrázek.", "error");
         }
     }
+
+    vykresliGalerii(galleryId, zoneId);
+    input.value = "";   // ať jde stejný soubor vybrat znovu
 };
 
 window.appendChat = function(role, text, photos) {
