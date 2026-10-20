@@ -10,9 +10,16 @@
 <link rel="canonical" href="https://app.remexo.cz/smazani-dat.html">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 10L85 30V70L50 90L15 70V30L50 10Z' fill='%23f59e0b'/%3E%3Ccircle cx='50' cy='48' r='16' fill='white'/%3E%3Cpath d='M40 58 L30 68 L45 64 Z' fill='white'/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script>
+(function(){var t=null,d=false;
+try{t=window.localStorage?localStorage.getItem("color-theme"):null}catch(e){}
+try{d=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches}catch(e){}
+if(t==="dark"||(!t&&d)){document.documentElement.classList.add("dark")}})();
+</script>
 <style>
 :root{--bg:#fff;--fg:#334155;--h:#0f172a;--mut:#64748b;--line:#e2e8f0;--acc:#d97706}
-@media (prefers-color-scheme:dark){:root{--bg:#0f172a;--fg:#cbd5e1;--h:#fff;--mut:#94a3b8;--line:#1e293b;--acc:#f59e0b}}
+html.dark{--bg:#0f172a;--fg:#cbd5e1;--h:#fff;--mut:#94a3b8;--line:#1e293b;--acc:#f59e0b}
+html.dark{color-scheme:dark}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.65 'Plus Jakarta Sans',system-ui,-apple-system,sans-serif}
 header,footer{border-color:var(--line);border-style:solid;border-width:0}
