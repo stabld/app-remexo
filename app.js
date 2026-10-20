@@ -74,7 +74,12 @@ window.initApp = function(role, name) {
     if(el("user-role-lbl")) el("user-role-lbl").innerText = role==="customer"?"Zákazník":"Řemeslník";
     
     const savedAv = window.APP_USER?.user_metadata?.avatar_url;
-    const displayAv = savedAv ? (savedAv + "?v=" + (window.APP_USER?.updated_at||Date.now())) : avatarUrl;
+    // Facebook URL už obsahuje parametry (?asid=...&hash=...), proto "&" místo druhého "?"
+    const displayAv = savedAv ? (savedAv + (savedAv.indexOf("?") === -1 ? "?" : "&") + "v=" + (window.APP_USER?.updated_at||Date.now())) : avatarUrl;
+    // Fotka z Facebooku/Googlu může vypršet - při chybě spadne na výchozí avatar
+    const avatarFallback = (img) => { if (img) img.onerror = function(){ this.onerror = null; this.src = avatarUrl; }; };
+    avatarFallback(el("user-avatar"));
+    avatarFallback(el("prof-avatar-img"));
     if(el("user-avatar")) el("user-avatar").src = displayAv;
     
     const tt = el("theme-toggle");
