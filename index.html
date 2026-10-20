@@ -152,9 +152,10 @@
                         <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-slate-200 dark:border-slate-700"></div></div>
                         <div class="relative flex justify-center text-sm"><span class="px-2 bg-white dark:bg-slate-900 text-slate-500">nebo se přihlaste přes</span></div>
                     </div>
-                    <div class="grid grid-cols-2 gap-3">
+                    <!-- FACEBOOK: skryto do schválení Meta (Business verification). Zapnutí: u tlačítka smazat style="display:none" a u tohoto divu změnit grid-cols-1 na grid-cols-2 -->
+                    <div class="grid grid-cols-1 gap-3">
                         <button type="button" onclick="window.signInWith('google')" class="flex justify-center items-center py-3 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition"><i class="fa-brands fa-google text-lg"></i></button>
-                        <button type="button" onclick="window.signInWith('facebook')" class="flex justify-center items-center py-3 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition"><i class="fa-brands fa-facebook text-lg text-blue-600"></i></button>
+                        <button type="button" onclick="window.signInWith('facebook')" style="display:none" class="flex justify-center items-center py-3 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition"><i class="fa-brands fa-facebook text-lg text-blue-600"></i></button>
                     </div>
                 </div>
 
