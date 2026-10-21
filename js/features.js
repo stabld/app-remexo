@@ -1948,6 +1948,19 @@ window.filterMarket = function(kat, triggerEl) {
     const list = document.getElementById('market-list');
     if (!list) return;
     if (!filtered.length) {
+        if (kat === 'all') {
+            // Úplně prázdné tržiště: řemeslník nesmí odejít s pocitem, že appka nefunguje
+            const chybiProfil = window.chybejiciUdajeProfilu ? window.chybejiciUdajeProfilu().length > 0 : false;
+            list.innerHTML = '<div class="text-center bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-3xl py-12 px-6">'
+                + '<i class="fa-solid fa-hourglass-half text-4xl text-remexo-500 mb-4 block"></i>'
+                + '<p class="font-extrabold text-lg dark:text-white mb-2">Zatím tu nejsou žádné poptávky</p>'
+                + '<p class="text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto leading-relaxed">Remexo v Olomouci právě začíná. Jakmile zákazník zadá poptávku, pošleme ti e-mail. '
+                + 'Mezitím si doplň profil a IČO, ať můžeš poslat nabídku hned, jak nějaká přijde.</p>'
+                + '<button onclick="window.goTab(\'profile\',\'Můj profil\')" class="mt-5 bg-remexo-500 hover:bg-remexo-600 text-white font-bold px-6 py-3 rounded-xl text-sm transition">'
+                + (chybiProfil ? 'Doplnit profil' : 'Zkontrolovat profil a IČO') + '</button></div>';
+            window.aktualizujCtaTrziste(0);
+            return;
+        }
         const hlaska = kat === 'saved'
             ? 'Zatím nemáte uložené žádné poptávky. Ukládejte je záložkou na kartě.'
             : 'Žádné poptávky v této kategorii.';
