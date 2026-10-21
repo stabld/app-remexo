@@ -961,7 +961,8 @@ window.isNearBrno = async function(addressStr) {
         if (!geo || geo.length === 0) return null;
 
         const lat = parseFloat(geo[0].lat), lon = parseFloat(geo[0].lon);
-        const BRNO_LAT = 49.1951, BRNO_LON = 16.6068, R = 6371;
+        // Oblast působnosti: Olomouc a okolí (do 35 km). Název funkce zůstal kvůli volání níže.
+        const BRNO_LAT = 49.5938, BRNO_LON = 17.2509, R = 6371;
         const dLat = (lat - BRNO_LAT) * Math.PI / 180, dLon = (lon - BRNO_LON) * Math.PI / 180;
         const a = Math.sin(dLat / 2) ** 2 + Math.cos(BRNO_LAT * Math.PI / 180) * Math.cos(lat * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
         const dist = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
@@ -1005,7 +1006,7 @@ window.publishRequest = async function(btnNode) {
         if(!/^(\+420|00420)?\d{9}$/.test(phoneDigits)){ window.showToast("Neplatné telefonní číslo","Zadejte platné české číslo (9 číslic), např. +420 731 573 644.","error"); highlightError("f-phone"); if(btnNode&&btnNode.tagName){btnNode.innerHTML=orig;btnNode.disabled=false;} return; }
 
         const nearBrno = await window.isNearBrno(street + ", " + city);
-        if (nearBrno === false) { window.showToast("Mimo oblast působnosti","Momentálně fungujeme jen v Brně a okolí (do 35 km). Mrzí nás to!","error"); highlightError("f-city"); if(btnNode&&btnNode.tagName){btnNode.innerHTML=orig;btnNode.disabled=false;} return; }
+        if (nearBrno === false) { window.showToast("Mimo oblast působnosti","Momentálně fungujeme jen v Olomouci a okolí (do 35 km). Mrzí nás to!","error"); highlightError("f-city"); if(btnNode&&btnNode.tagName){btnNode.innerHTML=orig;btnNode.disabled=false;} return; }
         if (nearBrno === null) { window.showToast("Adresu se nepodařilo najít","Zkontrolujte prosím ulici, číslo popisné a město a zkuste to znovu.","error"); highlightError("f-street"); if(btnNode&&btnNode.tagName){btnNode.innerHTML=orig;btnNode.disabled=false;} return; }
 
         // Telefon a ulice do popisu nepatří – putují do chráněné tabulky.
@@ -1709,7 +1710,7 @@ window.initMarketMap = async function() {
         // Umísťujeme podle města, ne podle přesné adresy – ta je chráněná
         // a pin u konkrétního domu by ji prozradil stejně dobře jako text.
         const mestoMatch=(r.description||"").match(/📍\s*([^\n]+)/);
-        const displayCity=(r.mesto||"").trim() || (mestoMatch?mestoMatch[1].trim():"Brno");
+        const displayCity=(r.mesto||"").trim() || (mestoMatch?mestoMatch[1].trim():"Olomouc");
         try{
             // Souřadnice máme uložené už od zadání poptávky, zaokrouhlené
             // na ~100 m. Adresu tedy nemusíme nikam posílat a mapa je rychlejší.
