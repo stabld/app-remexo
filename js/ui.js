@@ -256,7 +256,7 @@ window.createBeautifulCard = function(req, isMarket, i) {
                 ikona = "fa-circle-info";
                 tridy = "bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300";
                 nadpis = "Na tuhle poptávku zatím nemáme řemeslníka";
-                text = "Remexo v Brně a Olomouci teprve začíná a v některých oborech nám řemeslníci ještě chybí. Nenecháváme to být - napište nám a zkusíme někoho oslovit napřímo.";
+                text = "Remexo v Olomouci teprve začíná a v některých oborech nám řemeslníci ještě chybí. Nenecháváme to být - napište nám a zkusíme někoho oslovit napřímo.";
             }
 
             return '<div class="mt-5 p-4 rounded-2xl border ' + tridy + '">'
