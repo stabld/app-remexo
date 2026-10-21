@@ -255,7 +255,7 @@ window.craftsmanHTML = function(name) {
     <div id="view-earnings" class="hidden fade-up max-w-3xl">
         <h2 class="text-3xl font-extrabold mb-8 dark:text-white">Výdělky</h2>
         <div class="bg-gradient-to-br from-slate-800 to-slate-900 rounded-3xl p-8 mb-8 text-white shadow-xl relative overflow-hidden"><div class="absolute -right-10 -top-10 text-white/5 text-9xl"><i class="fa-solid fa-wallet"></i></div><p class="text-xs font-black uppercase tracking-widest opacity-60 mb-2 relative z-10">Celkové výdělky přes remexo</p><p class="text-5xl font-black mb-1 relative z-10">0 Kč</p></div>
-        <div class="bg-white dark:bg-slate-800/80 rounded-3xl border border-slate-200 dark:border-slate-700 p-8 text-center text-sm text-slate-400 py-12">Zatím neproběhly žádné výplaty.</div>
+        <div class="bg-white dark:bg-slate-800/80 rounded-3xl border border-slate-200 dark:border-slate-700 p-8 text-center text-sm text-slate-400 py-12">Platby přes Remexo teprve připravujeme. Zatím se na ceně i platbě domlouváš přímo se zákazníkem.</div>
     </div>
     <div id="view-profile" class="hidden fade-up max-w-4xl mx-auto">
         <h2 class="text-3xl font-extrabold mb-8 dark:text-white">Můj profil</h2>
