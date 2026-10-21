@@ -103,7 +103,7 @@ Deno.serve(async (req) => {
   if (udalost === "nova_poptavka") {
     predmet = `Nová poptávka: ${zkratit(nazev, 45)}`;
     nadpis = "Nová poptávka ve tvém okolí";
-    text = `<strong>${esc(nazev)}</strong><br>${esc(kategorie)} · ${esc(mesto ?? "Brno")}
+    text = `<strong>${esc(nazev)}</strong><br>${esc(kategorie)} · ${esc(mesto ?? "Olomouc")}
             <br><br>Kdo se ozve dřív, má větší šanci zakázku získat.`;
     tlacitko = "Zobrazit poptávku";
   } else if (udalost === "nova_nabidka") {
