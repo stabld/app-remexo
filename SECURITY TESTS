@@ -5,6 +5,14 @@ databázi — vytvoří si dočasná data, otestují a zase je smažou.
 
 Stav k 14. 8. 2026.
 
+> **Aktualizace 22. 10. 2026:** čísla v tomto dokumentu jsou z 14. 8. 2026 a od
+> té doby se sady **nespouštěly znovu**. Mezitím přibyly tabulky `oblibene`,
+> `odstoupeni`, `hodnoceni`, sloupce `requests.zruseno_*`, `offers.pokusy`
+> a upravená funkce `notif_nova_poptavka()`, které sady nepokrývají. Jediná
+> novější kontrola je `kontrola-kontakty-zruseni.sql` (22. 10., jen čtení: RLS
+> zapnuté, žádné pravidlo s `true`, v popisech poptávek žádný telefon). Před
+> veřejným spuštěním je potřeba sady přidat a znovu pustit.
+
 ## Souhrn
 
 | Sada | Soubor | Výsledek |
