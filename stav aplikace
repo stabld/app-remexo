@@ -1,33 +1,70 @@
 # Remexo — stav aplikace
 
-Podklad pro nezávislé posouzení. Stav k 14. 8. 2026.
+Podklad pro nezávislé posouzení. Stav k **22. 10. 2026**.
+(Předchozí verze byla z 14. 8. 2026 a mluvila o Brně – pilot se přesunul do Olomouce.)
+
+Komu je to určeno: druhému posuzovateli (člověk nebo AI), který aplikaci nezná.
+Chceme **poctivý, kritický názor**, ne pochvalu. Konkrétní otázky jsou v sekci
+„Na co se zaměřit" na konci.
 
 ---
 
 ## Co Remexo je
 
-Marketplace propojující domácnosti v Brně s řemeslníky. Zákazník vyfotí problém
-a popíše ho, AI asistent (Bořek) z toho vytvoří srozumitelné zadání, řemeslníci
-z okolí pošlou nabídky, zákazník si vybere.
+Marketplace propojující domácnosti v Olomouci a okolí (do 35 km) s řemeslníky.
+Zákazník vyfotí problém a popíše ho, AI asistent (Bořek) z toho vytvoří
+srozumitelné zadání, řemeslníci z okolí pošlou nabídky, zákazník si vybere.
 
-**Stav:** před spuštěním, pilot plánovaný na podzim 2026 v Brně.
-**Zásadní údaj:** v Brně zatím není zaregistrovaný ani jeden řemeslník.
+**Stav:** před veřejným spuštěním. Pilot v Olomouci plánujeme na týden od
+26. 10. 2026. Zakládající pětice olomouckých řemeslníků (zdarma natrvalo) se
+teprve oslovuje – **nabídková strana trhu zatím není naplněná**.
 
-**Odlišení od konkurence:** žádná provize ze zakázek, jen měsíční předplatné
-pro řemeslníky. Konkurent app.fixit.cz (Praha) si bere podíl z každé zakázky.
+**Obchodní model:**
+* žádná provize ze zakázek,
+* zakládajících pět řemeslníků z Olomouce zdarma natrvalo,
+* ostatní řemeslníci mají platit za poptávky, které jim něco přinesou.
+  **Cena ani mechanismus nejsou rozhodnuté, v kódu nejsou** – dnes je všechno
+  zdarma.
+
+**Konkurence:** app.fixit.cz (Praha, bere si podíl ze zakázek) a několik
+mladších projektů (jinnhub.app, zhotoveno.cz, homly-app.com, vilno.net).
+Žádnou z nich jsme důkladně nezkoumali, rozbor je zatím povrchní.
+
+**Kdo to staví:** jeden zakladatel, bez týmu. Kód ve spolupráci s jazykovým
+modelem.
+
+---
+
+## Co se změnilo od 14. 8. 2026
+
+* Město Brno → **Olomouc** (texty, výchozí město, geografický filtr, e-maily).
+* Přihlášení přes **Google** funguje; přes **Facebook** je zapojené, ale pro
+  veřejnost vypnuté (tlačítko skryté), dokud Meta neověří firmu.
+* Nové samostatné stránky **Soukromí** a **Smazání dat** (požadavek Meta).
+* Nové funkce: zrušení poptávky zákazníkem, odstoupení řemeslníka ze zakázky,
+  opravná nabídka (omezený počet pokusů), oblíbené poptávky, rozšířený prázdný
+  stav pro nového řemeslníka.
+* Rozšířená CSP kvůli profilovým fotkám z Facebooku.
+* Kontrola databáze 22. 10. 2026 (`kontrola-kontakty-zruseni.sql`): všechny
+  očekávané tabulky a sloupce existují, RLS je zapnuté, žádné pravidlo nemá
+  podmínku `true`, v popisech poptávek není telefon.
+* Rozhodnutí o ceně pro řemeslníky odloženo.
 
 ---
 
 ## Architektura
 
 ```
-prohlížeč (vanilla JS)
+prohlížeč (vanilla JS PWA, app.remexo.cz)
    │
    ├─→ Supabase  ── PostgreSQL + RLS + Auth + Storage + Realtime + pg_cron
    │
    ├─→ Vercel serverless  ── /api/borek-ai  (volání Gemini)
    │
    └─→ Supabase Edge Function ── notifikace (odesílání e-mailů přes SMTP)
+
+remexo.cz (samostatný repozitář web-remexo): statický web, Tailwind z CDN,
+  Vercel funkce pro sběr e-mailů a počítadlo, vlastní verze Bořka pro web.
 ```
 
 **Vlastní backend neexistuje.** Prohlížeč mluví přímo s databází, takže veškerá
@@ -43,20 +80,26 @@ Leaflet, Gemini `gemini-3.5-flash`, Deno pro Edge Function.
 | Oblast | Stav |
 |---|---|
 | Registrace, přihlášení, obnova hesla | funguje, e-mail se potvrzuje |
+| Přihlášení přes Google | funguje |
+| Přihlášení přes Facebook | zapojené, pro veřejnost vypnuté (čeká na Meta) |
 | Zadání poptávky přes AI | funguje |
 | Zadání poptávky ručně | funguje — záložní cesta při výpadku Gemini |
+| Omezení na Olomouc + 35 km | jen ve frontendu |
 | Fotky závady | neveřejný bucket, dočasné podepsané odkazy |
 | Tržiště zakázek, seznam i mapa | funguje, se stářím poptávky |
-| Nabídky, přijetí, odmítnutí | funguje |
+| Nabídky, přijetí, odmítnutí, opravná nabídka | funguje |
 | Chat zákazník ↔ řemeslník | realtime, se záznamem přečtení |
 | Oboustranné potvrzení dokončení | funguje |
+| Zrušení poptávky / odstoupení ze zakázky | funguje |
 | Hodnocení po dokončení | funguje |
+| Oblíbené poptávky | funguje (tabulka `oblibene`) |
 | Ověřování řemeslníků | IČO v profilu, ověřuje admin, odznak u nabídek |
 | Administrace | přehledy, ověřování, audit log |
 | E-mailová upozornění | nová poptávka, nabídka, dokončení, nepřečtené zprávy |
 
-**Co nefunguje a je to přiznané:** platby přes platformu a úschova prostředků.
-Záložka Platby říká „připravujeme" a stejně to uvádějí podmínky použití.
+**Co nefunguje a je to přiznané:** platby přes platformu, úschova prostředků,
+pojištění, placení řemeslníků za poptávky. Záložka Výdělky říká, že platby
+připravujeme, a stejně to uvádějí podmínky použití.
 
 ---
 
@@ -70,26 +113,29 @@ a [SECURITY_TESTS.md](SECURITY_TESTS.md).
 | Data | Přístup |
 |---|---|
 | Poptávky se stavem `waiting` | každý přihlášený (jsou na tržišti) |
-| Telefon a adresa zákazníka | jen řemeslník s **přijatou** nabídkou |
+| Telefon a adresa zákazníka | jen řemeslník s **přijatou** nabídkou (tabulka `poptavka_kontakt`) |
 | Fotky poptávky | zákazník; řemeslník u poptávek na tržišti, u svých nabídek a přidělených zakázek |
 | Chat | jen zákazník a přidělený řemeslník |
 | Hodnocení, veřejné profily | veřejné záměrně |
 | Audit log, admini, nastavení, počítadlo AI | přes API nedostupné vůbec |
 
-### Ověřeno testy
+### Výsledky testů — pozor na stáří
 
-| Sada | Výsledek |
-|---|---|
-| Přístup k datům | 31 / 31 PASS |
-| Storage | 12 / 12 PASS |
-| Volatelnost funkcí přes RPC | 22 / 22 PASS |
-| Přihlášení | 10 / 11 PASS |
-| XSS | 160 kombinací, 0 průniků |
-| Podepsané odkazy a expirace | 2 / 2 PASS |
-| Konfigurace | 0 nálezů |
+| Sada | Výsledek | Naposledy |
+|---|---|---|
+| Přístup k datům | 31 / 31 PASS | 14. 8. 2026 |
+| Storage | 12 / 12 PASS | 14. 8. 2026 |
+| Volatelnost funkcí přes RPC | 22 / 22 PASS | 14. 8. 2026 |
+| Přihlášení | 10 / 11 PASS | 14. 8. 2026 |
+| XSS | 160 kombinací, 0 průniků | 14. 8. 2026 |
+| Podepsané odkazy a expirace | 2 / 2 PASS | 14. 8. 2026 |
+| Konfigurace | 0 nálezů | 14. 8. 2026 |
+| Kontrola kontaktů a rušení (jen čtení) | vše OK | 22. 10. 2026 |
 
-Sady byly ověřeny obráceně: po záměrném vypnutí ochrany hlásí FAIL na správných
-místech.
+**Velké sady od 14. 8. neběžely znovu** a nepokrývají nové objekty (`oblibene`,
+`odstoupeni`, `hodnoceni`, sloupce pro rušení, `offers.pokusy`, upravená
+`notif_nova_poptavka()`). Žádné z nich nelze považovat za ověřené testem; je to
+nejslabší místo dokumentace.
 
 ### Role není v tokenu
 
@@ -103,7 +149,7 @@ každý zákazník mohl prohlásit za řemeslníka a dostat se k fotkám všech 
 
 ---
 
-## Známá rizika
+## Známá rizika a nedodělky
 
 **Obsah nahraných souborů se nekontroluje.** Limity hlídají hlavičku od
 prohlížeče, ne skutečný obsah. Zmírňuje to neveřejný bucket a to, že se soubory
@@ -117,34 +163,75 @@ nemůže obsahovat diakritiku. Řeší přechod na Resend s doménovou schránko
 **Registrace se dá zneužít k obcházení limitů** — deset účtů, deset limitů.
 
 **Fotky poptávek na tržišti vidí každý řemeslník**, ne jen ten s nabídkou. Je to
-záměr: bez fotky nelze zakázku nacenit. Přístup je zúžený podle stavu poptávky,
-takže do historie a cizích uzavřených zakázek nikdo nevidí.
+záměr: bez fotky nelze zakázku nacenit.
+
+**Geografické omezení je jen ve frontendu.** Databáze město ani vzdálenost
+nevynucuje.
+
+**Řemeslníkem se může stát kdokoliv.** Podle našeho vědomí se role volí při
+registraci a ověření podle IČO je dobrovolné – odznak „ověřeno" dává admin
+ručně a neověřený řemeslník vidí tržiště stejně jako ověřený. Posuzovatel by to
+měl v kódu a pravidlech ověřit, nespoléhat na tento popis.
+
+**Neexistuje obrana proti obejití platformy.** Po přijetí nabídky se oběma
+stranám zpřístupní kontakt a domluví se mimo Remexo. Model „platí se za
+poptávku" to řeší jen částečně a zatím neexistuje.
+
+**SQL v repozitáři nestačí k obnově databáze.** Část objektů vznikla přímo
+v SQL editoru Supabase. Edge Function v repozitáři je novější než nasazená.
+
+**E-mail o nové poptávce dostávají všichni řemeslníci** s povolenými e-maily —
+filtr podle města byl odstraněn. Pro pilot v jednom městě to je záměr, při růstu
+ne.
+
+**Meta aplikace je v režimu Development**, ověření firmy není hotové
+(zakladatel zatím nemá živnost ani doklady).
 
 **Aplikace neprošla externím posouzením.**
 
 ---
 
-## Na co se při posouzení zaměřit
+## Na co se zaměřit při posouzení
+
+Prosíme o odpovědi na tyto otázky, seřazené podle důležitosti. U každé uveď,
+co jsi skutečně ověřil a co jen odhaduješ.
 
 1. **Autorizace v databázi.** Celý model stojí na RLS a spouštěčích.
    Konfiguraci vyexportuje `export-konfigurace.sql` — plné znění pravidel,
-   těla funkcí i oprávnění rolí, bez dat uživatelů.
+   těla funkcí i oprávnění rolí, bez dat uživatelů. Dá se obejít oddělení
+   zákazník / řemeslník / admin? Dostane se někdo k telefonu nebo adrese bez
+   přijaté nabídky?
 
-2. **Důvěryhodnost role.** Poslední audit odhalil, že se Storage pravidlo ptalo
-   role v tokenu. Opraveno, ale stojí za to prověřit, jestli podobná chyba není
-   i jinde.
+2. **Nové objekty od 14. 8.** Tabulky `oblibene`, `odstoupeni`, `hodnoceni`,
+   sloupce `zruseno_*`, `offers.pokusy` a funkce `odstoupit_ze_zakazky`: jsou
+   chráněné stejně pečlivě jako starší části? Dá se obejít limit pokusů u
+   opravných nabídek? Může zákazník zrušit cizí poptávku?
 
 3. **Ochrana sloupců spouštěči.** Zda jde obejít neměnnost `customer_id`,
    `craftsman_id`, `request_id` a příznaku `overeno`.
 
-4. **Funkce se `security definer`.** Je jich 37 a obcházejí RLS. Zajímavé jsou
-   hlavně `admin_*`, které si samy ověřují oprávnění, a `zmen_roli()`.
+4. **Funkce se `security definer`.** Je jich desítky a obcházejí RLS.
+   Zajímavé jsou hlavně `admin_*`, `zmen_roli()` a `notif_nova_poptavka()`.
 
 5. **Edge Function pro e-maily.** Veřejně dostupná, chráněná jen sdíleným
-   tajemstvím v hlavičce.
+   tajemstvím v hlavičce. Je to dost? Dá se zneužít k rozesílání spamu?
 
-6. **Podepsané odkazy na fotky.** Platnost hodina, generují se pro každého
+6. **Přihlášení přes OAuth (Google, Facebook).** Může útočník podvrhnout
+   `user_metadata` (role, avatar URL) tak, aby to škodilo? Vkládá se
+   `avatar_url` do stránky bezpečně (CSP, escapování)?
+
+7. **CSP a XSS.** `vercel.json` povoluje `'unsafe-inline'` pro skripty. Jak moc
+   to oslabuje ochranu proti XSS u dat od uživatelů?
+
+8. **Podepsané odkazy na fotky.** Platnost hodina, generují se pro každého
    zvlášť podle jeho oprávnění.
+
+9. **Produkt, ne jen kód.** Je model „žádná provize, řemeslníci platí za
+   poptávky" udržitelný, když si strany po přijetí nabídky vymění kontakt?
+   Co je největší riziko spuštění v jednom městě bez naplněné nabídkové strany?
+   Co bys na konkurenčních projektech sledoval, než se cena stanoví?
+
+10. **Dokumentace.** Co v ní chybí nebo je zavádějící? Kde bys jí nevěřil?
 
 ---
 
@@ -153,24 +240,25 @@ takže do historie a cizích uzavřených zakázek nikdo nevidí.
 | Soubor | Obsah |
 |---|---|
 | `README.md` | technický popis, struktura, pořadí SQL skriptů |
-| `SECURITY_AUDIT.md` | audit se skóre a seznamem nalezených děr |
-| `SECURITY_TESTS.md` | co bylo testováno a s jakým výsledkem |
+| `SECURITY_AUDIT.md` | audit se skóre a seznamem nalezených děr (stav 14. 8.) |
+| `SECURITY_TESTS.md` | co bylo testováno a s jakým výsledkem (stav 14. 8.) |
 | `bezpecnostni-testy.sql` | 31 útočných testů |
 | `storage-testy.sql` | 12 testů pro Storage |
 | `audit-rpc.sql` | 22 testů volatelnosti funkcí |
 | `session-testy.js` | 11 testů přihlášení (konzole prohlížeče) |
-| `kontrola.sql`, `kontrola2.sql`, `audit-funkci.sql` | kontrola konfigurace |
+| `kontrola.sql`, `kontrola2.sql`, `audit-funkci.sql`, `kontrola-kontakty-zruseni.sql` | kontrola konfigurace |
 | `export-konfigurace.sql` | export konfigurace, bez dat |
 
 ---
 
 ## Závěrem
 
-Zabezpečení je na úrovni, kterou lze ověřit — ne jen popsat. Ale všechno
-ověřoval tentýž nástroj, který to i stavěl, a za devět dní našel osm skutečných
-děr, z toho polovinu ve vlastním čerstvém kódu. To je argument pro nezávislou
-kontrolu, ne proti ní.
+Zabezpečení základních částí je na úrovni, kterou lze ověřit — ne jen popsat.
+Ale všechno ověřoval tentýž nástroj, který to i stavěl, a za devět dní našel
+osm skutečných děr, z toho polovinu ve vlastním čerstvém kódu. To je argument
+pro nezávislou kontrolu, ne proti ní. Od té doby přibyly funkce, které
+testovacími sadami neprošly.
 
 Největší riziko projektu ale technické není. Aplikace je připravená, spuštění se
-blíží a v Brně není ani jeden řemeslník. Marketplace bez nabídkové strany
-nespustíte, ať je kód jakkoli čistý.
+blíží a nabídková strana trhu (řemeslníci v Olomouci) není naplněná. Marketplace
+bez nabídkové strany nespustíte, ať je kód jakkoli čistý.
