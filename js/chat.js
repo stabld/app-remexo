@@ -290,16 +290,16 @@ window.loadCustomerConversations = async function() {
         window._mojeKonverzace.add(String(r.id));
         const plneJmeno = r.craftsman_name || "Řemeslník";
         const zobrazeneJmeno = odhaleno ? plneJmeno : window.zkratitJmeno(plneJmeno);
-        // Do onclick musí jméno projít jak HTML escapem (kvůli uvozovkám v atributu),
-        // tak escapem apostrofu (kvůli řetězci uvnitř onclick)
-        const safeName = window.escapeHtml(zobrazeneJmeno).replace(/'/g, "\\'");
-        const craftIdParam = r.craftsman_id ? `'${r.craftsman_id}'` : 'null';
+        // Jméno nikdy nevkládáme do JavaScriptu uvnitř onclick (HTML escape ho tam
+        // neochrání: prohlížeč entity před spuštěním kódu vrátí zpět na znaky).
+        // Jde do data-atributu a onclick ho čte přes this.dataset.
+        const craftIdAttr = window.escapeHtml(r.craftsman_id || "");
         const seed = encodeURIComponent(r.craftsman_name || 'c');
         const unreadCount = (window.STATE.unreadChats && window.STATE.unreadChats[r.id]) || 0;
         const unreadBadge = unreadCount > 0 ? '<div class="w-5 h-5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center ml-auto shrink-0 shadow-sm">' + unreadCount + '</div>' : '<i class="fa-solid fa-chevron-right text-[10px] text-slate-300 dark:text-slate-600 shrink-0 ml-auto"></i>';
         const isActiveClass = window.activeChatId === String(r.id) ? 'bg-white dark:bg-slate-800/50 border-remexo-500 border-l-4' : 'border-l-transparent';
 
-        return '<div id="conv-' + r.id + '" onclick="window.openConversation(' + r.id + ',\'' + safeName + '\',\'craftsman' + r.id + '\',' + craftIdParam + ')" class="conv-item px-4 py-3.5 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/60 border-b border-slate-100 dark:border-slate-800/80 transition-all duration-150 flex items-center gap-3 ' + isActiveClass + '">' +
+        return '<div id="conv-' + r.id + '" data-rid="' + r.id + '" data-name="' + window.escapeHtml(zobrazeneJmeno) + '" data-seed="craftsman' + r.id + '" data-uid="' + craftIdAttr + '" onclick="window.openConversation(Number(this.dataset.rid), this.dataset.name, this.dataset.seed, this.dataset.uid || null)" class="conv-item px-4 py-3.5 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/60 border-b border-slate-100 dark:border-slate-800/80 transition-all duration-150 flex items-center gap-3 ' + isActiveClass + '">' +
         '<div class="relative shrink-0"><img id="cav-' + r.id + '" src="https://api.dicebear.com/7.x/avataaars/svg?seed=' + seed + '&backgroundColor=0f172a" class="w-10 h-10 rounded-full border-2 border-slate-200 dark:border-slate-700 bg-slate-100 object-cover"><span style="position:absolute;bottom:0;right:0;width:10px;height:10px;border-radius:50%;background:' + statusDot + ';border:2px solid white;"></span></div>' +
         '<div class="flex-1 min-w-0"><p class="font-bold text-sm dark:text-white truncate leading-tight" id="clist-name-' + r.id + '">' + window.escapeHtml(zobrazeneJmeno) + '</p><p class="text-xs text-slate-400 mt-0.5 truncate">' + window.escapeHtml(r.title || "Poptávka") + '</p></div>' +
         unreadBadge +
@@ -349,15 +349,15 @@ window.loadCraftsmanConversations = async function() {
         window._mojeKonverzace.add(String(o.request_id));
         const fullCustomerName = o.requests?.customer_name || "Zákazník";
         const displayName = isRevealed ? fullCustomerName : fullCustomerName.split(' ')[0];
-        const safeName = window.escapeHtml(displayName).replace(/'/g, "\\'");
-        const customerIdParam = o.requests?.customer_id ? `'${o.requests.customer_id}'` : 'null';
+        // Jméno jde do data-atributu, ne do JavaScriptu v onclick (viz výše).
+        const customerIdAttr = window.escapeHtml(o.requests?.customer_id || "");
         const seed = encodeURIComponent(o.requests?.customer_name || 'u');
         const unreadCount = (window.STATE.unreadChats && window.STATE.unreadChats[o.request_id]) || 0;
         const unreadBadge = unreadCount > 0 ? '<div class="w-5 h-5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center ml-auto shrink-0 shadow-sm">' + unreadCount + '</div>' : '<i class="fa-solid fa-chevron-right text-[10px] text-slate-300 dark:text-slate-600 shrink-0 ml-auto"></i>';
         const isActiveClass = window.activeChatId === String(o.request_id) ? 'bg-white dark:bg-slate-800/50 border-remexo-500 border-l-4' : 'border-l-transparent';
 
         // Tady se předává i ID zákazníka, aby fungovalo chytré načítání fotky!
-        return '<div id="conv-' + o.request_id + '" onclick="window.openConversation(' + o.request_id + ',\'' + safeName + '\',\'customer' + o.request_id + '\',' + customerIdParam + ')" class="conv-item px-4 py-3.5 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/60 border-b border-slate-100 dark:border-slate-800/80 transition-all duration-150 flex items-center gap-3 ' + isActiveClass + '">' +
+        return '<div id="conv-' + o.request_id + '" data-rid="' + o.request_id + '" data-name="' + window.escapeHtml(displayName) + '" data-seed="customer' + o.request_id + '" data-uid="' + customerIdAttr + '" onclick="window.openConversation(Number(this.dataset.rid), this.dataset.name, this.dataset.seed, this.dataset.uid || null)" class="conv-item px-4 py-3.5 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/60 border-b border-slate-100 dark:border-slate-800/80 transition-all duration-150 flex items-center gap-3 ' + isActiveClass + '">' +
         '<div class="relative shrink-0"><img id="cav-c-' + o.request_id + '" src="https://api.dicebear.com/7.x/avataaars/svg?seed=' + seed + '&backgroundColor=f59e0b" class="w-10 h-10 rounded-full border-2 border-slate-200 dark:border-slate-700 bg-slate-100 object-cover"><span style="position:absolute;bottom:0;right:0;width:10px;height:10px;border-radius:50%;background:' + statusDot + ';border:2px solid white;"></span></div>' +
         '<div class="flex-1 min-w-0"><p class="font-bold text-sm dark:text-white truncate leading-tight" id="clist-name-c-' + o.request_id + '">' + window.escapeHtml(displayName) + '</p><p class="text-xs text-slate-400 mt-0.5 truncate">' + window.escapeHtml(o.requests?.title || "Poptávka") + '</p></div>' +
         unreadBadge +
