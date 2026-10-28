@@ -117,6 +117,7 @@ window.initApp = function(role, name) {
             if(el("prof-role-badge")) el("prof-role-badge").innerText = role==="customer"?"Zákazník":"Řemeslník";
             // IČO a stav ověření se čtou z databáze, ne z tokenu
             if(role !== "customer" && window.nactiOvereni) window.nactiOvereni();
+            if(window.nactiEmailyNastaveni) window.nactiEmailyNastaveni();
         }
     }, 100);
 
