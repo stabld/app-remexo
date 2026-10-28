@@ -613,8 +613,8 @@ window.pridejSpravu = async function () {
         }
 
         const polozka = '<a href="#" onclick="window.goTab(\'admin\',\'Správa\');window.nactiAdmin();return false;" '
-            + 'class="nav-link flex items-center gap-3 px-4 py-3 rounded-2xl font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition" data-tab="admin">'
-            + '<i class="fa-solid fa-shield-halved w-5"></i> <span>Správa</span></a>';
+            + 'class="nav-link w-full flex items-center gap-4 px-5 py-3.5 rounded-2xl font-bold transition hover:bg-slate-100 dark:hover:bg-slate-800/50 text-slate-600 dark:text-slate-400 text-sm" data-tab="admin">'
+            + '<i class="fa-solid fa-shield-halved w-5 text-center text-lg"></i> <span>Správa</span></a>';
 
         const menu = document.getElementById("sidebar-nav");
         if (menu && !menu.querySelector('[data-tab="admin"]')) {
