@@ -246,17 +246,17 @@ window.createBeautifulCard = function(req, isMarket, i) {
                 ikona = "fa-satellite-dish";
                 tridy = "bg-remexo-50 dark:bg-remexo-500/10 border-remexo-200 dark:border-remexo-500/30 text-remexo-700 dark:text-remexo-400";
                 nadpis = "Poptávka je vypsaná";
-                text = "Řemeslníci ve vašem okolí ji vidí na tržišti. Jakmile někdo pošle nabídku, dáme vám vědět e-mailem.";
+                text = "Řemeslníci ve tvém okolí ji vidí na tržišti. Jakmile někdo pošle nabídku, dáme ti vědět e-mailem.";
             } else if (hodin < 72) {
                 ikona = "fa-clock";
                 tridy = "bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/30 text-amber-700 dark:text-amber-400";
                 nadpis = "Zatím se nikdo neozval";
-                text = "Někdy to chvíli trvá. Pomůže, když do popisu doplníte fotku závady a kdy se vám hodí termín - řemeslníci pak umí nacenit rychleji.";
+                text = "Někdy to chvíli trvá. Pomůže, když do popisu doplníš fotku závady a kdy se ti hodí termín - řemeslníci pak umí nacenit rychleji.";
             } else {
                 ikona = "fa-circle-info";
                 tridy = "bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300";
                 nadpis = "Na tuhle poptávku zatím nemáme řemeslníka";
-                text = "Remexo v Olomouci teprve začíná a v některých oborech nám řemeslníci ještě chybí. Nenecháváme to být - napište nám a zkusíme někoho oslovit napřímo.";
+                text = "Remexo v Olomouci teprve začíná a v některých oborech nám řemeslníci ještě chybí. Nenecháváme to být - napiš nám a zkusíme někoho oslovit napřímo.";
             }
 
             return '<div class="mt-5 p-4 rounded-2xl border ' + tridy + '">'
@@ -300,7 +300,7 @@ window.createBeautifulCard = function(req, isMarket, i) {
                     + (req.odstoupeni.duvod
                         ? '<p class="mt-1.5 font-medium">„' + window.escapeHtml(req.odstoupeni.duvod) + '"</p>'
                         : '<p class="mt-1.5 font-medium opacity-70">Důvod neuvedl.</p>')
-                    + (req.status === 'waiting' ? '<p class="mt-1.5 text-xs font-bold opacity-70">Poptávka je zpět na Tržišti, můžete vybrat jiného řemeslníka.</p>' : '')
+                    + (req.status === 'waiting' ? '<p class="mt-1.5 text-xs font-bold opacity-70">Poptávka je zpět na Tržišti, můžeš vybrat jiného řemeslníka.</p>' : '')
                     + '</div>' : '') +
                 (req.status==='active'
                     ? (req.dokonceniNavrzeno
@@ -333,7 +333,7 @@ window.createBeautifulCard = function(req, isMarket, i) {
             if (stavNabidky === "pending") {
                 tlacitkoNabidky = '<button disabled class="w-full bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 py-3.5 rounded-xl font-bold text-sm cursor-not-allowed border border-slate-200 dark:border-slate-700"><i class="fa-solid fa-hourglass-half mr-2"></i>Čeká na zákazníka</button>';
             } else if (stavNabidky === "accepted") {
-                tlacitkoNabidky = '<button disabled class="w-full bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400 py-3.5 rounded-xl font-bold text-sm cursor-not-allowed border border-green-200 dark:border-green-500/30"><i class="fa-solid fa-check mr-2"></i>Zakázka je vaše</button>';
+                tlacitkoNabidky = '<button disabled class="w-full bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400 py-3.5 rounded-xl font-bold text-sm cursor-not-allowed border border-green-200 dark:border-green-500/30"><i class="fa-solid fa-check mr-2"></i>Zakázka je tvoje</button>';
             } else if (stavNabidky === "rejected" && typeof window.dosleMiPokusy === "function" && window.dosleMiPokusy(req.id)) {
                 tlacitkoNabidky = '<button disabled class="w-full bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 py-3.5 rounded-xl font-bold text-sm cursor-not-allowed border border-slate-200 dark:border-slate-700"><i class="fa-solid fa-ban mr-2"></i>Nabídka odmítnuta</button>';
             } else if (stavNabidky === "rejected") {
@@ -488,12 +488,12 @@ window.goTab = function(id, title) {
     if(id === "new"){
         // Poptávky zadává zákazník, ne řemeslník
         if (window.APP_ROLE === "craftsman") {
-            window.showToast("Poptávky zadávají zákazníci", "Vy si vybíráte zakázky na Tržišti.", "info");
+            window.showToast("Poptávky zadávají zákazníci", "Ty si vybíráš zakázky na Tržišti.", "info");
             return window.goTab("market","Tržiště zakázek");
         }
         const chybi = window.chybejiciUdajeProfilu();
         if(chybi.length > 0){
-            window.showToast("Nejprve vyplňte profil","Před zadáním poptávky doplňte: "+chybi.join(", ")+".","error");
+            window.showToast("Nejprve vyplň profil","Před zadáním poptávky doplň: "+chybi.join(", ")+".","error");
             return window.goTab("profile","Můj profil");
         }
     }
