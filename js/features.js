@@ -86,7 +86,7 @@ window.nahrajFotkyPoptavky = async function(idPoptavky, fotky) {
     }
 
     if (fotky.length && !cesty.length) {
-        window.showToast("Fotky se nepodařilo nahrát", "Poptávku jsme uložili bez nich. Můžete je doplnit v detailu.", "error");
+        window.showToast("Fotky se nepodařilo nahrát", "Poptávku jsme uložili bez nich. Můžeš je doplnit v detailu.", "error");
     }
     return cesty;
 };
@@ -231,7 +231,7 @@ window.zrusitZakazku = function(index, sbId) {
             }).eq("id", sbId);
 
             if (error) {
-                window.showToast("Nepodařilo se zrušit", error.message || "Zkuste to prosím znovu.", "error");
+                window.showToast("Nepodařilo se zrušit", error.message || "Zkus to prosím znovu.", "error");
                 return;
             }
             window.zavritZruseni();
@@ -245,7 +245,7 @@ window.zrusitZakazku = function(index, sbId) {
 window.odstoupitZeZakazky = function(requestId) {
     window._otevritZruseni(
         "Odstoupit ze zakázky?",
-        "Zakázka se vrátí na Tržiště, aby si zákazník mohl vybrat někoho jiného. Vaše nabídka se zruší.",
+        "Zakázka se vrátí na Tržiště, aby si zákazník mohl vybrat někoho jiného. Tvoje nabídka se zruší.",
         async (duvod) => {
             if (!window.sb) return;
 
@@ -259,12 +259,12 @@ window.odstoupitZeZakazky = function(requestId) {
             });
 
             if (error) {
-                window.showToast("Nepodařilo se odstoupit", error.message || "Zkuste to prosím znovu.", "error");
+                window.showToast("Nepodařilo se odstoupit", error.message || "Zkus to prosím znovu.", "error");
                 return;
             }
 
             window.zavritZruseni();
-            window.showToast("Odstoupil jste ze zakázky", "Zákazník uvidí váš důvod a vybere si jiného řemeslníka.", "info");
+            window.showToast("Odstoupil jsi ze zakázky", "Zákazník uvidí tvůj důvod a vybere si jiného řemeslníka.", "info");
             if (window.loadCraftsmanJobsFromDB) window.loadCraftsmanJobsFromDB();
             if (window.nactiMojeNabidky) window.nactiMojeNabidky();
         }
@@ -290,9 +290,9 @@ window.uzavritBezPotvrzeni = async function(requestId, btnEl) {
                 .update({ status: "done" }).eq("id", requestId).eq("status", "active").select("id");
             if (error) throw error;
             if (!data || !data.length) {
-                window.showToast("Zakázku nelze uzavřít", "Její stav se mezitím změnil. Načtěte prosím stránku znovu.", "info");
+                window.showToast("Zakázku nelze uzavřít", "Její stav se mezitím změnil. Načti prosím stránku znovu.", "info");
             } else {
-                window.showToast("Zakázka dokončena", "Díky! Nezapomeňte řemeslníka ohodnotit.", "success");
+                window.showToast("Zakázka dokončena", "Díky! Nezapomeň řemeslníka ohodnotit.", "success");
             }
         } else {
             const { error } = await window.sb.from("requests")
@@ -332,7 +332,7 @@ window.potvrditDokonceniRemeslnikem = async function(requestId, btnEl) {
         if (error) throw error;
 
         if (!data || !data.length) {
-            window.showToast("Nelze potvrdit", "Stav zakázky se mezitím změnil. Načtěte prosím stránku znovu.", "info");
+            window.showToast("Nelze potvrdit", "Stav zakázky se mezitím změnil. Načti prosím stránku znovu.", "info");
         } else {
             window.showToast("Zakázka dokončena", "Obě strany potvrdily hotovo.", "success");
         }
@@ -354,12 +354,12 @@ window.navrhnoutDokonceni = async function(requestId, btnEl) {
         .eq("id", requestId);
 
     if (error) {
-        window.showToast("Nepodařilo se odeslat", error.message || "Zkuste to prosím znovu.", "error");
+        window.showToast("Nepodařilo se odeslat", error.message || "Zkus to prosím znovu.", "error");
         if (btnEl) { btnEl.innerHTML = orig; btnEl.disabled = false; }
         return;
     }
 
-    window.showToast("Odesláno zákazníkovi ✅", "Až práci potvrdí, zakázka se uzavře a můžete dostat hodnocení.", "success");
+    window.showToast("Odesláno zákazníkovi ✅", "Až práci potvrdí, zakázka se uzavře a můžeš dostat hodnocení.", "success");
     if (window.loadCraftsmanJobsFromDB) window.loadCraftsmanJobsFromDB();
 };
 
@@ -381,7 +381,7 @@ window.submitRating = async function() {
             .select("craftsman_id, status").eq("id", sbId).maybeSingle();
 
         if (chybaNacteni) {
-            window.showToast("Nepodařilo se uložit hodnocení", chybaNacteni.message || "Zkuste to prosím znovu.", "error");
+            window.showToast("Nepodařilo se uložit hodnocení", chybaNacteni.message || "Zkus to prosím znovu.", "error");
             vratTlacitko();
             return;
         }
@@ -389,7 +389,7 @@ window.submitRating = async function() {
         const { error: chybaStavu } = await window.sb.from("requests")
             .update({ status: "done" }).eq("id", sbId);
         if (chybaStavu) {
-            window.showToast("Nepodařilo se dokončit zakázku", chybaStavu.message || "Zkuste to prosím znovu.", "error");
+            window.showToast("Nepodařilo se dokončit zakázku", chybaStavu.message || "Zkus to prosím znovu.", "error");
             vratTlacitko();
             return;
         }
@@ -462,7 +462,7 @@ window._doDeleteRequest = async function(index, sbId) {
             "Tuto poptávku nelze smazat",
             poptavka.status === "done"
                 ? "Dokončené zakázky zůstávají v historii kvůli hodnocení."
-                : "Řemeslník už na ní pracuje. Nejdřív zakázku uzavřete.",
+                : "Řemeslník už na ní pracuje. Nejdřív zakázku uzavři.",
             "error"
         );
         return;
@@ -474,11 +474,11 @@ window._doDeleteRequest = async function(index, sbId) {
             await window.sb.from("messages").delete().eq("conversation_id",String(sbId));
             const {error}=await window.sb.from("requests").delete().eq("id",sbId);
             if(error){
-                window.showToast("Smazání se nezdařilo", error.message || "Zkontrolujte oprávnění (RLS) v databázi.", "error");
+                window.showToast("Smazání se nezdařilo", error.message || "Zkontroluj oprávnění (RLS) v databázi.", "error");
                 return;
             }
         } catch(e){
-            window.showToast("Smazání se nezdařilo", e.message || "Zkuste to prosím znovu.", "error");
+            window.showToast("Smazání se nezdařilo", e.message || "Zkus to prosím znovu.", "error");
             return;
         }
     }
@@ -649,13 +649,13 @@ window.saveProfile = async function(btnNode) {
             });
         } catch (dbErr) {
             console.error("Nepodařilo se uložit veřejný profil:", dbErr);
-            window.showToast("Profil uložen jen částečně", "Vaše jméno a fotka se nemusí ostatním zobrazit správně.", "error");
+            window.showToast("Profil uložen jen částečně", "Tvoje jméno a fotka se nemusí ostatním zobrazit správně.", "error");
         }
 
         document.getElementById("user-name").innerText = name;
         document.getElementById("user-avatar").src = displayUrl;
         document.querySelectorAll("#prof-avatar-img").forEach(function(img) { img.src = displayUrl; });
-        window.showToast("Profil uložen! ✅", "Vaše změny byly úspěšně uloženy.", "success");
+        window.showToast("Profil uložen! ✅", "Tvoje změny byly úspěšně uloženy.", "success");
 
         // Pokud čekala poptávka z webu na vyplnění profilu, teď ji dokončíme
         if (window.PENDING_POPTAVKA && window.applyPendingPoptavka) {
@@ -810,7 +810,7 @@ window.handlePhoto = async function(input, galleryId, zoneId) {
     const volno = window.MAX_FOTEK - window.poptPhotos.length;
     if (volno <= 0) {
         if (window.showToast) window.showToast("Víc fotek už ne",
-            "Připojit můžete nejvýš " + window.MAX_FOTEK + " fotek.", "info");
+            "Připojit můžeš nejvýš " + window.MAX_FOTEK + " fotek.", "info");
         input.value = "";
         return;
     }
@@ -837,7 +837,7 @@ window.handlePhoto = async function(input, galleryId, zoneId) {
     }
     if (nadLimit) {
         window.showToast("Vešlo se jen několik fotek",
-            "Připojit můžete nejvýš " + window.MAX_FOTEK + " fotek.", "info");
+            "Připojit můžeš nejvýš " + window.MAX_FOTEK + " fotek.", "info");
     }
 
     for (const file of kZpracovani) {
@@ -948,7 +948,7 @@ window.processPopt = async function(text) {
 window.startAI = function() {
     const txt = document.getElementById("popt-input").value.trim();
     if(!txt && (!window.poptPhotos || window.poptPhotos.length === 0)){
-        window.showToast("Chybí popis","Popište závadu nebo nahrajte fotku.","error");return;
+        window.showToast("Chybí popis","Popiš závadu nebo nahraj fotku.","error");return;
     }
     document.getElementById("popt-form").classList.add("hidden");
     document.getElementById("popt-chat").classList.remove("hidden");
@@ -1012,7 +1012,7 @@ window.publishRequest = async function(btnNode) {
         // hlavní kontrola probíhá už při otevření Nové poptávky
         const chybi = window.chybejiciUdajeProfilu ? window.chybejiciUdajeProfilu() : [];
         if(chybi.length > 0){
-            window.showToast("Nejprve vyplňte profil","Chybí: "+chybi.join(", ")+".","error");
+            window.showToast("Nejprve vyplň profil","Chybí: "+chybi.join(", ")+".","error");
             if(btnNode&&btnNode.tagName){btnNode.innerHTML=orig;btnNode.disabled=false;}
             return;
         }
@@ -1024,15 +1024,15 @@ window.publishRequest = async function(btnNode) {
 
         const highlightError = (id) => { const el=document.getElementById(id); if(!el)return; el.focus(); el.style.borderColor="#ef4444"; el.style.boxShadow="0 0 0 3px rgba(239,68,68,0.18)"; setTimeout(()=>{el.style.borderColor="";el.style.boxShadow="";},3000); };
 
-        if(!street||!city||!phone){ window.showToast("Chybí kontaktní údaje","Vyplňte ulici, město a telefonní číslo.","error"); if(!street)highlightError("f-street"); else if(!city)highlightError("f-city"); else highlightError("f-phone"); if(btnNode&&btnNode.tagName){btnNode.innerHTML=orig;btnNode.disabled=false;} return; }
-        if(street.length<5||!/[a-zA-ZáčďéěíňóřšťúůýžÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ]/.test(street)||!/\d/.test(street)){ window.showToast("Neplatná adresa","Zadejte ulici i číslo popisné.","error"); highlightError("f-street"); if(btnNode&&btnNode.tagName){btnNode.innerHTML=orig;btnNode.disabled=false;} return; }
-        if(city.length<2||/\d/.test(city)){ window.showToast("Neplatné město","Zadejte název města bez čísel.","error"); highlightError("f-city"); if(btnNode&&btnNode.tagName){btnNode.innerHTML=orig;btnNode.disabled=false;} return; }
+        if(!street||!city||!phone){ window.showToast("Chybí kontaktní údaje","Vyplň ulici, město a telefonní číslo.","error"); if(!street)highlightError("f-street"); else if(!city)highlightError("f-city"); else highlightError("f-phone"); if(btnNode&&btnNode.tagName){btnNode.innerHTML=orig;btnNode.disabled=false;} return; }
+        if(street.length<5||!/[a-zA-ZáčďéěíňóřšťúůýžÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ]/.test(street)||!/\d/.test(street)){ window.showToast("Neplatná adresa","Zadej ulici i číslo popisné.","error"); highlightError("f-street"); if(btnNode&&btnNode.tagName){btnNode.innerHTML=orig;btnNode.disabled=false;} return; }
+        if(city.length<2||/\d/.test(city)){ window.showToast("Neplatné město","Zadej název města bez čísel.","error"); highlightError("f-city"); if(btnNode&&btnNode.tagName){btnNode.innerHTML=orig;btnNode.disabled=false;} return; }
         const phoneDigits = phone.replace(/[\s\-().]/g, "");
-        if(!/^(\+420|00420)?\d{9}$/.test(phoneDigits)){ window.showToast("Neplatné telefonní číslo","Zadejte platné české číslo (9 číslic), např. +420 731 573 644.","error"); highlightError("f-phone"); if(btnNode&&btnNode.tagName){btnNode.innerHTML=orig;btnNode.disabled=false;} return; }
+        if(!/^(\+420|00420)?\d{9}$/.test(phoneDigits)){ window.showToast("Neplatné telefonní číslo","Zadej platné české číslo (9 číslic), např. +420 731 573 644.","error"); highlightError("f-phone"); if(btnNode&&btnNode.tagName){btnNode.innerHTML=orig;btnNode.disabled=false;} return; }
 
         const nearBrno = await window.isNearBrno(street + ", " + city);
         if (nearBrno === false) { window.showToast("Mimo oblast působnosti","Momentálně fungujeme jen v Olomouci a okolí (do 35 km). Mrzí nás to!","error"); highlightError("f-city"); if(btnNode&&btnNode.tagName){btnNode.innerHTML=orig;btnNode.disabled=false;} return; }
-        if (nearBrno === null) { window.showToast("Adresu se nepodařilo najít","Zkontrolujte prosím ulici, číslo popisné a město a zkuste to znovu.","error"); highlightError("f-street"); if(btnNode&&btnNode.tagName){btnNode.innerHTML=orig;btnNode.disabled=false;} return; }
+        if (nearBrno === null) { window.showToast("Adresu se nepodařilo najít","Zkontroluj prosím ulici, číslo popisné a město a zkus to znovu.","error"); highlightError("f-street"); if(btnNode&&btnNode.tagName){btnNode.innerHTML=orig;btnNode.disabled=false;} return; }
 
         // Telefon a ulice do popisu nepatří – putují do chráněné tabulky.
         // V popisu zůstane jen město, aby šla poptávka umístit na mapu.
@@ -1063,7 +1063,7 @@ window.publishRequest = async function(btnNode) {
                     request_id: sbId, telefon: phone, ulice: street, mesto: city
                 });
                 if(chybaKontaktu){
-                    window.showToast("Kontakt se nepodařilo uložit", "Řemeslník by se k vám nedovolal. Zkontrolujte poptávku v Moje poptávky.", "error");
+                    window.showToast("Kontakt se nepodařilo uložit", "Řemeslník by se k tobě nedovolal. Zkontroluj poptávku v Moje poptávky.", "error");
                 }
             }
         }
@@ -1081,7 +1081,7 @@ window.publishRequest = async function(btnNode) {
         ["popt-result","popt-tip","popt-chat","popt-finalize"].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.add("hidden");});
         document.getElementById("btn-show-finalize").classList.remove("hidden"); document.getElementById("popt-form").classList.remove("hidden");
         if(btnNode&&btnNode.tagName){btnNode.innerHTML=orig;btnNode.disabled=false;}
-        window.showToast("Poptávka zveřejněna! 🎉","Nabídky od řemeslníků uvidíte v sekci Moje poptávky.","success");
+        window.showToast("Poptávka zveřejněna! 🎉","Nabídky od řemeslníků uvidíš v sekci Moje poptávky.","success");
         window.goTab("requests","Moje poptávky");
     } catch(err) { window.showToast("Chyba","Nastala chyba: "+err.message,"error"); if(btnNode&&btnNode.tagName){btnNode.innerHTML=orig;btnNode.disabled=false;} }
 };
@@ -1101,8 +1101,8 @@ window.vyzvaKProfilu = function() {
     return '<div class="mb-6 p-5 rounded-3xl border-2 border-remexo-500/40 bg-remexo-50 dark:bg-remexo-500/10 flex flex-col sm:flex-row sm:items-center gap-4">'
         + '<div class="w-12 h-12 rounded-2xl bg-remexo-500 text-white flex items-center justify-center shrink-0 shadow-lg shadow-remexo-500/30"><i class="fa-solid fa-user-pen text-lg"></i></div>'
         + '<div class="flex-1 min-w-0">'
-        + '<p class="font-extrabold dark:text-white leading-tight">Ještě krůček a můžete reagovat</p>'
-        + '<p class="text-sm text-slate-600 dark:text-slate-300 mt-1">Poptávky si můžete prohlížet i teď. Abyste mohl poslat nabídku, doplňte: <strong>' + chybi.join(", ") + '</strong>.</p>'
+        + '<p class="font-extrabold dark:text-white leading-tight">Ještě krůček a můžeš reagovat</p>'
+        + '<p class="text-sm text-slate-600 dark:text-slate-300 mt-1">Poptávky si můžeš prohlížet i teď. Abys mohl poslat nabídku, doplň: <strong>' + chybi.join(", ") + '</strong>.</p>'
         + '</div>'
         + '<button onclick="window.goTab(\'profile\',\'Můj profil\')" class="shrink-0 bg-remexo-500 hover:bg-remexo-600 text-white px-6 py-3 rounded-xl font-bold text-sm transition shadow-md hover:scale-105">Doplnit profil</button>'
         + '</div>';
@@ -1135,7 +1135,7 @@ window.popisBezKontaktu = function(popis) {
 window.openOfferModal = function(id) {
     const chybiVProfilu = window.chybejiciUdajeProfilu ? window.chybejiciUdajeProfilu() : [];
     if (chybiVProfilu.length > 0) {
-        window.showToast("Nejprve vyplňte profil", "Než začnete posílat nabídky, doplňte: " + chybiVProfilu.join(", ") + ".", "error");
+        window.showToast("Nejprve vyplň profil", "Než začneš posílat nabídky, doplň: " + chybiVProfilu.join(", ") + ".", "error");
         window.goTab("profile", "Můj profil");
         return;
     }
@@ -1143,7 +1143,7 @@ window.openOfferModal = function(id) {
     if (window.uzJsemNabidl && window.uzJsemNabidl(id)) {
         const stav = window.stavMeNabidky(id);
         window.showToast(
-            "Nabídku jste už poslal",
+            "Nabídku jsi už poslal",
             stav === "accepted" ? "Tuto zakázku už máte přidělenou." : "Nabídka čeká na rozhodnutí zákazníka.",
             "info"
         );
@@ -1206,7 +1206,7 @@ window.submitCraftsmanOffer = async function() {
     const requestId=document.getElementById("co-req-id").value; const title=document.getElementById("co-req-title").value;
     const price=document.getElementById("co-price").value.trim(); const msg=document.getElementById("co-msg").value.trim();
     if(!msg){window.showToast("Chybí zpráva","Napište zákazníkovi alespoň krátkou zprávu.","error");return;}
-    if(!window.sb||!window.APP_USER){window.showToast("Nepřihlášen","Musíte se nejprve přihlásit.","error");return;}
+    if(!window.sb||!window.APP_USER){window.showToast("Nepřihlášen","Musíš se nejprve přihlásit.","error");return;}
     btn.innerHTML='<i class="fa-solid fa-circle-notch fa-spin mr-2"></i>Odesílám...';btn.disabled=true;
     try {
         const jmenoRemeslnika = document.getElementById("user-name").innerText;
@@ -1228,7 +1228,7 @@ window.submitCraftsmanOffer = async function() {
         if (predchoziStav === "rejected") {
             novyPocetPokusu = (window.pocetPokusu ? window.pocetPokusu(requestId) : 1) + 1;
             if (novyPocetPokusu > window.MAX_POKUSU) {
-                window.showToast("Další pokus už nelze poslat", "U jedné poptávky můžete zkusit nabídku nejvýše " + window.MAX_POKUSU + "×.", "error");
+                window.showToast("Další pokus už nelze poslat", "U jedné poptávky můžeš zkusit nabídku nejvýše " + window.MAX_POKUSU + "×.", "error");
                 btn.innerHTML=orig;btn.disabled=false;
                 window.closeOfferModal();
                 return;
@@ -1246,7 +1246,7 @@ window.submitCraftsmanOffer = async function() {
             // 23505 = databáze odmítla druhou nabídku na tutéž poptávku
             if(error.code === "23505"){
                 if(window._mojeNabidky) window._mojeNabidky.set(String(requestId), { stav: "pending", pokusy: novyPocetPokusu });
-                window.showToast("Nabídku jste už poslal","Na jednu poptávku lze reagovat jen jednou.","info");
+                window.showToast("Nabídku jsi už poslal","Na jednu poptávku lze reagovat jen jednou.","info");
                 btn.innerHTML=orig;btn.disabled=false;
                 window.closeOfferModal();
                 return;
@@ -1256,7 +1256,7 @@ window.submitCraftsmanOffer = async function() {
         if(window._mojeNabidky) window._mojeNabidky.set(String(requestId), { stav: "pending", pokusy: novyPocetPokusu });
         btn.innerHTML='<i class="fa-solid fa-check mr-2"></i>Odesláno!';
         btn.className=btn.className.replace("bg-remexo-500 hover:bg-remexo-600","bg-green-500");
-        window.showToast("Nabídka odeslána! 🎉","Jakmile ji zákazník přijme, otevře se vám chat.","success");
+        window.showToast("Nabídka odeslána! 🎉","Jakmile ji zákazník přijme, otevře se ti chat.","success");
         const ted=new Date().toISOString();
         window.STATE.craftJobs.push({title,requestId,status:"pending",vytvoreno:ted,time:window.formatDatumCas(ted)});
         window.refreshCraftsmanJobs();
@@ -1273,7 +1273,7 @@ window.loadOffersForRequest = async function(requestId, requestTitle) {
         .select("status").eq("id", requestId).maybeSingle();
     const jeUzavrena = !!(poptavka && poptavka.status !== "waiting");
     const stavHtml = (o) => '<div class="text-center text-sm font-bold text-slate-400 py-3 border border-dashed border-slate-200 dark:border-slate-700 rounded-xl">'
-        + (o.status === "accepted" ? "✅ Tuto nabídku jste přijal"
+        + (o.status === "accepted" ? "✅ Tuto nabídku jsi přijal"
             : (poptavka && poptavka.status === "done" ? "Zakázka je dokončená" : "Zakázka je už přidělená"))
         + '</div>';
 
@@ -1346,7 +1346,7 @@ window.rejectOffer = async function(btnNode, offerId, requestId, requestTitle) {
     try {
         const { error: chybaOdmitnuti } = await window.sb.from("offers").update({status: "rejected"}).eq("id", offerId);
         if (chybaOdmitnuti) {
-            window.showToast("Nepodařilo se odmítnout nabídku", chybaOdmitnuti.message || "Zkuste to prosím znovu.", "error");
+            window.showToast("Nepodařilo se odmítnout nabídku", chybaOdmitnuti.message || "Zkus to prosím znovu.", "error");
             btnNode.innerHTML = '<i class="fa-solid fa-times text-lg"></i>';
             btnNode.disabled = false;
             return;
@@ -1387,7 +1387,7 @@ window.acceptOffer = async function(offerId, requestId, craftsmanName) {
 
     const { error: chybaNabidky } = await window.sb.from("offers").update({status:"accepted"}).eq("id",offerId);
     if (chybaNabidky) {
-        window.showToast("Nepodařilo se přijmout nabídku", chybaNabidky.message || "Zkuste to prosím znovu.", "error");
+        window.showToast("Nepodařilo se přijmout nabídku", chybaNabidky.message || "Zkus to prosím znovu.", "error");
         return;
     }
 
@@ -1401,7 +1401,7 @@ window.acceptOffer = async function(offerId, requestId, craftsmanName) {
 
     if (!chybaPoptavky && (!zmenene || zmenene.length === 0)) {
         await window.sb.from("offers").update({status:"pending"}).eq("id",offerId);
-        window.showToast("Zakázka už je přidělená", "Nabídku se nepodařilo přijmout, zkuste stránku načíst znovu.", "info");
+        window.showToast("Zakázka už je přidělená", "Nabídku se nepodařilo přijmout, zkus stránku načíst znovu.", "info");
         window.closeOffersModal();
         if (window.loadCustomerRequestsFromDB) window.loadCustomerRequestsFromDB();
         return;
@@ -1410,7 +1410,7 @@ window.acceptOffer = async function(offerId, requestId, craftsmanName) {
     if (chybaPoptavky) {
         // Vrátíme nabídku zpět, ať nezůstane přijatá u poptávky, která je pořád volná
         await window.sb.from("offers").update({status:"pending"}).eq("id",offerId);
-        window.showToast("Nepodařilo se přijmout nabídku", chybaPoptavky.message || "Zkuste to prosím znovu.", "error");
+        window.showToast("Nepodařilo se přijmout nabídku", chybaPoptavky.message || "Zkus to prosím znovu.", "error");
         return;
     }
 
@@ -1423,7 +1423,7 @@ window.acceptOffer = async function(offerId, requestId, craftsmanName) {
 
 
 
-    window.showToast("Nabídka přijata! ✅","Zahajujete spolupráci s "+craftsmanName+".","success");
+    window.showToast("Nabídka přijata! ✅","Zahajuješ spolupráci s "+craftsmanName+".","success");
     const req=window.STATE.requests.find(r=>r.sbId===requestId);if(req){req.status="active";req.craftsman_name=craftsmanName;}
     if(window.refreshRequestsList)window.refreshRequestsList();if(window.refreshDashboard)window.refreshDashboard();
     window.activeChatId=String(requestId);
@@ -1649,7 +1649,7 @@ window.loadCustomerRequestsFromDB = async function() {
 window.loadMarketFromDB = async function() {
     const list=document.getElementById("market-list");if(!list||!window.sb)return;
     const {data,error}=await window.sb.from("requests").select("*").eq("status","waiting").order("created_at",{ascending:false});
-    if(error||!data||data.length===0){list.innerHTML='<div class="text-center p-16 bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-3xl"><i class="fa-solid fa-inbox text-5xl text-slate-300 dark:text-slate-600 mb-5 block"></i><p class="font-bold text-slate-500 text-lg">Zatím žádné poptávky ve vašem okolí.</p></div>';return;}
+    if(error||!data||data.length===0){list.innerHTML='<div class="text-center p-16 bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-3xl"><i class="fa-solid fa-inbox text-5xl text-slate-300 dark:text-slate-600 mb-5 block"></i><p class="font-bold text-slate-500 text-lg">Zatím žádné poptávky ve tvém okolí.</p></div>';return;}
     window.STATE.marketRequests=data;
     if(window.nactiOblibene) await window.nactiOblibene();
     if(window.nactiMojeNabidky) await window.nactiMojeNabidky();
@@ -1719,7 +1719,7 @@ window.initMarketMap = async function() {
     // "nikde nic, a tady jsem já" je platná informace.
     if (window.APP_POLOHA) {
         const domuIcon=L.divIcon({className:"",html:'<div style="background:#0f172a;color:#f59e0b;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(15,23,42,0.4);border:3px solid white;"><i class="fa-solid fa-house" style="font-size:13px;"></i></div>',iconSize:[34,34],iconAnchor:[17,17],popupAnchor:[0,-20]});
-        const domuPopup=L.popup({maxWidth:240,minWidth:180}).setContent('<div class="remexo-pin-popup"><p class="title">Odsud vyjíždíte</p><p class="addr" style="margin-bottom:10px">Od tohoto místa počítáme vzdálenost k poptávkám. Změnit ho můžete v profilu.</p></div>');
+        const domuPopup=L.popup({maxWidth:240,minWidth:180}).setContent('<div class="remexo-pin-popup"><p class="title">Odsud vyjíždíte</p><p class="addr" style="margin-bottom:10px">Od tohoto místa počítáme vzdálenost k poptávkám. Změnit ho můžeš v profilu.</p></div>');
         L.marker([window.APP_POLOHA.lat,window.APP_POLOHA.lon],{icon:domuIcon,zIndexOffset:1000}).addTo(window._marketMap).bindPopup(domuPopup);
         bounds.push([window.APP_POLOHA.lat,window.APP_POLOHA.lon]);
     }
@@ -1751,7 +1751,7 @@ window.initMarketMap = async function() {
             if(lat!=null && lon!=null && !isNaN(lat) && !isNaN(lon)){
                 bounds.push([lat,lon]);
                 const urgencyColor=r.urgency==="Vysoká"?"#ef4444":r.urgency==="Nízká"?"#22c55e":"#f59e0b";
-                const popup=L.popup({maxWidth:280,minWidth:220}).setContent('<div class="remexo-pin-popup"><span class="cat-badge">'+window.escapeHtml(r.category||"Ostatní")+'</span><p class="title">'+window.escapeHtml(r.title||"Poptávka")+'</p><p class="addr"><i class="fa-solid fa-location-dot" style="color:#f59e0b;margin-right:4px"></i>'+window.escapeHtml(displayCity)+(function(){var t=window.formatVzdalenost&&window.formatVzdalenost(window.vzdalenostPoptavky({lat:lat,lon:lon}));return t?' &middot; '+window.escapeHtml(t)+' od vás':'';})()+'</p><div style="display:flex;gap:8px;margin-bottom:10px"><span style="font-size:11px;font-weight:700;color:'+urgencyColor+';background:'+urgencyColor+'18;padding:3px 8px;border-radius:6px;">'+window.escapeHtml(r.urgency||"Střední")+' priorita</span>'+(r.price_estimate?'<span style="font-size:11px;font-weight:700;color:#0f172a;background:#f1f5f9;padding:3px 8px;border-radius:6px;">'+window.escapeHtml(r.price_estimate)+'</span>':'')+'</div><button class="offer-btn" onclick="window.openOfferModal(\''+r.id+'\'); document.querySelectorAll(\'.leaflet-popup-close-button\').forEach(b=>b.click());">Poslat nabídku →</button><button onclick="window.showRequestDetail(\''+r.id+'\')" style="width:100%;margin-top:6px;padding:8px;border:1px solid #e2e8f0;background:#fff;color:#475569;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;">Zobrazit detail poptávky</button></div>');
+                const popup=L.popup({maxWidth:280,minWidth:220}).setContent('<div class="remexo-pin-popup"><span class="cat-badge">'+window.escapeHtml(r.category||"Ostatní")+'</span><p class="title">'+window.escapeHtml(r.title||"Poptávka")+'</p><p class="addr"><i class="fa-solid fa-location-dot" style="color:#f59e0b;margin-right:4px"></i>'+window.escapeHtml(displayCity)+(function(){var t=window.formatVzdalenost&&window.formatVzdalenost(window.vzdalenostPoptavky({lat:lat,lon:lon}));return t?' &middot; '+window.escapeHtml(t)+' od tebe':'';})()+'</p><div style="display:flex;gap:8px;margin-bottom:10px"><span style="font-size:11px;font-weight:700;color:'+urgencyColor+';background:'+urgencyColor+'18;padding:3px 8px;border-radius:6px;">'+window.escapeHtml(r.urgency||"Střední")+' priorita</span>'+(r.price_estimate?'<span style="font-size:11px;font-weight:700;color:#0f172a;background:#f1f5f9;padding:3px 8px;border-radius:6px;">'+window.escapeHtml(r.price_estimate)+'</span>':'')+'</div><button class="offer-btn" onclick="window.openOfferModal(\''+r.id+'\'); document.querySelectorAll(\'.leaflet-popup-close-button\').forEach(b=>b.click());">Poslat nabídku →</button><button onclick="window.showRequestDetail(\''+r.id+'\')" style="width:100%;margin-top:6px;padding:8px;border:1px solid #e2e8f0;background:#fff;color:#475569;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;">Zobrazit detail poptávky</button></div>');
                 const marker=L.marker([lat,lon],{icon:pinIcon}).addTo(window._marketMap).bindPopup(popup);
                 window._marketMarkers[r.id]=marker;
             }
@@ -1906,7 +1906,7 @@ window._vykresliZalozku = function(btnEl, jeOblibena) {
 
 window.toggleOblibene = async function(id, btnEl) {
     if (!window.sb || !window.APP_USER) {
-        window.showToast("Nejste přihlášen", "Pro ukládání poptávek se přihlaste.", "error");
+        window.showToast("Nejsi přihlášen", "Pro ukládání poptávek se přihlas.", "error");
         return;
     }
 
@@ -1944,7 +1944,7 @@ window.toggleOblibene = async function(id, btnEl) {
         // Zápis selhal – vrátíme stav zpět, ať uživatel nevidí něco jiného, než je uloženo
         if (bylaOblibena) window._oblibene.add(klic); else window._oblibene.delete(klic);
         window._vykresliZalozku(btnEl, bylaOblibena);
-        window.showToast("Nepodařilo se uložit", e.message || "Zkuste to prosím znovu.", "error");
+        window.showToast("Nepodařilo se uložit", e.message || "Zkus to prosím znovu.", "error");
     }
 };
 
@@ -1987,7 +1987,7 @@ window.filterMarket = function(kat, triggerEl) {
             return;
         }
         const hlaska = kat === 'saved'
-            ? 'Zatím nemáte uložené žádné poptávky. Ukládejte je záložkou na kartě.'
+            ? 'Zatím nemáš uložené žádné poptávky. Ukládej je záložkou na kartě.'
             : 'Žádné poptávky v této kategorii.';
         list.innerHTML = '<div class="text-center text-slate-400 py-10">' + hlaska + '</div>';
         window.aktualizujCtaTrziste(0);
@@ -2171,7 +2171,7 @@ window.applyPendingPoptavka = function() {
     // jakmile profil uloží (jinak by o ni přišel)
     const chybi = window.chybejiciUdajeProfilu ? window.chybejiciUdajeProfilu() : [];
     if (chybi.length > 0) {
-        window.showToast("Nejprve vyplňte profil", "Vaši poptávku máme uloženou. Doplňte: " + chybi.join(", ") + ".", "info");
+        window.showToast("Nejprve vyplň profil", "Tvou poptávku máme uloženou. Doplň: " + chybi.join(", ") + ".", "info");
         window.goTab("profile", "Můj profil");
         return;
     }
@@ -2194,7 +2194,7 @@ window.applyPendingPoptavka = function() {
         if (resultEl) resultEl.classList.remove("hidden");
 
         if (window.showToast) {
-            window.showToast("Poptávka načtena! 📋", "Zkontrolujte údaje a pokračujte k adrese.", "success");
+            window.showToast("Poptávka načtena! 📋", "Zkontroluj údaje a pokračuj k adrese.", "success");
         }
     }, 300);
 };
