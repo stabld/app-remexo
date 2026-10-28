@@ -91,6 +91,10 @@ window.customerHTML = function(name) {
                         <div><label class="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2">Telefonní číslo</label><input type="tel" id="prof-phone" class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-5 py-3.5 text-sm focus:ring-2 focus:ring-remexo-500 outline-none dark:text-white" placeholder="+420 123 456 789"></div>
                         <div><label class="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2">Město</label><input type="text" id="prof-city" class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-5 py-3.5 text-sm focus:ring-2 focus:ring-remexo-500 outline-none dark:text-white" placeholder="Např. Olomouc"></div>
                     </div>
+                    <label class="flex items-start gap-3 cursor-pointer">
+                        <input type="checkbox" id="prof-emaily" checked disabled class="mt-1 w-4 h-4 accent-amber-500">
+                        <span class="text-sm text-slate-600 dark:text-slate-300">Posílat upozornění e-mailem<span class="block text-xs text-slate-400 mt-0.5">Nové poptávky, nabídky a dokončené zakázky. Tady jde kdykoli vypnout.</span></span>
+                    </label>
                     <div class="pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row gap-3">
                         <button onclick="window.saveProfile(this)" class="flex-1 bg-remexo-500 hover:bg-remexo-600 text-white px-8 py-4 rounded-2xl font-black text-lg transition shadow-xl shadow-remexo-500/20 hover:-translate-y-1">Uložit změny v profilu</button>
                         <button onclick="window.doLogout()" class="sm:w-auto px-8 py-4 rounded-2xl font-black text-lg transition border-2 border-red-200 dark:border-red-500/30 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 flex items-center justify-center gap-2"><i class="fa-solid fa-arrow-right-from-bracket"></i> Odhlásit se</button>
@@ -305,6 +309,10 @@ window.craftsmanHTML = function(name) {
                     </div>
 
                     <div><label class="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2">O mně / Popis služeb</label><textarea id="prof-bio" rows="4" class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-5 py-3.5 text-sm focus:ring-2 focus:ring-remexo-500 outline-none dark:text-white resize-none" placeholder="Popište své zkušenosti, specializaci, reference..."></textarea></div>
+                    <label class="flex items-start gap-3 cursor-pointer">
+                        <input type="checkbox" id="prof-emaily" checked disabled class="mt-1 w-4 h-4 accent-amber-500">
+                        <span class="text-sm text-slate-600 dark:text-slate-300">Posílat upozornění e-mailem<span class="block text-xs text-slate-400 mt-0.5">Nové poptávky, nabídky a dokončené zakázky. Tady jde kdykoli vypnout.</span></span>
+                    </label>
                     <div class="pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row gap-3">
                         <button onclick="window.saveProfile(this)" class="flex-1 bg-remexo-500 hover:bg-remexo-600 text-white px-8 py-4 rounded-2xl font-black text-lg transition shadow-xl shadow-remexo-500/20 hover:-translate-y-1">Uložit změny v profilu</button>
                         <button onclick="window.doLogout()" class="sm:w-auto px-8 py-4 rounded-2xl font-black text-lg transition border-2 border-red-200 dark:border-red-500/30 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 flex items-center justify-center gap-2"><i class="fa-solid fa-arrow-right-from-bracket"></i> Odhlásit se</button>
