@@ -173,8 +173,8 @@ async function adminRemeslnici(cil) {
         String(r.zakazek || 0),
         '<span class="text-xs text-slate-400 whitespace-nowrap">' + aDatum(r.registrovan) + '</span>',
         r.overeno
-            ? '<button onclick="window.adminZrusitOvereni(\'' + aEsc(r.uzivatel_id) + '\')" class="text-xs font-bold text-slate-500 hover:text-red-500 whitespace-nowrap">Zrušit ověření</button>'
-            : '<button onclick="window.adminOverit(\'' + aEsc(r.uzivatel_id) + '\',\'' + aEsc(r.jmeno || "") + '\')" class="bg-remexo-500 hover:bg-remexo-600 text-white text-xs font-bold px-3 py-2 rounded-lg whitespace-nowrap">Ověřit</button>'
+            ? '<button data-id="' + aEsc(r.uzivatel_id) + '" onclick="window.adminZrusitOvereni(this.dataset.id)" class="text-xs font-bold text-slate-500 hover:text-red-500 whitespace-nowrap">Zrušit ověření</button>'
+            : '<button data-id="' + aEsc(r.uzivatel_id) + '" data-jmeno="' + aEsc(r.jmeno || "") + '" onclick="window.adminOverit(this.dataset.id, this.dataset.jmeno)" class="bg-remexo-500 hover:bg-remexo-600 text-white text-xs font-bold px-3 py-2 rounded-lg whitespace-nowrap">Ověřit</button>'
     ]);
 
     cil.innerHTML = aTabulka(["Řemeslník", "IČO", "Stav", "Nabídek", "Registrace", ""], radky);
