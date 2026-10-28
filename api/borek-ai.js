@@ -112,6 +112,13 @@ export default async function handler(req, res) {
     // 2) Rozumný počet dotazů za hodinu.
     // Databáze je jediné místo, kde limit obejít nejde - paměť serverless
     // funkce se restartem vynuluje. Paměťová varianta níž zůstává jako záloha.
+    //
+    // Když se databázi nepodaří zeptat (chyba funkce, výpadek, pomalá odpověď),
+    // Bořka na chvíli vypneme, místo abychom dotazy pustili bez limitu.
+    // Dřív se v takovém případě limit tiše přeskočil a Gemini se volalo dál.
+    // Uživatel o rozepsaný text nepřijde, frontend při `pretizeno` nabídne zkusit znovu.
+    let prekrocen = null;   // true / false jen z platné odpovědi databáze
+    let limitStav = 'bez odpovědi';
     try {
         const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '');
         const r = await fetch(SUPABASE_URL + '/rest/v1/rpc/ai_limit_prekrocen', {
@@ -121,12 +128,28 @@ export default async function handler(req, res) {
                 Authorization: 'Bearer ' + token,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ p_limit: LIMIT_ZA_HODINU })
+            body: JSON.stringify({ p_limit: LIMIT_ZA_HODINU }),
+            signal: AbortSignal.timeout(4000)
         });
-        if (r.ok && (await r.json()) === true) {
-            return res.status(429).json({ error: 'Bořek dnes odpověděl už hodně lidem. Zkuste to prosím za chvíli.' });
+        limitStav = String(r.status);
+        if (r.ok) {
+            const hodnota = await r.json();
+            if (hodnota === true || hodnota === false) prekrocen = hodnota;
         }
-    } catch (e) { /* při výpadku spadneme zpět na paměťový limit */ }
+    } catch (e) {
+        limitStav = 'chyba: ' + String(e && e.name || e).slice(0, 40);
+    }
+
+    if (prekrocen === true) {
+        return res.status(429).json({ error: 'Bořek dnes odpověděl už hodně lidem. Zkuste to prosím za chvíli.' });
+    }
+    if (prekrocen === null) {
+        console.error('borek-ai: limit se nepodařilo ověřit (' + limitStav + '), požadavek odmítnut.');
+        return res.status(503).json({
+            error: 'Bořek je na chvíli nedostupný. Zkus to prosím za minutu.',
+            pretizeno: true
+        });
+    }
 
     if (prekrocilLimit(uzivatel.id)) {
         return res.status(429).json({ error: 'Bořek dnes odpověděl už hodně lidem. Zkuste to prosím za chvíli.' });
