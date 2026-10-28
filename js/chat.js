@@ -247,28 +247,28 @@ window.subscribeMessages = function(requestId) {
 window.sendMsg = async function() {
     const inp=document.getElementById("msg-input");
     const txt=inp?.value?.trim();if(!txt)return;
-    if(!window.activeChatId){ window.showToast("Nejprve otevřete konverzaci", "Vyberte vlevo konkrétní chat.", "info"); return; }
+    if(!window.activeChatId){ window.showToast("Nejprve otevři konverzaci", "Vyber vlevo konkrétní chat.", "info"); return; }
     inp.value="";
     const userNameEl = document.getElementById("user-name");
     const msgBase={conversation_id:String(window.activeChatId),sender_id:window.APP_USER?.id,sender_name:userNameEl?userNameEl.innerText:"Uživatel",text:txt};
     window.renderMessage({...msgBase,senderrole:window.APP_ROLE||"customer",created_at:new Date().toISOString()},"chat-msgs");
     if(window.sb){
         const {error}=await window.sb.from("messages").insert({...msgBase,senderrole:window.APP_ROLE||"customer"});
-        if(error) window.showToast("Zprávu se nepodařilo uložit", error.message || "Zkuste to prosím znovu.", "error");
+        if(error) window.showToast("Zprávu se nepodařilo uložit", error.message || "Zkus to prosím znovu.", "error");
     }
 };
 
 window.sendMsgC = async function() {
     const inp=document.getElementById("msg-input-c");
     const txt=inp?.value?.trim();if(!txt)return;
-    if(!window.activeChatId){ window.showToast("Nejprve otevřete konverzaci", "Vyberte vlevo konkrétní chat.", "info"); return; }
+    if(!window.activeChatId){ window.showToast("Nejprve otevři konverzaci", "Vyber vlevo konkrétní chat.", "info"); return; }
     inp.value="";
     const userNameEl = document.getElementById("user-name");
     const msgBase={conversation_id:String(window.activeChatId),sender_id:window.APP_USER?.id,sender_name:userNameEl?userNameEl.innerText:"Uživatel",text:txt};
     window.renderMessage({...msgBase,senderrole:window.APP_ROLE||"craftsman",created_at:new Date().toISOString()},"chat-msgs-c");
     if(window.sb){
         const {error}=await window.sb.from("messages").insert({...msgBase,senderrole:window.APP_ROLE||"craftsman"});
-        if(error) window.showToast("Zprávu se nepodařilo uložit", error.message || "Zkuste to prosím znovu.", "error");
+        if(error) window.showToast("Zprávu se nepodařilo uložit", error.message || "Zkus to prosím znovu.", "error");
     }
 };
 
@@ -279,7 +279,7 @@ window.loadCustomerConversations = async function() {
     // Chat vzniká až přijetím nabídky – u čekajících poptávek žádný není
     const reqs=(vsechny||[]).filter(r=>r.status==="active"||r.status==="done");
     if(!reqs||reqs.length===0){
-        list.innerHTML='<div class="p-8 text-center text-sm text-slate-400"><i class="fa-regular fa-comments text-4xl mb-3 block opacity-50"></i>Zatím žádné konverzace.<br>Chat se otevře, jakmile přijmete nabídku od řemeslníka.</div>';
+        list.innerHTML='<div class="p-8 text-center text-sm text-slate-400"><i class="fa-regular fa-comments text-4xl mb-3 block opacity-50"></i>Zatím žádné konverzace.<br>Chat se otevře, jakmile přijmeš nabídku od řemeslníka.</div>';
         return;
     }
     
@@ -329,7 +329,7 @@ window.loadCraftsmanConversations = async function() {
     // Psát si můžeme až s tím, koho si zákazník vybral
     const offers=(vsechnyNabidky||[]).filter(o=>o.status==="accepted");
     if(!offers||offers.length===0){
-        list.innerHTML='<div class="p-8 text-center text-sm text-slate-400"><i class="fa-regular fa-comments text-4xl mb-3 block opacity-50"></i>Zatím žádné konverzace.<br>Chat se otevře, jakmile zákazník přijme vaši nabídku.</div>';
+        list.innerHTML='<div class="p-8 text-center text-sm text-slate-400"><i class="fa-regular fa-comments text-4xl mb-3 block opacity-50"></i>Zatím žádné konverzace.<br>Chat se otevře, jakmile zákazník přijme tvoji nabídku.</div>';
         return;
     }
     
@@ -424,7 +424,7 @@ window.spustHlidaniZprav = function() {
                     if (!puvodni) {
                         window.showToast(
                             "Práce je hotová! 🔨",
-                            "Řemeslník dokončil: " + (r.title || "vaši zakázku") + ". Potvrďte prosím dokončení a ohodnoťte ho.",
+                            "Řemeslník dokončil: " + (r.title || "tvoji zakázku") + ". Potvrď prosím dokončení a ohodnoť ho.",
                             "success"
                         );
                         if (window.loadCustomerRequestsFromDB) window.loadCustomerRequestsFromDB();
@@ -450,7 +450,7 @@ window.spustHlidaniZprav = function() {
                         nove.forEach(o => {
                             window.showToast(
                                 "Nová nabídka! 🎉",
-                                (o.craftsman_name || "Řemeslník") + " nabízí " + (o.price || "dohodou") + " na: " + (o.requests?.title || "vaši poptávku"),
+                                (o.craftsman_name || "Řemeslník") + " nabízí " + (o.price || "dohodou") + " na: " + (o.requests?.title || "tvoji poptávku"),
                                 "success"
                             );
                         });
@@ -478,10 +478,10 @@ window.spustHlidaniZprav = function() {
 
                     if (puvodni && puvodni !== o.status) {
                         if (o.status === "rejected") {
-                            window.showToast("Nabídka odmítnuta ❌", "Zákazník vybral někoho jiného na: " + nazev + ". Můžete poslat novou nabídku.", "error");
+                            window.showToast("Nabídka odmítnuta ❌", "Zákazník vybral někoho jiného na: " + nazev + ". Můžeš poslat novou nabídku.", "error");
                             if (window.loadMarketFromDB) window.loadMarketFromDB();
                         } else if (o.status === "accepted") {
-                            window.showToast("Nabídka přijata! ✅", "Zákazník si vybral vás na: " + nazev, "success");
+                            window.showToast("Nabídka přijata! ✅", "Zákazník si vybral tebe na: " + nazev, "success");
                             if (window.loadCraftsmanJobsFromDB) window.loadCraftsmanJobsFromDB();
                             if (window.loadCraftsmanConversations) window.loadCraftsmanConversations();
                         }
@@ -489,7 +489,7 @@ window.spustHlidaniZprav = function() {
 
                     // Zákazník zakázku zrušil
                     if (o.status === "accepted" && puvodniZakazka && puvodniZakazka !== "cancelled" && stavZakazky === "cancelled") {
-                        window.showToast("Zakázka zrušena ❌", "Zákazník zrušil: " + nazev + ". Podrobnosti najdete v Moje práce.", "error");
+                        window.showToast("Zakázka zrušena ❌", "Zákazník zrušil: " + nazev + ". Podrobnosti najdeš v Moje práce.", "error");
                         if (window.loadCraftsmanJobsFromDB) window.loadCraftsmanJobsFromDB();
                     }
 
@@ -499,7 +499,7 @@ window.spustHlidaniZprav = function() {
                         try {
                             const { data: h } = await window.sb.from("hodnoceni")
                                 .select("hvezdicky").eq("request_id", o.request_id).maybeSingle();
-                            if (h && h.hvezdicky) hvezdy = " a ohodnotil vás " + "⭐".repeat(h.hvezdicky);
+                            if (h && h.hvezdicky) hvezdy = " a ohodnotil tě " + "⭐".repeat(h.hvezdicky);
                         } catch (e) {}
 
                         window.showToast(
@@ -565,7 +565,7 @@ window.spustHlidaniZprav = function() {
                     return;
                 }
 
-                window.showToast("Nová zpráva! 💬", "Napsal vám: " + (msg.sender_name || "Uživatel"), "info", true);
+                window.showToast("Nová zpráva! 💬", "Napsal ti: " + (msg.sender_name || "Uživatel"), "info", true);
 
                 if (!window.STATE.unreadChats) window.STATE.unreadChats = {};
                 window.STATE.unreadChats[konverzace] = (window.STATE.unreadChats[konverzace] || 0) + 1;
@@ -596,7 +596,7 @@ window.initGlobalNotifications = function() {
                 if (window.activeChatId !== String(msg.conversation_id)) {
                     // Tohle je JEDINÝ typ notifikace, který má zvyšovat bublinu u "Zprávy"
                     // (4. parametr "true" u showToast to zajišťuje)
-                    window.showToast("Nová zpráva! 💬", "Napsal vám: " + (msg.sender_name || "Uživatel"), "info", true);
+                    window.showToast("Nová zpráva! 💬", "Napsal ti: " + (msg.sender_name || "Uživatel"), "info", true);
                     
                     if (!window.STATE.unreadChats) window.STATE.unreadChats = {};
                     window.STATE.unreadChats[msg.conversation_id] = (window.STATE.unreadChats[msg.conversation_id] || 0) + 1;
@@ -617,7 +617,7 @@ window.initGlobalNotifications = function() {
             if (window.APP_ROLE === "craftsman" && payload.new.craftsman_id === window.APP_USER.id) {
                 if (payload.new.status === "accepted") {
                     // Přijetí nabídky NENÍ zpráva - jde jen do zvonečku nahoře
-                    window.showToast("Nabídka přijata! ✅", "Zákazník přijal vaši nabídku.", "success");
+                    window.showToast("Nabídka přijata! ✅", "Zákazník přijal tvoji nabídku.", "success");
                     if (window.loadCraftsmanJobsFromDB) window.loadCraftsmanJobsFromDB();
                     if (window.loadCraftsmanConversations) window.loadCraftsmanConversations();
                 } else if (payload.new.status === "rejected") {
@@ -629,7 +629,7 @@ window.initGlobalNotifications = function() {
         })
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'requests' }, payload => {
             if (window.APP_ROLE === "craftsman" && payload.new.status === "waiting") {
-                window.showToast("Nová poptávka! 🔨", (payload.new.title || "Nová zakázka") + " – mrkněte na Tržiště.", "info");
+                window.showToast("Nová poptávka! 🔨", (payload.new.title || "Nová zakázka") + " – mrkni na Tržiště.", "info");
                 if (window.STATE) window.STATE.marketRequests = null;
             }
         })
