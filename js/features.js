@@ -530,6 +530,23 @@ window.handleProfilePhoto = async function(input) {
     } catch(err) { window._profilePhotoBlob = compressedBlob; window.showToast("Chyba fotky", err.message, "error"); }
 };
 
+// Nastavení e-mailových upozornění (profiles.chce_emaily). Čte se zvlášť od
+// nactiOvereni, protože ta běží jen pro řemeslníky a zákazník ji potřebuje taky.
+// Dokud se hodnota nenačte, políčko je vypnuté a při ukládání se nepřepisuje,
+// aby se omylem nezapnuly e-maily někomu, kdo si je vypnul.
+window.nactiEmailyNastaveni = async function() {
+    const pole = document.getElementById("prof-emaily");
+    if (!pole || !window.APP_USER) return;
+    try {
+        const { data, error } = await window.sb
+            .from("profiles").select("chce_emaily").eq("id", window.APP_USER.id).single();
+        if (error) throw error;
+        pole.checked = data.chce_emaily !== false;
+        pole.disabled = false;
+        pole.dataset.nacteno = "1";
+    } catch (e) { /* políčko zůstane vypnuté a neuloží se */ }
+};
+
 // Stav ověření a IČO se čtou z profiles, ne z tokenu - v tokenu si je
 // uživatel může nastavit sám, což by z ověření udělalo ozdobu.
 window.nactiOvereni = async function() {
@@ -603,6 +620,14 @@ window.saveProfile = async function(btnNode) {
                 } else {
                     window.showToast("IČO nemá osm číslic", "Zbytek profilu jsme uložili, IČO ne.", "error");
                 }
+            }
+
+            // E-mailová upozornění: ukládá se jen když se hodnota úspěšně načetla
+            const emailyPole = document.getElementById("prof-emaily");
+            if (emailyPole && emailyPole.dataset.nacteno === "1") {
+                const { error: chybaEmaily } = await window.sb.from('profiles')
+                    .update({ chce_emaily: emailyPole.checked }).eq('id', window.APP_USER.id);
+                if (chybaEmaily) window.showToast("Upozornění se nepodařilo uložit", "Zbytek profilu jsme uložili.", "error");
             }
 
             // Neveřejnou adresu přepočítáme na souřadnice, ať řemeslník vidí
