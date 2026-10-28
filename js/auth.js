@@ -55,7 +55,7 @@ window.doRegister = async function() {
 
     const consentEl = document.getElementById("reg-consent");
     if (consentEl && !consentEl.checked) {
-        return window.showErr("Pro vytvoření účtu musíte souhlasit s podmínkami použití a zpracováním osobních údajů.");
+        return window.showErr("Pro vytvoření účtu musíš souhlasit s podmínkami použití a zpracováním osobních údajů.");
     }
 
     const password = document.getElementById("reg-pass").value;
@@ -63,7 +63,7 @@ window.doRegister = async function() {
 
     // --- KONTROLA SHODY HESEL ---
     if (password !== confirmPassword) {
-        return window.showErr("Hesla se neshodují. Zkontrolujte je prosím.");
+        return window.showErr("Hesla se neshodují. Zkontroluj je prosím.");
     }
 
     // --- KONTROLA SÍLY HESLA ---
@@ -95,7 +95,7 @@ window.doRegister = async function() {
                 + ". Otevři ho a klikni na odkaz, tím účet aktivuješ. Kdyby nedorazil, mrkni do spamu.");
             setTimeout(() => window.switchTab("login"), 6000);
         } else {
-            window.showOk("Účet vytvořen! Nyní se přihlaste.");
+            window.showOk("Účet vytvořen! Teď se přihlas.");
             setTimeout(() => window.switchTab("login"), 1800);
         }
     } catch(e) { window.showErr("Chyba: " + e.message); }
@@ -142,7 +142,7 @@ window.doLogin = async function() {
 window.doResetPassword = async function() {
     if (!window.sb) return window.showErr("Chyba připojení.");
     const email = document.getElementById("forgot-email").value.trim();
-    if (!email) return window.showErr("Zadejte prosím svůj e-mail.");
+    if (!email) return window.showErr("Zadej prosím svůj e-mail.");
     const btn = document.getElementById("btn-do-forgot");
     btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-2"></i>Odesílám...'; btn.disabled = true;
     try {
@@ -173,7 +173,7 @@ window.closeForgotPw = function() {
 // === 1. ODESLÁNÍ E-MAILU S ODKAZEM ===
 window.sendResetLink = async function() {
     const email = document.getElementById("forgot-pw-email").value.trim();
-    if (!email) { window.showToast("Chyba", "Zadejte svůj e-mail.", "error"); return; }
+    if (!email) { window.showToast("Chyba", "Zadej svůj e-mail.", "error"); return; }
     
     const btn = document.getElementById("btn-send-reset");
     const orig = btn.innerHTML;
@@ -186,7 +186,7 @@ window.sendResetLink = async function() {
         if (error) throw error;
         
         window.closeForgotPw();
-        window.showToast("Odesláno! 📧", "Zkontrolujte si e-mail (i složku Spam).", "success");
+        window.showToast("Odesláno! 📧", "Zkontroluj si e-mail (i složku Spam).", "success");
     } catch(e) {
         window.showToast("Chyba", e.message, "error");
     } finally {
@@ -223,7 +223,7 @@ window.saveNewPassword = async function() {
         const m = document.getElementById("new-pw-modal");
         m.classList.remove("opacity-100"); setTimeout(() => m.classList.add("hidden"), 300);
         
-        window.showToast("Heslo změněno! ✅", "Nyní používáte nové heslo.", "success");
+        window.showToast("Heslo změněno! ✅", "Teď používáš nové heslo.", "success");
     } catch (e) {
         window.showToast("Chyba", "Nepodařilo se změnit heslo: " + e.message, "error");
     } finally {
