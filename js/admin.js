@@ -142,7 +142,7 @@ window.adminHlaseniStav = async function (id, vyreseno) {
         if (window.showToast) window.showToast("Hotovo", vyreseno ? "Hlášení označeno jako vyřešené." : "Hlášení znovu otevřeno.", "success");
         await window.adminZalozka("hlaseni");
     } catch (e) {
-        if (window.showToast) window.showToast("Nepovedlo se", (e && e.message) || "Zkuste to znovu.", "error");
+        if (window.showToast) window.showToast("Nepovedlo se", (e && e.message) || "Zkus to znovu.", "error");
     }
 };
 
@@ -154,7 +154,7 @@ window.adminHlaseniPoznamka = async function (id) {
         if (error) throw error;
         if (window.showToast) window.showToast("Uloženo", "Poznámka byla uložena.", "success");
     } catch (e) {
-        if (window.showToast) window.showToast("Nepovedlo se", (e && e.message) || "Zkuste to znovu.", "error");
+        if (window.showToast) window.showToast("Nepovedlo se", (e && e.message) || "Zkus to znovu.", "error");
     }
 };
 
