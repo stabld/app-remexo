@@ -2,7 +2,7 @@ window.customerHTML = function(name) {
     const first = name.split(" ")[0];
     return `
     <div id="view-dash" class="hidden fade-up">
-        <div class="dash-head mb-4 lg:mb-10"><h2 class="text-xl lg:text-3xl font-extrabold lg:mb-2 dark:text-white">Vítejte, ${first} 👋</h2><p class="dash-sub text-slate-500 text-lg">Přehled vašich aktivit na platformě Remexo.</p></div>
+        <div class="dash-head mb-4 lg:mb-10"><h2 class="text-xl lg:text-3xl font-extrabold lg:mb-2 dark:text-white">Ahoj, ${first} 👋</h2><p class="dash-sub text-slate-500 text-lg">Přehled tvých aktivit na platformě Remexo.</p></div>
         <button onclick="window.goTab('new','Nová poptávka')" class="dash-cta w-full text-left bg-remexo-500 hover:bg-remexo-600 active:scale-[0.99] text-white rounded-3xl p-5 lg:p-7 mb-4 lg:mb-8 shadow-lg shadow-remexo-500/25 transition flex items-center gap-4">
             <div class="w-12 h-12 lg:w-14 lg:h-14 rounded-2xl bg-white/20 flex items-center justify-center text-2xl shrink-0"><i class="fa-solid fa-camera"></i></div>
             <div class="flex-1 min-w-0">
@@ -117,7 +117,7 @@ window.customerHTML = function(name) {
                             <input type="file" accept="image/*" multiple onchange="window.handlePhoto(this)" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-40">
                             <div id="photo-zone" class="w-full h-full border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-2xl flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-900 group-hover:border-remexo-500 group-hover:bg-remexo-50 dark:group-hover:bg-remexo-500/10 transition-all overflow-hidden relative z-10 shadow-inner">
                                 <i class="popt-ikona fa-solid fa-camera text-4xl mb-3 text-slate-300 dark:text-slate-500 group-hover:text-remexo-500 transition-colors"></i>
-                                <p class="text-sm font-bold text-slate-500 group-hover:text-remexo-600 transition-colors">Klikněte pro nahrání</p>
+                                <p class="text-sm font-bold text-slate-500 group-hover:text-remexo-600 transition-colors">Klikni pro nahrání</p>
                                 <p class="popt-hint text-xs text-slate-400 mt-1">Max. 5 fotek</p>
                             </div>
                             <div id="photo-gallery" class="hidden absolute inset-0 z-30 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-3 overflow-y-auto grid grid-cols-2 gap-2 content-start pointer-events-none"></div>
@@ -182,7 +182,7 @@ window.customerHTML = function(name) {
         <input type="file" accept="image/*" multiple onchange="window.handlePhoto(this,'photo-gallery-finalize','photo-zone-finalize')" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-40">
         <div id="photo-zone-finalize" class="w-full h-full border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-2xl flex flex-col items-center justify-center bg-white dark:bg-slate-800 group-hover:border-remexo-500 transition-all overflow-hidden relative z-10 shadow-sm py-6">
             <i class="fa-solid fa-camera text-3xl mb-2 text-slate-300 dark:text-slate-500 group-hover:text-remexo-500 transition-colors"></i>
-            <p class="text-sm font-bold text-slate-500 group-hover:text-remexo-600 transition-colors">Klikněte pro nahrání fotek</p>
+            <p class="text-sm font-bold text-slate-500 group-hover:text-remexo-600 transition-colors">Klikni pro nahrání fotek</p>
         </div>
         <div id="photo-gallery-finalize" class="hidden absolute inset-0 z-30 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-3 overflow-y-auto grid grid-cols-3 gap-2 content-start pointer-events-none"></div>
     </div>
@@ -230,7 +230,7 @@ window.craftsmanHTML = function(name) {
             <button id="razeni-nove" onclick="window.prepniRazeni('nove')" class="shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition bg-remexo-500 text-white shadow-md">Nejnovější</button>
             <button id="razeni-blizko" onclick="window.prepniRazeni('blizko')" class="shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-remexo-500"><i class="fa-solid fa-route mr-1.5"></i>Nejblíž</button>
         </div>
-        <div id="market-list" class="space-y-4"><div class="text-center p-16 bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-3xl"><i class="fa-solid fa-circle-notch fa-spin text-5xl text-remexo-500 mb-5 block"></i><p class="font-bold text-slate-500 text-lg">Hledám nové poptávky ve vašem okolí...</p></div></div>
+        <div id="market-list" class="space-y-4"><div class="text-center p-16 bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-3xl"><i class="fa-solid fa-circle-notch fa-spin text-5xl text-remexo-500 mb-5 block"></i><p class="font-bold text-slate-500 text-lg">Hledám nové poptávky ve tvém okolí...</p></div></div>
         <div id="market-map" class="hidden"></div>
     </div>
     <div id="view-jobs" class="hidden fade-up">
@@ -286,10 +286,10 @@ window.craftsmanHTML = function(name) {
                     </div>
                     <div class="grid md:grid-cols-2 gap-5">
                         <div><label class="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2">Telefonní číslo</label><input type="tel" id="prof-phone" class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-5 py-3.5 text-sm focus:ring-2 focus:ring-remexo-500 outline-none dark:text-white" placeholder="+420 123 456 789"></div>
-                        <div><label class="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2">Město / Působnost</label><input type="text" id="prof-city" class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-5 py-3.5 text-sm focus:ring-2 focus:ring-remexo-500 outline-none dark:text-white" placeholder="Např. Olomouc a okolí"><p class="text-[11px] text-slate-400 mt-2">Uvidí zákazníci ve vašem profilu.</p></div>
+                        <div><label class="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2">Město / Působnost</label><input type="text" id="prof-city" class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-5 py-3.5 text-sm focus:ring-2 focus:ring-remexo-500 outline-none dark:text-white" placeholder="Např. Olomouc a okolí"><p class="text-[11px] text-slate-400 mt-2">Uvidí zákazníci ve tvém profilu.</p></div>
                     </div>
                     <div class="pt-5 border-t border-slate-100 dark:border-slate-800">
-                        <label class="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2">Odkud vyjíždíte</label>
+                        <label class="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2">Odkud vyjíždíš</label>
                         <input type="text" id="prof-adresa" class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-5 py-3.5 text-sm focus:ring-2 focus:ring-remexo-500 outline-none dark:text-white" placeholder="Např. Ostružnická 12, Olomouc">
                         <p class="text-[11px] text-slate-400 mt-2 leading-relaxed"><i class="fa-solid fa-lock mr-1 opacity-70"></i>Neveřejné. Slouží jen k výpočtu vzdálenosti k poptávkám &ndash; zákazníci ani ostatní řemeslníci ji nevidí. Čím přesnější adresa, tím přesnější kilometry; stačí i jen ulice a město.</p>
                     </div>
