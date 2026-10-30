@@ -481,58 +481,114 @@ window.chybejiciUdajeProfilu = function() {
 };
 
 // Na stránce Můj profil ukáže, co ještě chybí vyplnit. Vychází ze stejné kontroly
-// jako zadání poptávky (uložený profil), takže po uložení zvýraznění zmizí.
+// jako zadání poptávky (uložený profil).
+// Chybějící pole jsou červená. Jakmile je někdo vyplní, zezelenají a pruh nahoře
+// také (je jasné, že už je to v pořádku), ale ten zůstane, dokud se profil neuloží,
+// protože poptávku pustí až uložený profil. Po uložení se ukáže zelené potvrzení.
 // Funkci jde volat opakovaně, vždy nejdřív uklidí po sobě.
 window.zvyrazniChybejiciProfil = function() {
     const chybi = window.chybejiciUdajeProfilu();
     const pole = { "jméno a příjmení": "prof-name", "telefon": "prof-phone", "město": "prof-city" };
+    const tmave = document.documentElement.classList.contains("dark");
+    const CERVENA = "#ef4444";
+    const ZELENA = "#22c55e";
+    const ZELENA_TEXT = tmave ? "#4ade80" : "#15803d";
+    const zRole = window.APP_ROLE === "craftsman";
+
+    const nastavBarvu = function(inp, hotovo) {
+        inp.style.borderColor = hotovo ? ZELENA : CERVENA;
+        inp.style.boxShadow = "0 0 0 3px " + (hotovo ? "rgba(34,197,94,.25)" : "rgba(239,68,68,.25)");
+    };
     const smazZvyrazneni = function(inp) {
         inp.style.borderColor = "";
         inp.style.boxShadow = "";
     };
+    const nastavPruh = function(pruh, hotovo, text) {
+        pruh.style.cssText = "border:1px solid " + (hotovo ? "rgba(34,197,94,.5)" : "rgba(239,68,68,.5)")
+            + ";background:" + (hotovo ? "rgba(34,197,94,.12)" : "rgba(239,68,68,.12)")
+            + ";color:" + (hotovo ? ZELENA_TEXT : CERVENA)
+            + ";border-radius:12px;padding:12px 16px;font-size:14px;font-weight:700;";
+        pruh.textContent = text;
+    };
+    const sloupecProfilu = function() {
+        const inp = document.getElementById("prof-name");
+        return inp && inp.closest(".space-y-5");
+    };
 
+    const bylNekompletni = !!window._profilBylNekompletni;
     document.querySelectorAll(".prof-chybi").forEach(function(el) { el.remove(); });
     Object.keys(pole).forEach(function(nazev) {
         const inp = document.getElementById(pole[nazev]);
         if (inp) smazZvyrazneni(inp);
     });
-    if (!chybi.length) return;
+    window._profilPrekresli = null;
 
-    chybi.forEach(function(nazev) {
-        const inp = document.getElementById(pole[nazev]);
-        if (!inp) return;
-        inp.style.borderColor = "#ef4444";
-        inp.style.boxShadow = "0 0 0 3px rgba(239,68,68,.25)";
-
-        const napoveda = document.createElement("p");
-        napoveda.className = "prof-chybi";
-        napoveda.style.cssText = "margin-top:6px;font-size:12px;font-weight:700;color:#ef4444;";
-        napoveda.textContent = "Doplň: " + nazev;
-        inp.insertAdjacentElement("afterend", napoveda);
-
-        // Jakmile začne psát, červená u toho pole zmizí. Pruh nahoře zůstane
-        // do uložení, protože poptávku pustí až uložený profil.
-        if (!inp.dataset.chybiPoslech) {
-            inp.dataset.chybiPoslech = "1";
-            inp.addEventListener("input", function() {
-                if (!inp.value.trim()) return;
-                smazZvyrazneni(inp);
-                const n = inp.nextElementSibling;
-                if (n && n.classList.contains("prof-chybi")) n.remove();
-            });
+    if (!chybi.length) {
+        // Profil je kompletní. Když byl před chvílí nekompletní, potvrdíme to (jednou).
+        if (bylNekompletni) {
+            window._profilBylNekompletni = false;
+            const sloupec = sloupecProfilu();
+            if (sloupec) {
+                const potvrzeni = document.createElement("div");
+                potvrzeni.className = "prof-chybi";
+                nastavPruh(potvrzeni, true, "Profil je kompletní. " + (zRole ? "Můžeš posílat nabídky." : "Můžeš zadávat poptávky."));
+                sloupec.insertBefore(potvrzeni, sloupec.firstChild);
+            }
         }
-    });
+        return;
+    }
+    window._profilBylNekompletni = true;
 
+    let pruh = null;
     const prvni = document.getElementById(pole[chybi[0]]);
     const sloupec = prvni && prvni.closest(".space-y-5");
     if (sloupec) {
-        const pruh = document.createElement("div");
+        pruh = document.createElement("div");
         pruh.className = "prof-chybi";
-        pruh.style.cssText = "border:1px solid rgba(239,68,68,.5);background:rgba(239,68,68,.12);color:#ef4444;border-radius:12px;padding:12px 16px;font-size:14px;font-weight:700;";
-        pruh.textContent = (window.APP_ROLE === "craftsman" ? "Než začneš posílat nabídky" : "Pro zadání poptávky")
-            + " ještě doplň: " + chybi.join(", ") + ". Potom klikni na Uložit změny v profilu.";
         sloupec.insertBefore(pruh, sloupec.firstChild);
     }
+
+    // Podle toho, co je právě v polích, nastaví červenou nebo zelenou
+    const prekresli = function() {
+        let vse = true;
+        chybi.forEach(function(nazev) {
+            const inp = document.getElementById(pole[nazev]);
+            if (!inp) return;
+            const hotovo = inp.value.trim() !== "";
+            if (!hotovo) vse = false;
+            nastavBarvu(inp, hotovo);
+
+            let napoveda = inp.nextElementSibling;
+            if (!(napoveda && napoveda.classList.contains("prof-chybi"))) {
+                napoveda = document.createElement("p");
+                napoveda.className = "prof-chybi";
+                inp.insertAdjacentElement("afterend", napoveda);
+            }
+            napoveda.style.cssText = "margin-top:6px;font-size:12px;font-weight:700;color:" + (hotovo ? ZELENA_TEXT : CERVENA) + ";";
+            napoveda.textContent = hotovo ? "✓ Vyplněno" : "Doplň: " + nazev;
+        });
+        if (pruh) {
+            nastavPruh(pruh, vse, vse
+                ? "Všechno je vyplněné. Teď klikni na Uložit změny v profilu."
+                : (zRole ? "Než začneš posílat nabídky" : "Pro zadání poptávky")
+                    + " ještě doplň: " + chybi.filter(function(nazev) {
+                        const inp = document.getElementById(pole[nazev]);
+                        return inp && inp.value.trim() === "";
+                    }).join(", ") + ". Potom klikni na Uložit změny v profilu.");
+        }
+    };
+    window._profilPrekresli = prekresli;
+    prekresli();
+
+    // Posluchač se přidá jen jednou na pole; volá vždy aktuální přepočet
+    chybi.forEach(function(nazev) {
+        const inp = document.getElementById(pole[nazev]);
+        if (!inp || inp.dataset.chybiPoslech) return;
+        inp.dataset.chybiPoslech = "1";
+        inp.addEventListener("input", function() {
+            if (window._profilPrekresli) window._profilPrekresli();
+        });
+    });
 };
 
 window.goTab = function(id, title) {
