@@ -640,21 +640,41 @@ window.saveProfile = async function(btnNode) {
     const orig = btnNode.innerHTML; btnNode.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-2"></i>Ukládám...'; btnNode.disabled = true;
     try {
         const updateData = { full_name: document.getElementById("prof-name").value.trim(), phone: document.getElementById("prof-phone").value.trim(), city: document.getElementById("prof-city").value.trim(), bio: document.getElementById("prof-bio")?.value.trim()||"" };
+        // Telefon se ověří DŘÍV než se nahraje fotka. Po nahrání už by se při chybném
+        // čísle fotka přepsala, ale adresa by se do profilu neuložila.
+        const phoneInput = document.getElementById('prof-phone');
+        if (phoneInput) {
+            const cleanPhone = phoneInput.value.replace(/[\s\-().]/g, '');
+            if (cleanPhone.length !== 0 && !/^(\+420|00420)?\d{9}$/.test(cleanPhone)) {
+                window.showToast("Chyba", "Telefonní číslo musí mít 9 číslic.", "error");
+                return;
+            }
+        }
+        // Nahrání fotky může selhat (oprávnění, síť, velikost). Dřív se chyba zahodila
+        // a do profilu se uložila adresa souboru, který neexistuje. Teď se při chybě adresa
+        // neukládá a uživatel se to dozví.
+        let fotkaSelhala = false;
         if (window._profilePhotoBlob) {
             btnNode.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-2"></i>Nahrávám fotku...';
             const path = window.APP_USER.id + ".jpg";
-            await window.sb.storage.from("avatars").upload(path, window._profilePhotoBlob, { upsert: true, contentType: "image/jpeg" });
-            const { data: urlData } = window.sb.storage.from("avatars").getPublicUrl(path);
-            updateData.avatar_url = urlData.publicUrl; window._profilePhotoBlob = null;
+            let chybaFotky = null;
+            try {
+                const odpovedUpload = await window.sb.storage.from("avatars").upload(path, window._profilePhotoBlob, { upsert: true, contentType: "image/jpeg" });
+                chybaFotky = odpovedUpload && odpovedUpload.error;
+            } catch (e) {
+                chybaFotky = e || new Error("Nahrání selhalo");
+            }
+            if (chybaFotky) {
+                console.warn("Nahrání avataru selhalo:", chybaFotky.message || chybaFotky);
+                fotkaSelhala = true;
+            } else {
+                const { data: urlData } = window.sb.storage.from("avatars").getPublicUrl(path);
+                updateData.avatar_url = urlData.publicUrl;
+            }
+            // Po pokusu se čekající fotka zahodí: stránka dál ukazuje uložený avatar
+            // a při chybě si uživatel vybere fotku znovu.
+            window._profilePhotoBlob = null;
         }
-        const phoneInput = document.getElementById('prof-phone');
-    if (phoneInput) {
-        const cleanPhone = phoneInput.value.replace(/[\s\-().]/g, '');
-        if (cleanPhone.length !== 0 && !/^(\+420|00420)?\d{9}$/.test(cleanPhone)) {
-            window.showToast("Chyba", "Telefonní číslo musí mít 9 číslic.", "error");
-            return;
-        }
-    }
         btnNode.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-2"></i>Ukládám profil...';
         const { data, error } = await window.sb.auth.updateUser({ data: updateData });
         if (error) throw error;
@@ -712,7 +732,11 @@ window.saveProfile = async function(btnNode) {
         document.getElementById("user-name").innerText = name;
         document.getElementById("user-avatar").src = displayUrl;
         document.querySelectorAll("#prof-avatar-img").forEach(function(img) { img.src = displayUrl; });
-        window.showToast("Profil uložen! ✅", "Tvoje změny byly úspěšně uloženy.", "success");
+        if (fotkaSelhala) {
+            window.showToast("Profil uložen, fotka ne", "Fotku se nepodařilo nahrát. Vyber ji prosím znovu a ulož.", "error");
+        } else {
+            window.showToast("Profil uložen! ✅", "Tvoje změny byly úspěšně uloženy.", "success");
+        }
 
         // Pokud čekala poptávka z webu na vyplnění profilu, teď ji dokončíme
         if (window.PENDING_POPTAVKA && window.applyPendingPoptavka) {
