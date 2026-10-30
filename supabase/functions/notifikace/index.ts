@@ -10,32 +10,62 @@
 // BEZPEČNOST: funkce je veřejně dostupná na internetu, proto si
 // na začátku ověří tajemství. Bez něj by kdokoliv mohl přes tvůj
 // účet rozesílat e-maily.
+//
+// ZMĚNY OPROTI PŘEDCHOZÍ VERZI (30. 10.):
+//  1) Předmět je čistě ASCII. Dřív do něj mohla proniknout "…" a knihovna
+//     z ní udělala neplatnou hlavičku (mezery a dvojtečka uvnitř
+//     "=?utf-8?Q?...?="), kterou poštovní servery berou jako podezřelou.
+//  2) Tělo zprávy kódujeme sami (base64, řádky po 76 znacích, CRLF).
+//     Kódování quoted-printable v knihovně denomailer 1.6.0 občas poškodí
+//     české znaky na místě zalomení řádku, používá malá hex písmena
+//     a nechává v těle holé LF.
+//  3) Zpráva má textovou i HTML část (multipart/alternative).
+//  4) Odesílatel má jméno ("Remexo <adresa>"), i když je v SMTP_FROM jen adresa.
+//  5) Hlavička Auto-Submitted: auto-generated (strojově odeslané upozornění).
+//  6) Bez zadaného města se nepíše žádné (dřív se tam doplnilo "Brno").
 
 import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
 const secret = Deno.env.get("NOTIF_SECRET") ?? "";
 
-// Předmět s diakritikou se musí zakódovat podle RFC 2047, jinak se
-// v poště objeví "=?utf-8?Q?Nov=c3=a1..." místo "Nová".
-// Knihovna to nedělá spolehlivě, tak si to uděláme sami.
-// V seznamu zpráv se stejně zobrazí jen začátek předmětu
+// Řídicí znaky včetně CR/LF a oddělovačů řádků Unicode (U+2028, U+2029).
+// V hlavičce e-mailu (předmět) nesmí být nikdy: knihovna denomailer
+// předmět zapíše tak, jak je, a zalomení řádku by dovolilo podstrčit
+// další hlavičky (např. Bcc) nebo vlastní text zprávy.
+const RADKY = /[\p{Cc}\p{Zl}\p{Zp}]+/gu;
+
+// Zkrácení textu do předmětu. Tři tečky jsou ASCII, ne znak "…".
 function zkratit(text: unknown, delka: number): string {
-  const t = String(text ?? "").trim();
-  return t.length > delka ? t.slice(0, delka - 1) + "…" : t;
+  const t = String(text ?? "").replace(RADKY, " ").trim();
+  return t.length > delka ? t.slice(0, delka - 3).trimEnd() + "..." : t;
 }
 
-// POZOR: nepoužívat. Knihovna si předmět kóduje sama a když dostane
-// už zakódovaný text, zabalí ho podruhé - v poště se pak objeví
-// "=?utf-8?Q?=3d?UTF-8?B?..." jako viditelný text.
-// Knihovna denomailer diakritiku v předmětu nezvládá. Zkusili jsme ji
-// nechat na ní i zakódovat sami - v obou případech se v poště objevila
-// hlavička jako viditelný text ("=?utf-8?Q?Nov=c3=a1...").
-//
-// Předmět proto posíláme bez diakritiky. Vypadá to hůř, ale je to
-// spolehlivé a čitelné ve všech poštovních klientech.
-// Tělo e-mailu diakritiku má, tam je kódování v pořádku.
-function bezDiakritiky(text: string): string {
-  return String(text ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+// Předmět posíláme bez diakritiky a bez jakéhokoliv jiného znaku mimo ASCII.
+// Knihovna totiž zakódovaný předmět zabalí podruhé (viz dřívější pokusy),
+// takže čistý ASCII je jediná spolehlivá cesta, dokud knihovnu nevyměníme.
+function predmetASCII(text: unknown): string {
+  return String(text ?? "")
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")        // háčky a čárky
+    .replace(RADKY, " ")                    // žádné zalomení řádku v hlavičce
+    .replace(/[^\x20-\x7e]/g, "")           // cokoliv dalšího mimo ASCII pryč
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
+// Text -> UTF-8 -> base64 po řádcích do 76 znaků, oddělených CRLF.
+function base64Radky(text: string): string {
+  const bajty = new TextEncoder().encode(text);
+  let bin = "";
+  for (let i = 0; i < bajty.length; i += 0x8000) {
+    bin += String.fromCharCode(...bajty.subarray(i, i + 0x8000));
+  }
+  return (btoa(bin).match(/.{1,76}/g) ?? []).join("\r\n");
+}
+
+// V textové části budou jen CRLF zalomení.
+function naCRLF(text: string): string {
+  return text.replace(/\r\n|\r|\n/g, "\r\n");
 }
 
 function odpoved(stav: number, telo: Record<string, unknown>) {
@@ -52,18 +82,42 @@ function esc(v: unknown): string {
     .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
 
-function sablona(nadpis: string, text: string, odkaz: string, tlacitko: string) {
-  return `<!DOCTYPE html><html lang="cs"><body style="margin:0;padding:24px;background:#f8fafc;font-family:-apple-system,Segoe UI,Roboto,sans-serif;">
+const PATICKA =
+  "Tento e-mail ti přišel, protože máš účet na Remexo. " +
+  "Odhlásit upozornění můžeš v aplikaci v sekci Můj profil.";
+
+function sablonaHtml(nadpis: string, textHtml: string, odkaz: string, tlacitko: string) {
+  return `<!DOCTYPE html><html lang="cs"><head><meta charset="utf-8"><title>${esc(nadpis)}</title></head><body style="margin:0;padding:24px;background:#f8fafc;font-family:-apple-system,Segoe UI,Roboto,sans-serif;">
   <div style="max-width:480px;margin:0 auto;background:#fff;border-radius:20px;padding:28px;border:1px solid #e2e8f0;">
     <p style="margin:0 0 4px;font-size:13px;font-weight:700;color:#f59e0b;letter-spacing:1px;">REMEXO</p>
-    <h1 style="margin:0 0 12px;font-size:21px;color:#0f172a;">${nadpis}</h1>
-    <p style="margin:0 0 22px;font-size:15px;line-height:1.6;color:#475569;">${text}</p>
-    <a href="${odkaz}" style="display:inline-block;background:#f59e0b;color:#fff;text-decoration:none;padding:13px 26px;border-radius:12px;font-weight:700;font-size:15px;">${tlacitko}</a>
-    <p style="margin:26px 0 0;font-size:12px;color:#94a3b8;line-height:1.5;">
-      Tento e-mail ti přišel, protože máš účet na Remexo.<br>
-      Odhlásit upozornění můžeš v aplikaci v sekci Můj profil.
-    </p>
+    <h1 style="margin:0 0 12px;font-size:21px;color:#0f172a;">${esc(nadpis)}</h1>
+    <p style="margin:0 0 22px;font-size:15px;line-height:1.6;color:#475569;">${textHtml}</p>
+    <a href="${odkaz}" style="display:inline-block;background:#f59e0b;color:#fff;text-decoration:none;padding:13px 26px;border-radius:12px;font-weight:700;font-size:15px;">${esc(tlacitko)}</a>
+    <p style="margin:26px 0 0;font-size:12px;color:#94a3b8;line-height:1.5;">${esc(PATICKA)}</p>
   </div></body></html>`;
+}
+
+function sablonaText(nadpis: string, textPlain: string, odkaz: string, tlacitko: string) {
+  return [
+    "REMEXO",
+    "",
+    nadpis,
+    "",
+    textPlain,
+    "",
+    `${tlacitko}: ${odkaz}`,
+    "",
+    "--",
+    PATICKA,
+    "",
+  ].join("\n");
+}
+
+// Jméno odesílatele. Když je v SMTP_FROM jen adresa, přidá se "Remexo".
+function odesilatel(): string {
+  const z = (Deno.env.get("SMTP_FROM") ?? Deno.env.get("SMTP_USER") ?? "").trim();
+  if (!z) return "";
+  return z.includes("<") ? z : `Remexo <${z}>`;
 }
 
 Deno.serve(async (req) => {
@@ -81,61 +135,55 @@ Deno.serve(async (req) => {
   }
 
   const { udalost, prijemci, nazev, mesto, kategorie, cena } = telo ?? {};
-  // Adresy: jen platný tvar, bez duplicit, s pevným stropem.
-  // Bez deduplikace by při chybě v dotazu přišlo jednomu člověku
-  // deset stejných e-mailů; strop brání zneužití k rozesílce.
-  const MAX_PRIJEMCU = 200;
-  // Povolené jsou jen znaky, které se v adresách běžně vyskytují.
-  // Volnější zápis by propustil i "<script>@x.cz".
-  const platny = (e: unknown) =>
-    typeof e === "string" && e.length <= 254 &&
-    /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(e.trim());
-
-  const seznam: string[] = Array.isArray(prijemci)
-    ? [...new Set(prijemci.filter(platny).map((e) => String(e).trim().toLowerCase()))]
-        .slice(0, MAX_PRIJEMCU)
-    : [];
+  const seznam: string[] = Array.isArray(prijemci) ? prijemci.filter(Boolean).slice(0, 200) : [];
   if (!seznam.length) return odpoved(200, { odeslano: 0, poznamka: "Žádní příjemci." });
 
   const app = "https://app.remexo.cz";
-  let predmet: string, nadpis: string, text: string, tlacitko: string;
+
+  // Hodnoty od uživatelů: bez řídicích znaků, a to ve verzi pro HTML i pro text
+  const c = (v: unknown) => String(v ?? "").replace(RADKY, " ").trim();
+  const h = (v: unknown) => esc(c(v));
+
+  let predmet: string, nadpis: string, textHtml: string, textPlain: string, tlacitko: string;
 
   if (udalost === "nova_poptavka") {
-    predmet = `Nová poptávka: ${zkratit(nazev, 45)}`;
+    const radek = [c(kategorie), c(mesto)].filter(Boolean).join(" · ");
+    predmet = `Nova poptavka: ${zkratit(nazev, 45)}`;
     nadpis = "Nová poptávka ve tvém okolí";
-    text = `<strong>${esc(nazev)}</strong><br>${esc(kategorie)} · ${esc(mesto ?? "Olomouc")}
-            <br><br>Kdo se ozve dřív, má větší šanci zakázku získat.`;
+    textHtml = `<strong>${h(nazev)}</strong>${radek ? `<br>${esc(radek)}` : ""}` +
+      `<br><br>Kdo se ozve dřív, má větší šanci zakázku získat.`;
+    textPlain = `${c(nazev)}\n${radek ? radek + "\n" : ""}\nKdo se ozve dřív, má větší šanci zakázku získat.`;
     tlacitko = "Zobrazit poptávku";
   } else if (udalost === "nova_nabidka") {
-    predmet = `Nová nabídka: ${zkratit(nazev, 45)}`;
+    predmet = `Nova nabidka: ${zkratit(nazev, 45)}`;
     nadpis = "Řemeslník ti poslal nabídku";
-    text = `Na tvoji poptávku <strong>${esc(nazev)}</strong> dorazila nabídka${
-      cena ? ` za ${esc(cena)}` : ""
-    }.<br><br>Podívej se na ni a rozhodni se, jestli ti sedí.`;
+    const cenaTxt = c(cena) ? ` za ${c(cena)}` : "";
+    textHtml = `Na tvoji poptávku <strong>${h(nazev)}</strong> dorazila nabídka${esc(cenaTxt)}.` +
+      `<br><br>Podívej se na ni a rozhodni se, jestli ti sedí.`;
+    textPlain = `Na tvoji poptávku "${c(nazev)}" dorazila nabídka${cenaTxt}.\n\n` +
+      `Podívej se na ni a rozhodni se, jestli ti sedí.`;
     tlacitko = "Zobrazit nabídku";
-  } else if (udalost === "neprectene_zpravy") {
-    // kategorie nese počet nepřečtených zpráv
-    const pocet = Number(kategorie) || 1;
-    const slovo = pocet === 1 ? "zprávu" : (pocet < 5 ? "zprávy" : "zpráv");
-    predmet = `Cekaji na tebe zpravy: ${zkratit(nazev, 40)}`;
-    nadpis = pocet === 1 ? "Čeká na tebe zpráva" : `Čekají na tebe ${pocet} ${slovo}`;
-    text = `V konverzaci u zakázky <strong>${esc(nazev)}</strong> máš nepřečtené zprávy.<br><br>`
-         + `Druhá strana čeká na odpověď — čím dřív se ozveš, tím líp.`;
-    tlacitko = "Přečíst zprávy";
   } else if (udalost === "zakazka_hotova") {
     // kategorie nese informaci, komu píšeme
     const zakaznikovi = kategorie === "zakaznik";
-    predmet = `Zakázka dokončena: ${zkratit(nazev, 45)}`;
+    predmet = `Zakazka dokoncena: ${zkratit(nazev, 45)}`;
     nadpis = zakaznikovi ? "Řemeslník označil práci za hotovou" : "Zákazník potvrdil dokončení";
-    text = zakaznikovi
-      ? `U zakázky <strong>${esc(nazev)}</strong> je hotovo.<br><br>Zkontroluj práci a potvrď dokončení. Pak můžeš řemeslníka ohodnotit — pomůže to dalším lidem při výběru.`
-      : `Zákazník potvrdil dokončení zakázky <strong>${esc(nazev)}</strong>.<br><br>Díky za odvedenou práci.`;
+    if (zakaznikovi) {
+      textHtml = `U zakázky <strong>${h(nazev)}</strong> je hotovo.<br><br>` +
+        `Zkontroluj práci a potvrď dokončení. Pak můžeš řemeslníka ohodnotit — pomůže to dalším lidem při výběru.`;
+      textPlain = `U zakázky "${c(nazev)}" je hotovo.\n\n` +
+        `Zkontroluj práci a potvrď dokončení. Pak můžeš řemeslníka ohodnotit — pomůže to dalším lidem při výběru.`;
+    } else {
+      textHtml = `Zákazník potvrdil dokončení zakázky <strong>${h(nazev)}</strong>.<br><br>Díky za odvedenou práci.`;
+      textPlain = `Zákazník potvrdil dokončení zakázky "${c(nazev)}".\n\nDíky za odvedenou práci.`;
+    }
     tlacitko = "Zobrazit zakázku";
   } else {
     return odpoved(400, { chyba: "Neznámá událost." });
   }
 
-  const html = sablona(nadpis, text, app, tlacitko);
+  const html = sablonaHtml(nadpis, textHtml, app, tlacitko);
+  const plain = sablonaText(nadpis, textPlain, app, tlacitko);
 
   const client = new SMTPClient({
     connection: {
@@ -149,6 +197,9 @@ Deno.serve(async (req) => {
     },
   });
 
+  const from = odesilatel();
+  const subject = predmetASCII(predmet);
+
   let odeslano = 0;
   const chyby: string[] = [];
 
@@ -156,10 +207,23 @@ Deno.serve(async (req) => {
     try {
       // Každému zvlášť, aby příjemci navzájem neviděli své adresy
       await client.send({
-        from: Deno.env.get("SMTP_FROM") ?? Deno.env.get("SMTP_USER") ?? "",
+        from,
         to: email,
-        subject: bezDiakritiky(predmet),
-        html,
+        subject,
+        // Tělo předkódované base64; textová část první, HTML druhá (ta se preferuje)
+        mimeContent: [
+          {
+            mimeType: 'text/plain; charset="utf-8"',
+            content: base64Radky(naCRLF(plain)),
+            transferEncoding: "base64",
+          },
+          {
+            mimeType: 'text/html; charset="utf-8"',
+            content: base64Radky(naCRLF(html)),
+            transferEncoding: "base64",
+          },
+        ],
+        headers: { "Auto-Submitted": "auto-generated" },
       });
       odeslano++;
     } catch (e) {
