@@ -1,6 +1,7 @@
 // REMEXO: odesílání e-mailových upozornění
 //
-// Spouští ji databáze při vzniku poptávky nebo nabídky.
+// Spouští ji databáze při vzniku poptávky nebo nabídky, při dokončení
+// zakázky a při nepřečtených zprávách.
 // Nasazení: supabase functions deploy notifikace
 //
 // Potřebné proměnné (supabase secrets set ...):
@@ -11,7 +12,7 @@
 // na začátku ověří tajemství. Bez něj by kdokoliv mohl přes tvůj
 // účet rozesílat e-maily.
 //
-// ZMĚNY OPROTI PŘEDCHOZÍ VERZI (30. 10.):
+// ZMĚNY OPROTI PŘEDCHOZÍ VERZI (30. 10., verze 2):
 //  1) Předmět je čistě ASCII. Dřív do něj mohla proniknout "…" a knihovna
 //     z ní udělala neplatnou hlavičku (mezery a dvojtečka uvnitř
 //     "=?utf-8?Q?...?="), kterou poštovní servery berou jako podezřelou.
@@ -22,7 +23,10 @@
 //  3) Zpráva má textovou i HTML část (multipart/alternative).
 //  4) Odesílatel má jméno ("Remexo <adresa>"), i když je v SMTP_FROM jen adresa.
 //  5) Hlavička Auto-Submitted: auto-generated (strojově odeslané upozornění).
-//  6) Bez zadaného města se nepíše žádné (dřív se tam doplnilo "Brno").
+//  6) Bez zadaného města se nepíše žádné (dřív se tam doplnilo "Brno" / "Olomouc").
+//  7) Zachováno z verze v repozitáři: kontrola a deduplikace adres příjemců,
+//     strop 200 příjemců, událost "neprectene_zpravy".
+//  8) Zachováno ze starší nasazené verze: odstranění řídicích znaků (RADKY).
 
 import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
@@ -135,7 +139,21 @@ Deno.serve(async (req) => {
   }
 
   const { udalost, prijemci, nazev, mesto, kategorie, cena } = telo ?? {};
-  const seznam: string[] = Array.isArray(prijemci) ? prijemci.filter(Boolean).slice(0, 200) : [];
+
+  // Adresy: jen platný tvar, bez duplicit, s pevným stropem.
+  // Bez deduplikace by při chybě v dotazu přišlo jednomu člověku
+  // deset stejných e-mailů; strop brání zneužití k rozesílce.
+  const MAX_PRIJEMCU = 200;
+  // Povolené jsou jen znaky, které se v adresách běžně vyskytují.
+  // Volnější zápis by propustil i "<script>@x.cz".
+  const platny = (e: unknown) =>
+    typeof e === "string" && e.length <= 254 &&
+    /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(e.trim());
+
+  const seznam: string[] = Array.isArray(prijemci)
+    ? [...new Set(prijemci.filter(platny).map((e) => String(e).trim().toLowerCase()))]
+        .slice(0, MAX_PRIJEMCU)
+    : [];
   if (!seznam.length) return odpoved(200, { odeslano: 0, poznamka: "Žádní příjemci." });
 
   const app = "https://app.remexo.cz";
@@ -163,6 +181,17 @@ Deno.serve(async (req) => {
     textPlain = `Na tvoji poptávku "${c(nazev)}" dorazila nabídka${cenaTxt}.\n\n` +
       `Podívej se na ni a rozhodni se, jestli ti sedí.`;
     tlacitko = "Zobrazit nabídku";
+  } else if (udalost === "neprectene_zpravy") {
+    // kategorie nese počet nepřečtených zpráv (1 až 99)
+    const pocet = Math.min(Math.max(Math.trunc(Number(kategorie)) || 1, 1), 99);
+    const slovo = pocet === 1 ? "zprávu" : (pocet < 5 ? "zprávy" : "zpráv");
+    predmet = `Cekaji na tebe zpravy: ${zkratit(nazev, 40)}`;
+    nadpis = pocet === 1 ? "Čeká na tebe zpráva" : `Čekají na tebe ${pocet} ${slovo}`;
+    textHtml = `V konverzaci u zakázky <strong>${h(nazev)}</strong> máš nepřečtené zprávy.<br><br>` +
+      `Druhá strana čeká na odpověď — čím dřív se ozveš, tím líp.`;
+    textPlain = `V konverzaci u zakázky "${c(nazev)}" máš nepřečtené zprávy.\n\n` +
+      `Druhá strana čeká na odpověď — čím dřív se ozveš, tím líp.`;
+    tlacitko = "Přečíst zprávy";
   } else if (udalost === "zakazka_hotova") {
     // kategorie nese informaci, komu píšeme
     const zakaznikovi = kategorie === "zakaznik";
