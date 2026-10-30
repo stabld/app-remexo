@@ -604,6 +604,7 @@ window.saveProfile = async function(btnNode) {
         if (error) throw error;
         const freshUser = (await window.sb.auth.getUser()).data?.user || data.user;
         window.APP_USER = freshUser;
+        if (window.zvyrazniChybejiciProfil) window.zvyrazniChybejiciProfil();
         const name = freshUser.user_metadata?.full_name || updateData.full_name;
         const savedAvatarUrl = freshUser.user_metadata?.avatar_url || updateData.avatar_url;
         const displayUrl = savedAvatarUrl || ("https://api.dicebear.com/7.x/avataaars/svg?seed=" + encodeURIComponent(name) + "&backgroundColor=" + (window.APP_ROLE==="customer"?"f59e0b":"0f172a"));
