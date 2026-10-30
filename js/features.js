@@ -435,6 +435,48 @@ window.nactiHodnoceni = async function(craftsmanId) {
     }
 };
 
+// Smaže fotky poptávky ze Storage (bucket "poptavky").
+// MUSÍ proběhnout dřív, než se poptávka smaže z tabulky: pravidlo pro mazání souborů
+// hledá poptávku v tabulce requests a ověřuje, že patří přihlášenému. Po jejím smazání
+// by už soubory smazat nešly a zůstaly by ve Storage navždy.
+// Chyba tady poptávku nezastaví, uživatel ji smazat chce. Osiřelé soubory zachytí
+// kontrolní dotaz 3_osirele_soubory.sql.
+window.smazFotkyPoptavky = async function(idPoptavky, popis) {
+    if (!window.sb || !idPoptavky) return 0;
+    const id = String(idPoptavky);
+    const cesty = new Set();
+
+    try {
+        // 1) všechno, co leží ve složce této poptávky
+        const { data } = await window.sb.storage.from("poptavky").list(id, { limit: 100 });
+        (data || []).forEach(function(f) { if (f && f.name) cesty.add(id + "/" + f.name); });
+    } catch (e) {
+        console.warn("Výpis fotek poptávky selhal:", e && e.message);
+    }
+
+    try {
+        // 2) cesty uložené v popisu, ale jen z vlastní složky poptávky, nikdy cizí
+        const ex = window.extractPhotoFromDesc ? window.extractPhotoFromDesc(popis) : { soubory: [] };
+        (ex.soubory || []).forEach(function(c) {
+            if (c.indexOf(id + "/") === 0 && c.indexOf("..") === -1) cesty.add(c);
+        });
+    } catch (e) {
+        console.warn("Čtení cest z popisu selhalo:", e && e.message);
+    }
+
+    if (!cesty.size) return 0;
+    try {
+        const { data, error } = await window.sb.storage.from("poptavky").remove(Array.from(cesty));
+        if (error) { console.warn("Fotky poptávky se nesmazaly:", error.message); return 0; }
+        const smazano = (data || []).length;
+        if (smazano < cesty.size) console.warn("Ze Storage se smazalo " + smazano + " z " + cesty.size + " fotek.");
+        return smazano;
+    } catch (e) {
+        console.warn("Fotky poptávky se nesmazaly:", e && e.message);
+        return 0;
+    }
+};
+
 window.confirmDelete = function(index, sbId) {
     window._pendingDelete = { index, sbId };
     const modal = document.getElementById("confirm-modal");
@@ -470,6 +512,20 @@ window._doDeleteRequest = async function(index, sbId) {
 
     if(sbId&&window.sb){
         try {
+            // Stav si ověříme znovu v databázi: stránka mohla být zastaralá (jiné okno či zařízení)
+            // a mazání fotek už nejde vzít zpět. Chyba dotazu mazání neblokuje.
+            const { data: akt } = await window.sb.from("requests").select("status").eq("id",sbId).maybeSingle();
+            if (akt && akt.status !== "waiting") {
+                window.showToast(
+                    "Tuto poptávku nelze smazat",
+                    akt.status === "done"
+                        ? "Dokončené zakázky zůstávají v historii kvůli hodnocení."
+                        : "Řemeslník už na ní pracuje. Nejdřív zakázku uzavři.",
+                    "error"
+                );
+                return;
+            }
+            await window.smazFotkyPoptavky(sbId, poptavka && poptavka.popis);   // dřív než poptávka, viz výše
             await window.sb.from("offers").delete().eq("request_id",sbId);
             await window.sb.from("messages").delete().eq("conversation_id",String(sbId));
             const {error}=await window.sb.from("requests").delete().eq("id",sbId);
