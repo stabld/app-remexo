@@ -118,7 +118,7 @@ window.customerHTML = function(name) {
                             <div id="photo-zone" class="w-full h-full border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-2xl flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-900 group-hover:border-remexo-500 group-hover:bg-remexo-50 dark:group-hover:bg-remexo-500/10 transition-all overflow-hidden relative z-10 shadow-inner">
                                 <i class="popt-ikona fa-solid fa-camera text-4xl mb-3 text-slate-300 dark:text-slate-500 group-hover:text-remexo-500 transition-colors"></i>
                                 <p class="text-sm font-bold text-slate-500 group-hover:text-remexo-600 transition-colors">Klikni pro nahrání</p>
-                                <p class="popt-hint text-xs text-slate-400 mt-1">Max. 5 fotek</p>
+                                <p class="popt-hint text-xs text-slate-400 mt-1">Max. 5 fotek. Nefoť lidi ani doklady.</p>
                             </div>
                             <div id="photo-gallery" class="hidden absolute inset-0 z-30 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-3 overflow-y-auto grid grid-cols-2 gap-2 content-start pointer-events-none"></div>
                         </div>
