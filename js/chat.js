@@ -492,6 +492,7 @@ window.spustHlidaniZprav = function() {
                                 window.showToast("Nabídka odmítnuta ❌", window.hlaskaOdmitnuti(o.requests?.title || "", o.duvod_odmitnuti, mohuZnovu), "error");
                             }
                             if (window.loadMarketFromDB) window.loadMarketFromDB();
+                            if (window.loadCraftsmanJobsFromDB) window.loadCraftsmanJobsFromDB();
                         } else if (o.status === "accepted") {
                             window.showToast("Nabídka přijata! ✅", "Zákazník si vybral tebe na: " + nazev, "success");
                             if (window.loadCraftsmanJobsFromDB) window.loadCraftsmanJobsFromDB();
@@ -602,7 +603,7 @@ window.initGlobalNotifications = function() {
             const msg = payload.new;
             const isMyChat = window.APP_ROLE === "customer" 
                 ? (window.STATE.requests || []).some(r => String(r.sbId) === String(msg.conversation_id))
-                : (window.STATE.craftJobs || []).some(j => String(j.requestId) === String(msg.conversation_id));
+                : (window.STATE.craftJobs || []).some(j => j.status !== "rejected" && String(j.requestId) === String(msg.conversation_id));
             console.log("[notif] Přišla nová zpráva přes realtime:", msg, "| isMyChat:", isMyChat, "| activeChatId:", window.activeChatId);
 
             if (isMyChat && msg.sender_id !== window.APP_USER.id) {
