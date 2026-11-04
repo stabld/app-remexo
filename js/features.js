@@ -269,7 +269,9 @@ window.odstoupitZeZakazky = function(requestId) {
                 const zaznam = window._mojeNabidky.get(String(requestId));
                 window._mojeNabidky.set(String(requestId), Object.assign({}, zaznam, { stav: "rejected", duvod: null }));
             }
-            window.showToast("Odstoupil jsi ze zakázky", "Zákazník uvidí tvůj důvod a vybere si jiného řemeslníka.", "info");
+            window.showToast("Odstoupil jsi ze zakázky", duvod
+                ? "Zákazník uvidí tvůj důvod a vybere si jiného řemeslníka."
+                : "Zakázka je zpět na Tržišti a zákazník si vybere jiného řemeslníka.", "info");
             if (window.loadCraftsmanJobsFromDB) window.loadCraftsmanJobsFromDB();
             if (window.nactiMojeNabidky) window.nactiMojeNabidky();
         }
