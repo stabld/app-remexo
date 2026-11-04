@@ -342,6 +342,12 @@ window.createBeautifulCard = function(req, isMarket, i) {
             } else {
                 tlacitkoNabidky = '<button onclick="window.openOfferModal(\'' + req.id + '\')" class="w-full bg-remexo-500 hover:bg-remexo-600 text-white py-3.5 rounded-xl font-bold text-sm transition shadow-md">Podat nabídku</button>';
             }
+            if (stavNabidky === "rejected" && typeof window.duvodOdmitnutiMojeNabidky === "function") {
+                const duvodText = window.duvodOdmitnutiMojeNabidky(req.id);
+                if (duvodText) {
+                    tlacitkoNabidky = '<div class="mb-2 text-xs font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl px-3 py-2">Nabídka byla odmítnuta, z důvodu: ' + window.escapeHtml(duvodText) + '.</div>' + tlacitkoNabidky;
+                }
+            }
             const oblibena = (typeof window.jeOblibena === "function") ? window.jeOblibena(req.id) : false;
             const zalozkaIkona = oblibena ? "fa-solid fa-bookmark" : "fa-regular fa-bookmark";
             const zalozkaBarva = oblibena ? "text-remexo-500 border-remexo-500" : "text-slate-400 border-slate-200 dark:border-slate-700";
