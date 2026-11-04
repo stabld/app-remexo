@@ -463,10 +463,17 @@ window.spustHlidaniZprav = function() {
         // Řemeslníkovi hlídáme, jestli zákazník nerozhodl o jeho nabídce
         if (window.APP_ROLE === "craftsman" && window._mojeNabidky) {
             try {
-                const { data: nabidky } = await window.sb
+                let { data: nabidky, error: chybaDotazu } = await window.sb
                     .from("offers")
-                    .select("request_id, status, requests(title, status)")
+                    .select("request_id, status, pokusy, duvod_odmitnuti, requests(title, status)")
                     .eq("craftsman_id", window.APP_USER.id);
+                if (chybaDotazu && /duvod_odmitnuti/.test(chybaDotazu.message || "")) {
+                    // Databáze ještě nemá nový sloupec (nabidky_v1.sql)
+                    ({ data: nabidky } = await window.sb
+                        .from("offers")
+                        .select("request_id, status, requests(title, status)")
+                        .eq("craftsman_id", window.APP_USER.id));
+                }
 
                 for (const o of (nabidky || [])) {
                     const klic = String(o.request_id);
@@ -478,7 +485,12 @@ window.spustHlidaniZprav = function() {
 
                     if (puvodni && puvodni !== o.status) {
                         if (o.status === "rejected") {
-                            window.showToast("Nabídka odmítnuta ❌", "Zákazník vybral někoho jiného na: " + nazev + ". Můžeš poslat novou nabídku.", "error");
+                            // Přijatá nabídka, která se uzavřela, je moje vlastní odstoupení od zakázky
+                            if (puvodni !== "accepted") {
+                                const pokusyTed = o.pokusy || (zaznam && zaznam.pokusy) || 1;
+                                const mohuZnovu = stavZakazky === "waiting" && pokusyTed < window.MAX_POKUSU;
+                                window.showToast("Nabídka odmítnuta ❌", window.hlaskaOdmitnuti(o.requests?.title || "", o.duvod_odmitnuti, mohuZnovu), "error");
+                            }
                             if (window.loadMarketFromDB) window.loadMarketFromDB();
                         } else if (o.status === "accepted") {
                             window.showToast("Nabídka přijata! ✅", "Zákazník si vybral tebe na: " + nazev, "success");
@@ -513,7 +525,8 @@ window.spustHlidaniZprav = function() {
                     window._mojeNabidky.set(klic, {
                         stav: o.status,
                         stavZakazky: stavZakazky,
-                        pokusy: (zaznam && zaznam.pokusy) || 1
+                        pokusy: o.pokusy || (zaznam && zaznam.pokusy) || 1,
+                        duvod: o.duvod_odmitnuti || null
                     });
                 }
             } catch (e) {}
@@ -621,8 +634,20 @@ window.initGlobalNotifications = function() {
                     if (window.loadCraftsmanJobsFromDB) window.loadCraftsmanJobsFromDB();
                     if (window.loadCraftsmanConversations) window.loadCraftsmanConversations();
                 } else if (payload.new.status === "rejected") {
-                    // Odmítnutí nabídky NENÍ zpráva - jde jen do zvonečku nahoře
-                    window.showToast("Nabídka odmítnuta ❌", "Zákazník si vybral někoho jiného.", "error");
+                    const klic = String(payload.new.request_id);
+                    const zaznam = window._mojeNabidky ? window._mojeNabidky.get(klic) : null;
+                    // Přijatá nabídka, která se uzavřela, je moje vlastní odstoupení od zakázky
+                    if (!(zaznam && zaznam.stav === "accepted")) {
+                        // Odmítnutí nabídky NENÍ zpráva - jde jen do zvonečku nahoře
+                        const pokusyTed = payload.new.pokusy || (zaznam && zaznam.pokusy) || 1;
+                        const mohuZnovu = !!(zaznam && zaznam.stavZakazky === "waiting") && pokusyTed < window.MAX_POKUSU;
+                        window.showToast("Nabídka odmítnuta ❌", window.hlaskaOdmitnuti((window.najdiPoptavku && (window.najdiPoptavku(payload.new.request_id) || {}).title) || "", payload.new.duvod_odmitnuti, mohuZnovu), "error");
+                        // Poll na pozadí by tutéž změnu hlásil podruhé, proto si ji zapíšeme hned
+                        if (window._mojeNabidky) window._mojeNabidky.set(klic, Object.assign({}, zaznam || {}, {
+                            stav: "rejected", pokusy: pokusyTed, duvod: payload.new.duvod_odmitnuti || null
+                        }));
+                        if (window.loadMarketFromDB) window.loadMarketFromDB();
+                    }
                     if (window.loadCraftsmanJobsFromDB) window.loadCraftsmanJobsFromDB();
                 }
             }
