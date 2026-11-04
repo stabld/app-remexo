@@ -264,6 +264,11 @@ window.odstoupitZeZakazky = function(requestId) {
             }
 
             window.zavritZruseni();
+            // Vlastní odstoupení nemá spustit hlášku "Nabídka odmítnuta"
+            if (window._mojeNabidky && window._mojeNabidky.has(String(requestId))) {
+                const zaznam = window._mojeNabidky.get(String(requestId));
+                window._mojeNabidky.set(String(requestId), Object.assign({}, zaznam, { stav: "rejected", duvod: null }));
+            }
             window.showToast("Odstoupil jsi ze zakázky", "Zákazník uvidí tvůj důvod a vybere si jiného řemeslníka.", "info");
             if (window.loadCraftsmanJobsFromDB) window.loadCraftsmanJobsFromDB();
             if (window.nactiMojeNabidky) window.nactiMojeNabidky();
@@ -1420,25 +1425,132 @@ window.loadOffersForRequest = async function(requestId, requestTitle) {
     const modal=document.getElementById("offers-modal");modal.classList.remove("hidden");void modal.offsetWidth;modal.classList.add("opacity-100");
 };
 
-window.rejectOffer = async function(btnNode, offerId, requestId, requestTitle) {
-    if(!window.sb) return;
-    btnNode.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-lg"></i>';
-    btnNode.disabled = true;
-    try {
-        const { error: chybaOdmitnuti } = await window.sb.from("offers").update({status: "rejected"}).eq("id", offerId);
-        if (chybaOdmitnuti) {
-            window.showToast("Nepodařilo se odmítnout nabídku", chybaOdmitnuti.message || "Zkus to prosím znovu.", "error");
-            btnNode.innerHTML = '<i class="fa-solid fa-times text-lg"></i>';
-            btnNode.disabled = false;
-            return;
+// === DŮVOD ODMÍTNUTÍ NABÍDKY ===
+// Zákazník při odmítnutí vybírá důvod z nabídky, řemeslník ho pak uvidí.
+// Kódy musí odpovídat omezení offers_duvod_odmitnuti_check v databázi (nabidky_v1.sql).
+window.DUVODY_ODMITNUTI = [
+    { kod: "cena", zakaznik: "Cena je pro mě příliš vysoká", remeslnik: "cena je pro zákazníka příliš vysoká" },
+    { kod: "termin", zakaznik: "Nevyhovuje mi termín", remeslnik: "zákazníkovi nevyhovuje termín" },
+    { kod: "jiny_remeslnik", zakaznik: "Vybral jsem jiného řemeslníka", remeslnik: "zákazník vybral jiného řemeslníka" },
+    { kod: "nepotrebuji", zakaznik: "Už to nepotřebuji nebo jsem to vyřešil jinak", remeslnik: "zákazník už práci nepotřebuje nebo ji vyřešil jinak" },
+    { kod: "jine", zakaznik: "Jiný důvod", remeslnik: "jiný důvod" }
+];
+
+// Text důvodu pro řemeslníka. Neznámý kód (nebo žádný) vrátí prázdný řetězec.
+window.textDuvoduProRemeslnika = function(kod) {
+    const d = (window.DUVODY_ODMITNUTI || []).find(x => x.kod === kod);
+    return d ? d.remeslnik : "";
+};
+
+// Hláška pro řemeslníka: "Nabídka ... byla odmítnuta, z důvodu: ..."
+window.hlaskaOdmitnuti = function(nazev, duvod, mohuZkusitZnovu) {
+    const t = window.textDuvoduProRemeslnika(duvod);
+    let s = t
+        ? "Nabídka" + (nazev ? " na „" + nazev + "“" : "") + " byla odmítnuta, z důvodu: " + t + "."
+        : "Zákazník odmítl tvoji nabídku" + (nazev ? " na: " + nazev : "") + ".";
+    if (mohuZkusitZnovu) s += " Můžeš poslat novou nabídku.";
+    return s;
+};
+
+window._zajistiModalOdmitnuti = function() {
+    let m = document.getElementById("odmitnuti-modal");
+    if (m) return m;
+    m = document.createElement("div");
+    m.id = "odmitnuti-modal";
+    m.className = "hidden fixed inset-0 z-[300] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm opacity-0 transition-opacity duration-300";
+    m.innerHTML = '<div class="bg-white dark:bg-[#0f172a] rounded-[2rem] shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-md p-8">'
+        + '<div class="w-14 h-14 bg-red-100 dark:bg-red-500/20 text-red-500 rounded-full flex items-center justify-center text-2xl mb-5"><i class="fa-solid fa-circle-xmark"></i></div>'
+        + '<h3 class="text-xl font-black dark:text-white mb-2">Proč nabídku odmítáš?</h3>'
+        + '<p class="text-sm text-slate-500 dark:text-slate-400 mb-5">Vyber důvod. Řemeslník ho uvidí, aby věděl, proč nabídka neuspěla.</p>'
+        + '<div id="odmitnuti-moznosti" class="flex flex-col gap-2 mb-6"></div>'
+        + '<div class="flex gap-3">'
+        + '<button type="button" id="odmitnuti-zpet" class="flex-1 py-3.5 rounded-xl font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition">Zpět</button>'
+        + '<button type="button" id="odmitnuti-potvrdit" disabled class="flex-1 bg-red-500 hover:bg-red-600 text-white py-3.5 rounded-xl font-bold transition opacity-50 cursor-not-allowed">Odmítnout</button>'
+        + '</div></div>';
+    document.body.appendChild(m);
+    return m;
+};
+
+window.zavritOdmitnuti = function() {
+    const m = document.getElementById("odmitnuti-modal");
+    if (!m) return;
+    m.classList.remove("opacity-100");
+    setTimeout(() => m.classList.add("hidden"), 250);
+};
+
+// Okno s výběrem důvodu. Tlačítko "Odmítnout" jde použít až po výběru.
+// akce(kodDuvodu) se zavolá po potvrzení.
+window._otevritOdmitnuti = function(akce) {
+    const m = window._zajistiModalOdmitnuti();
+    const seznam = m.querySelector("#odmitnuti-moznosti");
+    const potvrdit = m.querySelector("#odmitnuti-potvrdit");
+    const zpet = m.querySelector("#odmitnuti-zpet");
+    const ZAKLAD = "w-full text-left px-4 py-3 rounded-xl border-2 text-sm font-bold transition ";
+    const NEVYBRANO = "border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800";
+    const VYBRANO = "border-remexo-500 bg-remexo-500/10 text-remexo-600 dark:text-white";
+    let vybrany = null;
+
+    const zamknout = () => { potvrdit.disabled = true; potvrdit.classList.add("opacity-50", "cursor-not-allowed"); };
+    const odemknout = () => { potvrdit.disabled = false; potvrdit.classList.remove("opacity-50", "cursor-not-allowed"); };
+
+    seznam.innerHTML = "";
+    window.DUVODY_ODMITNUTI.forEach(d => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.dataset.kod = d.kod;
+        b.textContent = d.zakaznik;
+        b.className = ZAKLAD + NEVYBRANO;
+        b.onclick = () => {
+            vybrany = d.kod;
+            seznam.querySelectorAll("button").forEach(x => { x.className = ZAKLAD + (x === b ? VYBRANO : NEVYBRANO); });
+            odemknout();
+        };
+        seznam.appendChild(b);
+    });
+
+    potvrdit.textContent = "Odmítnout";
+    zamknout();
+    zpet.onclick = () => window.zavritOdmitnuti();
+    potvrdit.onclick = async () => {
+        if (!vybrany) return;
+        potvrdit.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i>';
+        zamknout();
+        try {
+            await akce(vybrany);
+        } finally {
+            potvrdit.textContent = "Odmítnout";
+            if (vybrany) odemknout();
         }
-        window.showToast("Nabídka skryta", "Řemeslník byl odmítnut.", "info");
-        window.loadOffersForRequest(requestId, requestTitle);
-    } catch(e) {
-        window.showToast("Chyba", "Nepodařilo se odmítnout nabídku.", "error");
-        btnNode.innerHTML = '<i class="fa-solid fa-times text-lg"></i>';
-        btnNode.disabled = false;
-    }
+    };
+
+    m.classList.remove("hidden");
+    void m.offsetWidth;
+    m.classList.add("opacity-100");
+};
+
+window.rejectOffer = function(btnNode, offerId, requestId, requestTitle) {
+    if (!window.sb) return;
+    window._otevritOdmitnuti(async (duvod) => {
+        try {
+            let { error: chybaOdmitnuti } = await window.sb.from("offers")
+                .update({ status: "rejected", duvod_odmitnuti: duvod }).eq("id", offerId);
+            if (chybaOdmitnuti && /duvod_odmitnuti/.test(chybaOdmitnuti.message || "")) {
+                // Databáze ještě nemá nový sloupec (nabidky_v1.sql): odmítnutí proběhne bez důvodu
+                console.warn("Sloupec duvod_odmitnuti v databázi chybí, odmítám bez důvodu.");
+                ({ error: chybaOdmitnuti } = await window.sb.from("offers")
+                    .update({ status: "rejected" }).eq("id", offerId));
+            }
+            if (chybaOdmitnuti) {
+                window.showToast("Nepodařilo se odmítnout nabídku", chybaOdmitnuti.message || "Zkus to prosím znovu.", "error");
+                return;
+            }
+            window.zavritOdmitnuti();
+            window.showToast("Nabídka odmítnuta", "Řemeslník uvidí důvod, který jsi zvolil.", "info");
+            window.loadOffersForRequest(requestId, requestTitle);
+        } catch(e) {
+            window.showToast("Chyba", "Nepodařilo se odmítnout nabídku.", "error");
+        }
+    });
 };
 
 window.acceptOffer = async function(offerId, requestId, craftsmanName) {
@@ -1497,8 +1609,14 @@ window.acceptOffer = async function(offerId, requestId, craftsmanName) {
 
     // Ostatní nabídky u téhle poptávky už nemají smysl
     try {
-        const { error: chybaUzavreni } = await window.sb.from("offers").update({status:"rejected"})
+        let { error: chybaUzavreni } = await window.sb.from("offers")
+            .update({status:"rejected", duvod_odmitnuti:"jiny_remeslnik"})
             .eq("request_id", requestId).neq("id", offerId).eq("status", "pending");
+        if (chybaUzavreni && /duvod_odmitnuti/.test(chybaUzavreni.message || "")) {
+            // Databáze ještě nemá nový sloupec (nabidky_v1.sql): zavřeme je bez důvodu
+            ({ error: chybaUzavreni } = await window.sb.from("offers").update({status:"rejected"})
+                .eq("request_id", requestId).neq("id", offerId).eq("status", "pending"));
+        }
         if (chybaUzavreni) console.error("Ostatní nabídky se nepodařilo uzavřít:", chybaUzavreni.message);
     } catch(e) { console.error("Ostatní nabídky se nepodařilo uzavřít:", e.message); }
 
@@ -1914,15 +2032,23 @@ window.nactiMojeNabidky = async function() {
     window._mojeNabidky = new Map();
     if (!window.sb || !window.APP_USER) return;
     try {
-        const { data, error } = await window.sb
+        let { data, error } = await window.sb
             .from("offers")
-            .select("request_id, status, pokusy, requests(status)")
+            .select("request_id, status, pokusy, duvod_odmitnuti, requests(status)")
             .eq("craftsman_id", window.APP_USER.id);
+        if (error && /duvod_odmitnuti/.test(error.message || "")) {
+            // Databáze ještě nemá nový sloupec (nabidky_v1.sql)
+            ({ data, error } = await window.sb
+                .from("offers")
+                .select("request_id, status, pokusy, requests(status)")
+                .eq("craftsman_id", window.APP_USER.id));
+        }
         if (error) throw error;
         (data || []).forEach(o => window._mojeNabidky.set(String(o.request_id), {
             stav: o.status,
             stavZakazky: o.requests?.status || null,
-            pokusy: o.pokusy || 1
+            pokusy: o.pokusy || 1,
+            duvod: o.duvod_odmitnuti || null
         }));
     } catch (e) {
         console.error("Nepodařilo se načíst odeslané nabídky:", e.message);
@@ -1932,6 +2058,12 @@ window.nactiMojeNabidky = async function() {
 window.stavMeNabidky = function(id) {
     const zaznam = window._mojeNabidky.get(String(id));
     return zaznam ? zaznam.stav : null;
+};
+
+// Důvod odmítnutí mojí nabídky (text pro řemeslníka), nebo "" když ho zákazník nevybral
+window.duvodOdmitnutiMojeNabidky = function(id) {
+    const zaznam = window._mojeNabidky.get(String(id));
+    return zaznam && zaznam.duvod ? window.textDuvoduProRemeslnika(zaznam.duvod) : "";
 };
 
 window.pocetPokusu = function(id) {
