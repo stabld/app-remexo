@@ -295,12 +295,12 @@ window.createBeautifulCard = function(req, isMarket, i) {
                 '<div class="req-akce flex flex-wrap gap-3 mt-6 pt-5 border-t border-slate-100 dark:border-slate-800">' +
                 '<button onclick="window.loadOffersForRequest(' + (req.sbId||0) + ',\'' + titleDoOnclick + '\')" class="flex-1 ' + barvaNabidek + ' py-3.5 rounded-xl font-bold text-sm hover:scale-[1.02] transition-transform shadow-md flex items-center justify-center gap-2">' + textNabidek + '</button>' +
                 (req.status==='active' ? '<button onclick="window.zrusitZakazku(' + i + ',' + (req.sbId||'null') + ')" class="px-5 py-3.5 rounded-xl border-2 border-slate-200 dark:border-slate-700 text-slate-400 hover:text-red-500 hover:border-red-200 font-bold text-sm transition"><i class="fa-solid fa-xmark mr-2"></i>Zrušit</button>' : '') +
-                (req.odstoupeni ? '<div class="w-full p-4 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 text-sm text-amber-700 dark:text-amber-400">'
+                (req.odstoupeni ? '<div class="w-full p-4 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-sm text-red-700 dark:text-red-400">'
                     + '<p class="font-bold"><i class="fa-solid fa-circle-info mr-2"></i>' + window.escapeHtml(req.odstoupeni.craftsman_name || 'Řemeslník') + ' ze zakázky odstoupil</p>'
                     + (req.odstoupeni.duvod
                         ? '<p class="mt-1.5 font-medium">„' + window.escapeHtml(req.odstoupeni.duvod) + '"</p>'
                         : '<p class="mt-1.5 font-medium opacity-70">Důvod neuvedl.</p>')
-                    + (req.status === 'waiting' ? '<p class="mt-1.5 text-xs font-bold opacity-70">Poptávka je zpět na Tržišti, můžeš vybrat jiného řemeslníka.</p>' : '')
+                    + (req.status === 'waiting' ? '<p class="mt-1.5 text-xs font-bold">Poptávka je zpět na Tržišti, můžeš vybrat jiného řemeslníka.</p>' : '')
                     + '</div>' : '') +
                 (req.status==='active'
                     ? (req.dokonceniNavrzeno
