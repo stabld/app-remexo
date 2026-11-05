@@ -1436,7 +1436,7 @@ window.DUVODY_ODMITNUTI = [
     { kod: "termin", zakaznik: "Nevyhovuje mi termín", remeslnik: "zákazníkovi nevyhovuje termín" },
     { kod: "jiny_remeslnik", zakaznik: "Vybral jsem jiného řemeslníka", remeslnik: "zákazník vybral jiného řemeslníka" },
     { kod: "nepotrebuji", zakaznik: "Už to nepotřebuji nebo jsem to vyřešil jinak", remeslnik: "zákazník už práci nepotřebuje nebo ji vyřešil jinak" },
-    { kod: "jine", zakaznik: "Jiný důvod", remeslnik: "jiný důvod" }
+    { kod: "jine", zakaznik: "Jiný důvod", remeslnik: "zákazník uvedl jiný důvod" }
 ];
 
 // Text důvodu pro řemeslníka. Neznámý kód (nebo žádný) vrátí prázdný řetězec.
