@@ -1364,8 +1364,22 @@ window.submitCraftsmanOffer = async function() {
         const predchoziStav = window.stavMeNabidky ? window.stavMeNabidky(requestId) : null;
 
         // Zakázku už mezitím mohl někdo dostat – ověříme si to čerstvě z databáze
-        const { data: aktualni } = await window.sb.from("requests")
-            .select("status").eq("id", requestId).maybeSingle();
+        const { data: aktualni, error: chybaCteni } = await window.sb.from("requests")
+            .select("status, customer_id").eq("id", requestId).maybeSingle();
+        if (!chybaCteni && !aktualni) {
+            // Zákazník poptávku mezitím smazal (nebo už není volná): řádek nevidíme, databáze by vložení odmítla
+            window.showToast("Poptávka už není k dispozici", "Zákazník ji mezitím smazal nebo ji dostal jiný řemeslník. Seznam se obnoví.", "info");
+            btn.innerHTML=orig;btn.disabled=false;
+            window.closeOfferModal();
+            if (window.loadMarketFromDB) window.loadMarketFromDB();
+            return;
+        }
+        if (aktualni && aktualni.customer_id && aktualni.customer_id === window.APP_USER.id) {
+            window.showToast("Na vlastní poptávku to nejde", "Tuhle poptávku jsi zadal ty. Nabídku jí může poslat jen řemeslník z jiného účtu.", "info");
+            btn.innerHTML=orig;btn.disabled=false;
+            window.closeOfferModal();
+            return;
+        }
         if (aktualni && aktualni.status !== "waiting") {
             window.showToast("Zakázka už není volná", "Zákazník si mezitím vybral jiného řemeslníka.", "info");
             btn.innerHTML=orig;btn.disabled=false;
@@ -1414,7 +1428,21 @@ window.submitCraftsmanOffer = async function() {
         window.refreshCraftsmanJobs();
         // Do chatu se dostane až ve chvíli, kdy zákazník nabídku přijme
         setTimeout(()=>{window.closeOfferModal();btn.innerHTML=orig;btn.disabled=false;btn.className=btn.className.replace("bg-green-500","bg-remexo-500 hover:bg-remexo-600");window.goTab("jobs","Moje práce");},1000);
-    } catch(e){btn.innerHTML=orig;btn.disabled=false;window.showToast("Chyba odesílání",e.message,"error");}
+    } catch(e){
+        btn.innerHTML=orig;btn.disabled=false;
+        if (e && (e.code === "42501" || /row-level security/i.test(e.message || ""))) {
+            // Databáze nabídku odmítla: buď se změnilo přihlášení (jiné okno), nebo poptávka už není k dispozici
+            let jinyUcet = false;
+            try { const { data: u } = await window.sb.auth.getUser(); jinyUcet = !!(u && u.user && window.APP_USER && u.user.id !== window.APP_USER.id); } catch(_) {}
+            window.showToast("Nabídku se nepodařilo odeslat",
+                jinyUcet ? "V jiném okně jsi přihlášený pod jiným účtem. Načti stránku znovu (F5)."
+                         : "Poptávka už není dostupná, nebo na ni nemůžeš reagovat. Seznam se obnoví.", "error");
+            window.closeOfferModal();
+            if (window.loadMarketFromDB) window.loadMarketFromDB();
+            return;
+        }
+        window.showToast("Chyba odesílání",e.message,"error");
+    }
 };
 
 window.loadOffersForRequest = async function(requestId, requestTitle) {
