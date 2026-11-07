@@ -2431,3 +2431,132 @@ window.applyPendingPoptavka = function() {
         }
     }, 300);
 };
+
+// ============================================================
+// ÚVODNÍ NÁVOD PRO NOVÉ UŽIVATELE
+// Při prvním přihlášení se ukáže krátký návod o třech krocích podle role.
+// Že už ho uživatel viděl, se pamatuje v účtu (user_metadata) i v tomto prohlížeči.
+// Znovu ho jde otevřít z konzole: otevritUvod("customer") nebo otevritUvod("craftsman").
+// ============================================================
+(function () {
+    const KROKY = {
+        customer: [
+            { ikona: "📸", nadpis: "Zadej poptávku", text: "Klikni na „Vytvořit poptávku“, popiš, co je potřeba opravit, a přidej fotku. Bořek (AI asistent) z toho připraví zadání pro řemeslníky." },
+            { ikona: "📩", nadpis: "Vyber nabídku", text: "Řemeslníci ti pošlou nabídky a my ti dáme vědět e-mailem. Porovnáš je a tu, která ti sedí, přijmeš." },
+            { ikona: "💬", nadpis: "Domluv se v chatu", text: "S vybraným řemeslníkem si napíšeš přímo v aplikaci v části Zprávy a domluvíte termín i detaily. Platby přes aplikaci zatím připravujeme." }
+        ],
+        craftsman: [
+            { ikona: "🧰", nadpis: "Doplň si profil", text: "V části Profil vyplň město, telefon a IČO. Podle města ti Tržiště zakázek ukáže, které poptávky jsou nejblíž." },
+            { ikona: "🔎", nadpis: "Vyber zakázku", text: "Na Tržišti zakázek otevři detail poptávky a pošli nabídku s cenou a krátkou zprávou. Když zákazník nabídku odmítne, můžeš to zkusit ještě jednou." },
+            { ikona: "🤝", nadpis: "Domluv se se zákazníkem", text: "Když zákazník nabídku přijme, najdeš zakázku v Moje práce a můžeš si s ním psát. O nových poptávkách ti dáme vědět e-mailem." }
+        ]
+    };
+    const POZNAMKA = "Když si nebudeš vědět rady, napiš nám přes tlačítko „Nahlásit problém“.";
+
+    const druh = (role) => (role === "customer" ? "customer" : "craftsman");
+    const klic = (role) => "remexo_uvod_" + ((window.APP_USER && window.APP_USER.id) || "") + "_" + druh(role);
+
+    function uzVidel(role) {
+        try {
+            const m = window.APP_USER && window.APP_USER.user_metadata;
+            if (m && m["uvod_" + druh(role)]) return true;
+        } catch (e) {}
+        try { return localStorage.getItem(klic(role)) === "1"; } catch (e) { return false; }
+    }
+
+    function oznacVidel(role) {
+        try { localStorage.setItem(klic(role), "1"); } catch (e) {}
+        try {
+            const data = {}; data["uvod_" + druh(role)] = true;
+            if (window.APP_USER) window.APP_USER.user_metadata = Object.assign({}, window.APP_USER.user_metadata, data);
+            if (window.sb) {
+                const p = window.sb.auth.updateUser({ data: data });
+                if (p && p.catch) p.catch(function () {});
+            }
+        } catch (e) {}
+    }
+
+    window.otevritUvod = function (role, nahled) {
+        if (document.getElementById("uvod-modal")) return;
+        const kroky = KROKY[druh(role)];
+        let i = 0;
+
+        const el = document.createElement("div");
+        el.id = "uvod-modal";
+        el.setAttribute("role", "dialog");
+        el.setAttribute("aria-modal", "true");
+        el.setAttribute("aria-labelledby", "uvod-nadpis");
+        el.style.cssText = "position:fixed;inset:0;z-index:650;display:flex;align-items:center;justify-content:center;padding:1rem;"
+            + "background:rgba(15,23,42,.6);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);opacity:0;transition:opacity .3s ease;";
+        el.innerHTML =
+            '<div class="bg-white dark:bg-[#0f172a] rounded-[2rem] shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-md p-8" style="max-height:92vh;overflow-y:auto;">'
+          +   '<div id="uvod-ikona" style="width:64px;height:64px;border-radius:1rem;background:rgba(245,158,11,.12);display:flex;align-items:center;justify-content:center;font-size:2rem;margin-bottom:1.25rem;"></div>'
+          +   '<h3 id="uvod-nadpis" class="text-2xl font-black mb-2 dark:text-white"></h3>'
+          +   '<p id="uvod-text" class="text-slate-500 dark:text-slate-400 text-sm" style="line-height:1.6;min-height:5.5rem;"></p>'
+          +   '<p id="uvod-poznamka" class="text-slate-400 text-xs" style="line-height:1.5;margin-top:.75rem;"></p>'
+          +   '<div id="uvod-tecky" style="display:flex;justify-content:center;margin:1.25rem 0;"></div>'
+          +   '<button type="button" id="uvod-dal" class="w-full bg-remexo-500 hover:bg-remexo-600 text-white py-3.5 rounded-xl font-bold transition shadow-md"></button>'
+          +   '<button type="button" id="uvod-preskocit" class="text-slate-500 hover:text-remexo-500 text-sm font-bold transition" style="display:block;width:100%;margin-top:.5rem;padding:.5rem;">Přeskočit</button>'
+          + '</div>';
+
+        const q = (id) => el.querySelector("#" + id);
+
+        function zavrit() {
+            document.removeEventListener("keydown", klavesa);
+            el.style.opacity = "0";
+            setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 300);
+            if (!nahled) oznacVidel(role);
+        }
+        function klavesa(e) { if (e.key === "Escape") zavrit(); }
+
+        function kresli() {
+            const k = kroky[i], posledni = i === kroky.length - 1;
+            q("uvod-ikona").textContent = k.ikona;
+            q("uvod-nadpis").textContent = (i + 1) + ". " + k.nadpis;
+            q("uvod-text").textContent = k.text;
+            q("uvod-poznamka").textContent = posledni ? POZNAMKA : "";
+            q("uvod-dal").textContent = posledni ? "Rozumím, jdu na to" : "Další";
+            q("uvod-preskocit").style.display = posledni ? "none" : "block";
+            q("uvod-tecky").innerHTML = kroky.map(function (_, n) {
+                return '<span style="width:' + (n === i ? "22px" : "8px") + ';height:8px;border-radius:9999px;margin:0 3px;transition:all .25s ease;background:'
+                    + (n === i ? "#f59e0b" : "rgba(148,163,184,.45)") + ';"></span>';
+            }).join("");
+        }
+
+        q("uvod-dal").addEventListener("click", function () {
+            if (i < kroky.length - 1) { i++; kresli(); } else { zavrit(); }
+        });
+        q("uvod-preskocit").addEventListener("click", zavrit);
+        document.addEventListener("keydown", klavesa);
+
+        kresli();
+        document.body.appendChild(el);
+        void el.offsetWidth;
+        el.style.opacity = "1";
+        q("uvod-dal").focus();
+    };
+
+    // Sám se ukáže jen při prvním přihlášení dané role
+    window.spustUvodPokudJeTreba = function (role) {
+        try {
+            if (!window.APP_USER || uzVidel(role)) return;
+            const heslo = document.getElementById("new-pw-modal");
+            if (heslo && !heslo.classList.contains("hidden")) return; // právě se mění heslo
+            const app = document.getElementById("main-app");
+            if (!app || app.classList.contains("hidden")) return;
+            window.otevritUvod(role);
+        } catch (e) {}
+    };
+
+    // initApp je v app.js (načítá se až po tomhle souboru), proto se zavěsíme po načtení stránky
+    window.addEventListener("load", function () {
+        const puvodni = window.initApp;
+        if (typeof puvodni !== "function" || puvodni.__uvod) return;
+        window.initApp = function (role) {
+            const vysledek = puvodni.apply(this, arguments);
+            setTimeout(function () { window.spustUvodPokudJeTreba(role); }, 1500);
+            return vysledek;
+        };
+        window.initApp.__uvod = true;
+    });
+})();
