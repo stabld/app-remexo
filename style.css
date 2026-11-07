@@ -163,16 +163,6 @@ body { font-family: "Plus Jakarta Sans", sans-serif; }
         flex: 1 1 100% !important;
     }
 
-    /* Nabídky řemeslníků: cena pod jménem, ne namačkaná vedle */
-    #offers-modal-list .flex.items-center.gap-4 {
-        flex-wrap: wrap !important;
-        gap: 0.75rem !important;
-    }
-    #offers-modal-list .ml-auto {
-        margin-left: 0 !important;
-        width: 100% !important;
-    }
-
     /* Statistiky u řemeslníka – tři sloupce jsou na mobilu moc těsné */
     #view-jobs .grid.grid-cols-3 {
         grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
@@ -285,4 +275,69 @@ body { font-family: "Plus Jakarta Sans", sans-serif; }
     .req-detaily { margin-top: 0.75rem !important; padding-top: 0.75rem !important; }
     .req-akce { margin-top: 0.875rem !important; padding-top: 0.75rem !important; gap: 0.5rem !important; }
     .req-akce button { padding-top: 0.75rem !important; padding-bottom: 0.75rem !important; }
+}
+
+/* ===== OKNO S NABÍDKAMI ŘEMESLNÍKŮ ===== */
+.nab-top { margin: -0.25rem 0 -0.25rem; }
+.nab-count { font-weight: 800; font-size: 0.95rem; color: #0f172a; }
+.nab-tip { margin-top: 2px; font-size: 0.8rem; line-height: 1.35; color: #64748b; }
+.dark .nab-count { color: #f8fafc; }
+.dark .nab-tip { color: #94a3b8; }
+
+.nab-karta { padding: 1.1rem; border: 1px solid #e2e8f0; border-radius: 1.5rem; background: #f8fafc; }
+.dark .nab-karta { border-color: #334155; background: rgba(30,41,59,0.5); }
+
+.nab-hlava { display: flex; align-items: center; gap: 0.75rem; cursor: pointer; transition: opacity .15s; }
+.nab-hlava:hover { opacity: .8; }
+.nab-av { width: 3rem; height: 3rem; flex: none; border-radius: 9999px; background: #fff; border: 1px solid #e2e8f0; object-fit: cover; }
+.dark .nab-av { border-color: #334155; }
+.nab-kdo { min-width: 0; flex: 1; }
+.nab-jmeno { font-weight: 800; line-height: 1.25; color: #0f172a; overflow-wrap: anywhere; }
+.dark .nab-jmeno { color: #fff; }
+.nab-radek { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; margin-top: 3px; font-size: 0.78rem; line-height: 1.3; }
+.nab-radek .ml-2 { margin-left: 0 !important; }
+.nab-datum { color: #94a3b8; font-weight: 600; }
+.nab-rating { font-weight: 700; color: #a16207; }
+.dark .nab-rating { color: #eab308; }
+.nab-rating-pocet { font-weight: 600; color: #94a3b8; }
+.nab-rating-novy { font-weight: 600; color: #64748b; }
+.dark .nab-rating-novy { color: #94a3b8; }
+.nab-profil { flex: none; align-self: flex-start; font-size: 0.75rem; font-weight: 700; color: #64748b; padding-top: 2px; white-space: nowrap; }
+.nab-profil i { font-size: 0.65rem; margin-left: 2px; }
+
+.nab-lbl { font-size: 0.68rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: #94a3b8; }
+
+.nab-cena { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; margin-top: 0.9rem; padding: 0.7rem 0.95rem; border-radius: 1rem; background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.3); }
+.nab-cena .nab-lbl { color: #b45309; flex: none; }
+.nab-cena-hodnota { font-weight: 900; font-size: 1.3rem; line-height: 1.2; color: #b45309; text-align: right; overflow-wrap: anywhere; }
+.dark .nab-cena .nab-lbl, .dark .nab-cena-hodnota { color: #fbbf24; }
+.nab-cena-dlouha { font-size: 1rem; font-weight: 800; }
+
+.nab-sekce { margin-top: 0.9rem; }
+.nab-msg { margin-top: 0.35rem; padding: 0.8rem 0.95rem; font-size: 0.9rem; line-height: 1.5; color: #475569; background: #fff; border: 1px solid #f1f5f9; border-radius: 1rem; overflow-wrap: anywhere; }
+.dark .nab-msg { color: #cbd5e1; background: #0f172a; border-color: #334155; }
+
+.nab-akce { display: flex; gap: 0.5rem; margin-top: 1rem; }
+.nab-btn { white-space: nowrap; border-radius: 0.85rem; padding: 0.85rem 1rem; font-size: 0.9rem; font-weight: 700; line-height: 1.2; transition: transform .15s, background .15s; }
+.nab-btn-ano { flex: 1 1 auto; background: #0f172a; color: #fff; box-shadow: 0 4px 10px rgba(15,23,42,.18); }
+.nab-btn-ano:hover { transform: scale(1.02); }
+.nab-btn-ano i { margin-right: 0.3rem; }
+.dark .nab-btn-ano { background: #fff; color: #0f172a; }
+.nab-btn-ne { flex: none; background: transparent; color: #dc2626; border: 1px solid #fecaca; }
+.nab-btn-ne:hover { background: #fef2f2; }
+.dark .nab-btn-ne { color: #f87171; border-color: rgba(248,113,113,.35); }
+.dark .nab-btn-ne:hover { background: rgba(239,68,68,.1); }
+
+@media (max-width: 767px) {
+    #offers-modal > div > div:first-child { padding: 1rem 1.25rem !important; }
+    #offers-modal-list { padding: 1rem !important; }
+    .nab-karta { padding: 0.95rem; }
+    .nab-cena-hodnota { font-size: 1.2rem; }
+    .nab-cena-dlouha { font-size: 0.95rem; }
+}
+@media (max-width: 360px) {
+    .nab-profil { display: none; }
+}
+@media (max-width: 380px) {
+    .nab-akce { flex-direction: column-reverse; }
 }
