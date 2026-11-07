@@ -1393,10 +1393,10 @@ window.loadOffersForRequest = async function(requestId, requestTitle) {
 
     const hodnoceniHtml = (craftsmanId) => {
         const h = hodnoceniPodleId[String(craftsmanId)];
-        if (!h || !h.pocet) return '<span class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Nový na Remexu</span>';
+        if (!h || !h.pocet) return '<span class="nab-rating nab-rating-novy">Nový na Remexu</span>';
         const prumer = (h.soucet / h.pocet).toFixed(1);
-        return '<span class="text-[11px] font-bold text-yellow-600 dark:text-yellow-500">⭐ ' + prumer
-            + ' <span class="text-slate-400">(' + h.pocet + ')</span></span>';
+        return '<span class="nab-rating">⭐ ' + prumer
+            + ' <span class="nab-rating-pocet">(' + h.pocet + ' hodnocení)</span></span>';
     };
 
     document.getElementById("offers-modal-title").innerText=requestTitle;
@@ -1405,7 +1405,15 @@ window.loadOffersForRequest = async function(requestId, requestTitle) {
     if(!offers||offers.length===0){
         modalList.innerHTML='<div class="text-center text-slate-400 py-12"><i class="fa-solid fa-inbox text-4xl mb-4 block"></i><p>Zatím žádné aktivní nabídky.</p></div>';
     } else {
-        modalList.innerHTML=offers.map(o=>{
+        // Nad kartami: kolik nabídek je a co se stane po přijetí
+        const pocetNabidek = offers.length;
+        const slovoNabidek = pocetNabidek === 1 ? "nabídka" : (pocetNabidek <= 4 ? "nabídky" : "nabídek");
+        const hlavickaNabidek = '<div class="nab-top"><p class="nab-count">' + pocetNabidek + ' ' + slovoNabidek + '</p>'
+            + (jeUzavrena ? '' : '<p class="nab-tip">' + (pocetNabidek > 1
+                ? 'Po přijetí jedné nabídky se otevře chat s řemeslníkem a ostatní nabídky se uzavřou.'
+                : 'Po přijetí nabídky se otevře chat s řemeslníkem.') + '</p>')
+            + '</div>';
+        modalList.innerHTML=hlavickaNabidek + offers.map(o=>{
             // Zprávu i jméno píše řemeslník – do stránky nesmí syrové
             const bezpJmeno = window.escapeHtml(o.craftsman_name || "Řemeslník");
             // Odznak ověření vedle jména - hlavní důvod, proč ověřování vůbec děláme
@@ -1414,7 +1422,29 @@ window.loadOffersForRequest = async function(requestId, requestTitle) {
                 : '';
             const bezpZprava = window.escapeHtml(o.message || "").replace(/\n/g, "<br>");
             const bezpCena = window.escapeHtml(o.price || "Dohodou");
-            return '<div class="p-5 border border-slate-200 dark:border-slate-700 rounded-3xl bg-slate-50 dark:bg-slate-800/50"><div class="flex items-center gap-4 mb-4 cursor-pointer hover:opacity-75 transition" onclick="window.openPublicProfile(\'' + o.craftsman_id + '\')"><img id="offer-av-' + o.id + '" src="https://api.dicebear.com/7.x/avataaars/svg?seed=' + encodeURIComponent(o.craftsman_name || '') + '&backgroundColor=0f172a" class="w-12 h-12 rounded-full bg-white shadow-sm border border-slate-200 dark:border-slate-700 object-cover"><div><p class="font-extrabold dark:text-white">' + bezpJmeno + odznakOvereni + '</p><div class="flex items-center gap-2 mt-0.5">' + hodnoceniHtml(o.craftsman_id) + '<span class="text-xs font-bold text-slate-400">· ' + new Date(o.created_at).toLocaleDateString("cs") + '</span></div></div><span class="ml-auto font-black text-lg text-remexo-500">' + bezpCena + '</span></div><p class="text-sm text-slate-600 dark:text-slate-300 mb-5 bg-white dark:bg-[#0f172a] p-4 rounded-2xl border border-slate-100 dark:border-slate-700">' + bezpZprava + '</p>' + (jeUzavrena ? stavHtml(o) : '<div class="flex gap-2"><button data-title="' + window.escapeHtml(requestTitle||"") + '" onclick="window.rejectOffer(this, ' + o.id + ',' + requestId + ', this.dataset.title)" class="px-5 bg-red-50 hover:bg-red-100 dark:bg-red-500/10 dark:hover:bg-red-500/20 text-red-500 rounded-xl transition shadow-sm"><i class="fa-solid fa-times text-lg"></i></button><button data-jmeno="' + window.escapeHtml(o.craftsman_name||"") + '" onclick="window.acceptOffer(' + o.id + ',' + requestId + ', this.dataset.jmeno); window.closeOffersModal();" class="flex-1 bg-slate-900 dark:bg-white text-white dark:text-slate-900 py-3.5 rounded-xl font-bold text-sm transition shadow-md hover:scale-[1.02]">Přijmout a zahájit zprávy</button></div>') + '</div>';
+            const datumNabidky = new Date(o.created_at).toLocaleDateString("cs");
+            const zpravaHtml = bezpZprava
+                ? '<div class="nab-sekce"><span class="nab-lbl">Zpráva od řemeslníka</span><p class="nab-msg">' + bezpZprava + '</p></div>'
+                : '';
+            const tlacitka = jeUzavrena ? stavHtml(o)
+                : '<div class="nab-akce">'
+                    + '<button data-title="' + window.escapeHtml(requestTitle||"") + '" onclick="window.rejectOffer(this, ' + o.id + ',' + requestId + ', this.dataset.title)" class="nab-btn nab-btn-ne">Odmítnout</button>'
+                    + '<button data-jmeno="' + window.escapeHtml(o.craftsman_name||"") + '" onclick="window.acceptOffer(' + o.id + ',' + requestId + ', this.dataset.jmeno); window.closeOffersModal();" class="nab-btn nab-btn-ano"><i class="fa-solid fa-check"></i> Přijmout nabídku</button>'
+                + '</div>';
+            return '<div class="nab-karta">'
+                + '<div class="nab-hlava" onclick="window.openPublicProfile(\'' + o.craftsman_id + '\')">'
+                    + '<img id="offer-av-' + o.id + '" src="https://api.dicebear.com/7.x/avataaars/svg?seed=' + encodeURIComponent(o.craftsman_name || '') + '&backgroundColor=0f172a" class="nab-av" alt="">'
+                    + '<div class="nab-kdo">'
+                        + '<p class="nab-jmeno">' + bezpJmeno + '</p>'
+                        + '<div class="nab-radek">' + odznakOvereni + hodnoceniHtml(o.craftsman_id) + '</div>'
+                        + '<div class="nab-radek nab-datum">Nabídka z ' + datumNabidky + '</div>'
+                    + '</div>'
+                    + '<span class="nab-profil">Profil <i class="fa-solid fa-chevron-right"></i></span>'
+                + '</div>'
+                + '<div class="nab-cena"><span class="nab-lbl">Cena</span><span class="nab-cena-hodnota' + ((o.price || "").length > 16 ? ' nab-cena-dlouha' : '') + '">' + bezpCena + '</span></div>'
+                + zpravaHtml
+                + tlacitka
+            + '</div>';
         }).join("");
     }
     // Skutečné profilovky doplníme až po vykreslení, ať se okno neotevírá pomalu
