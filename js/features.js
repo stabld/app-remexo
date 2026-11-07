@@ -1211,13 +1211,48 @@ window.popisBezKontaktu = function(popis) {
         .map(r => {
             if (r.startsWith("📍")) {              // z adresy zůstane jen město
                 const c = r.split(",");
-                const mesto = c.length > 1 ? c[c.length - 1].trim() : r.replace(/^📍\s*Adresa:\s*/, "").trim();
+                const mesto = (c.length > 1 ? c[c.length - 1].trim() : r).replace(/^📍\s*(Adresa:\s*)?/, "").trim();
                 return "📍 " + mesto;
             }
             return r;
         });
 
     return hlavni + (radky.length ? "\n\n📋 DOPLŇUJÍCÍ INFORMACE:\n" + radky.join("\n") : "");
+};
+
+// Pole poptávky se ukládají tak, jak je zákazník vidí na obrazovce, tedy někdy VELKÝMI PÍSMENY.
+// V okně s nabídkou je vrátíme do normální podoby ("ORIENTAČNĚ OD 1 000 DO 2 500 KČ" -> "Orientačně od 1 000 do 2 500 Kč").
+window.zjemniVelkaPismena = function(t) {
+    t = String(t == null ? "" : t).trim();
+    if (t.length <= 3 || t !== t.toUpperCase() || t === t.toLowerCase()) return t;
+    t = t.charAt(0) + t.slice(1).toLowerCase();
+    return t.replace(/(^|[^A-Za-zÀ-ž])kč(?![A-Za-zÀ-ž])/g, "$1Kč");
+};
+
+// Popis poptávky rozdělíme na vlastní text a jednotlivé údaje (místo, termín, typ objektu, parkování, rozpočet).
+// Telefon a ulice se odřežou už v popisBezKontaktu.
+window.rozloztPopisPoptavky = function(popis) {
+    const bezKontaktu = window.popisBezKontaktu ? window.popisBezKontaktu(popis) : (popis || "");
+    const znacka = "📋 DOPLŇUJÍCÍ INFORMACE:";
+    const i = bezKontaktu.indexOf(znacka);
+    const hlavni = (i >= 0 ? bezKontaktu.slice(0, i) : bezKontaktu).trim();
+    const radky = i >= 0
+        ? bezKontaktu.slice(i + znacka.length).split(/\r?\n/).map(r => r.trim()).filter(Boolean)
+        : [];
+    const TYPY = [
+        { re: /^📍\uFE0F?\s*(?:Adresa:\s*)?/, popisek: "Místo", ikona: "fa-location-dot" },
+        { re: /^📅\uFE0F?\s*Termín:\s*/, popisek: "Termín", ikona: "fa-calendar-days" },
+        { re: /^🏠\uFE0F?\s*Typ objektu:\s*/, popisek: "Typ objektu", ikona: "fa-house" },
+        { re: /^🚗\uFE0F?\s*Parkování:\s*/, popisek: "Parkování", ikona: "fa-car" },
+        { re: /^💰\uFE0F?\s*Rozpočet:\s*/, popisek: "Rozpočet", ikona: "fa-coins" }
+    ];
+    const fakta = radky.map(r => {
+        for (const t of TYPY) {
+            if (t.re.test(r)) return { popisek: t.popisek, ikona: t.ikona, hodnota: r.replace(t.re, "").replace(/^📍\uFE0F?\s*/, "").trim() };
+        }
+        return { popisek: "Další informace", ikona: "fa-circle-info", hodnota: r };
+    }).filter(f => f.hodnota);
+    return { hlavni, fakta };
 };
 
 window.openOfferModal = function(id) {
@@ -1242,17 +1277,54 @@ window.openOfferModal = function(id) {
     document.getElementById("co-req-id").value=req.id;
     document.getElementById("co-req-title").value=req.title;
     document.getElementById("co-title").innerText=req.title;
-    document.getElementById("co-cat").innerText=req.category||"Ostatní";
-    document.getElementById("co-urg").innerText=req.urgency||"Střední";
-    let extracted=window.extractPhotoFromDesc(req.description);
-    document.getElementById("co-desc").innerHTML=window.escapeHtml(window.popisBezKontaktu(extracted.desc)).replace(/\n/g,"<br>");
-    document.getElementById("co-price").value=req.price_estimate||"Dohodou";
+
+    // Štítky: kategorie a naléhavost (barva podle naléhavosti)
+    document.getElementById("co-cat").innerText=window.zjemniVelkaPismena(req.category||"Ostatní");
+    const nalehavost=window.zjemniVelkaPismena(req.urgency||"Střední");
+    const urgEl=document.getElementById("co-urg");
+    urgEl.innerText="Naléhavost: "+nalehavost;
+    urgEl.className="cof-stitek "+({"vysoká":"cof-urg-vysoka","nízká":"cof-urg-nizka"}[nalehavost.toLowerCase()]||"cof-urg-stredni");
+
+    // Popis zvlášť, údaje o poptávce zvlášť (jako přehledné dlaždice)
+    const extracted=window.extractPhotoFromDesc(req.description);
+    const rozlozeny=window.rozloztPopisPoptavky(extracted.desc);
+    const descEl=document.getElementById("co-desc");
+    descEl.innerHTML=window.escapeHtml(rozlozeny.hlavni).replace(/\n/g,"<br>");
+    descEl.classList.toggle("hidden",!rozlozeny.hlavni);
+
+    let vzdalenost=null;
+    try { vzdalenost=window.formatVzdalenost&&window.formatVzdalenost(window.vzdalenostPoptavky(req)); } catch(e) {}
+    const fakta=rozlozeny.fakta.map(f => (f.popisek==="Místo"&&vzdalenost) ? Object.assign({},f,{hodnota:f.hodnota+" · "+vzdalenost+" od tebe"}) : f);
+    const faktaEl=document.getElementById("co-fakta");
+    faktaEl.innerHTML=fakta.map(f => '<div class="cof-fakt"><span class="cof-fakt-popisek"><i class="fa-solid '+f.ikona+'"></i> '+window.escapeHtml(f.popisek)+'</span><span class="cof-fakt-hodnota">'+window.escapeHtml(f.hodnota)+'</span></div>').join("");
+    faktaEl.classList.toggle("hidden",fakta.length===0);
+
+    // Cena: předvyplníme odhadem zákazníka a řekneme to nahlas
+    const odhad=window.zjemniVelkaPismena(req.price_estimate||"");
+    document.getElementById("co-price").value=odhad||"Dohodou";
+    const odhadEl=document.getElementById("co-odhad");
+    if(odhadEl) odhadEl.classList.toggle("hidden",!odhad);
+
     document.getElementById("co-msg").value='Dobrý den, mám zájem o vaši zakázku "' + req.title + '". Mám čas a vybavení, mohu pomoci.';
-    
+
+    // Zákazník už jednou odmítl: řekneme proč a kolik pokusů zbývá
+    const upozorneni=document.getElementById("co-notice");
+    if(upozorneni){
+        if(window.stavMeNabidky&&window.stavMeNabidky(req.id)==="rejected"){
+            const duvod=window.duvodOdmitnutiMojeNabidky?window.duvodOdmitnutiMojeNabidky(req.id):"";
+            const zbyva=(window.MAX_POKUSU||2)-(window.pocetPokusu?window.pocetPokusu(req.id):1);
+            upozorneni.innerHTML='<strong>Tvoje předchozí nabídka byla odmítnuta'+(duvod?', z důvodu: '+window.escapeHtml(duvod):'')+'.</strong> Můžeš poslat opravenou nabídku'+(zbyva<=1?' – je to tvůj poslední pokus.':'.');
+            upozorneni.classList.remove("hidden");
+        } else {
+            upozorneni.classList.add("hidden");
+            upozorneni.innerHTML="";
+        }
+    }
+
     const photoWrap = document.getElementById("co-photo-wrap");
     const vsechnyFotky = (extracted.soubory || []).length + (extracted.photos || []).length;
     if (vsechnyFotky > 0) {
-        photoWrap.innerHTML = '<div class="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-4">'
+        photoWrap.innerHTML = '<div class="grid grid-cols-2 sm:grid-cols-3 gap-2">'
             + (extracted.soubory || []).map(c => window.fotkaMisto(c)).join("")
             + '</div>';
         const grid2 = photoWrap.querySelector('div');
@@ -1263,24 +1335,15 @@ window.openOfferModal = function(id) {
             img.onclick = () => window.openLightbox(img.src);
             grid2.appendChild(img);
         });
+        photoWrap.classList.remove("hidden");   // dřív zůstávalo skryté, fotky se v okně neukázaly
         window.doplnFotky(photoWrap);
-    } else if (false) {
-        photoWrap.innerHTML = '<div class="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-4"></div>';
-        const grid = photoWrap.querySelector('div');
-        extracted.photos.forEach(p => {
-            const img = document.createElement("img");
-            img.src = "data:" + p.mime + ";base64," + p.photo;
-            img.className = "w-full h-24 object-cover rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm cursor-pointer hover:opacity-80 transition";
-            img.onclick = () => window.openLightbox(img.src);
-            grid.appendChild(img);
-        });
-        photoWrap.classList.remove("hidden");
     } else {
         photoWrap.classList.add("hidden");
         photoWrap.innerHTML = "";
     }
 
     const modal=document.getElementById("craftsman-offer-modal");
+    const telo=modal.querySelector(".cof-telo"); if(telo) telo.scrollTop=0;
     modal.classList.remove("hidden");void modal.offsetWidth;modal.classList.add("opacity-100");
 };
 
