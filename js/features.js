@@ -986,7 +986,14 @@ window.appendChat = function(role, text, photos) {
             d.appendChild(grid);
         }
     }
-    else { d.className="poptavka-bubble-ai text-sm flex items-start gap-3"; d.innerHTML='<div class="w-8 h-8 bg-remexo-500 rounded-full flex items-center justify-center text-white shrink-0 overflow-hidden"><img src="/borek-hlava.PNG" alt="Bořek" class="w-full h-full object-contain p-0.5"></div><div>' + window.escapeHtml(text).replace(/\n/g, "<br>") + '</div>'; }
+    else {
+        // Bezpečnostní varování ("POZOR, tohle není běžná oprava. 1. ... 2. ... 3. ...") má každý krok na vlastním řádku,
+        // ať se v ohrožení dobře čte. Model někdy kroky pošle slepené do jednoho odstavce.
+        if (/^POZOR, tohle není běžná oprava\./.test(String(text))) {
+            text = String(text).replace(/[ \t]+(?=[1-9]\.\s)/g, "\n");
+        }
+        d.className="poptavka-bubble-ai text-sm flex items-start gap-3"; d.innerHTML='<div class="w-8 h-8 bg-remexo-500 rounded-full flex items-center justify-center text-white shrink-0 overflow-hidden"><img src="/borek-hlava.PNG" alt="Bořek" class="w-full h-full object-contain p-0.5"></div><div>' + window.escapeHtml(text).replace(/\n/g, "<br>") + '</div>';
+    }
     box.appendChild(d); box.scrollTop=box.scrollHeight;
 };
 
